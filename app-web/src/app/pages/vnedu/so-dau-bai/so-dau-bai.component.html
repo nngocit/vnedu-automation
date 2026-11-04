@@ -302,55 +302,68 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- MODAL: ĐIỂM DANH HỌC SINH                                   -->
+<!-- MODAL: ĐIỂM DANH HỌC SINH (GIAO DIỆN HIỆN ĐẠI, MÀU SẮC ĐẲNG CẤP) -->
 <!-- ============================================================ -->
 <div *ngIf="showAttendanceModal" class="modal-backdrop-custom d-flex align-items-center justify-content-center">
-  <div class="modal-dialog-custom modal-lg">
+  <div class="modal-dialog-custom modal-lg modal-attendance-pro">
+    <!-- Header Modal -->
     <div class="modal-header-custom p-4 border-bottom d-flex align-items-center justify-content-between">
       <div class="d-flex align-items-center gap-3">
-        <div class="symbol symbol-40px symbol-circle bg-primary text-white d-flex align-items-center justify-content-center">
+        <div class="modal-header-icon d-flex align-items-center justify-content-center">
           👥
         </div>
         <div>
-          <h4 class="fw-bold modal-title-text fs-4 mb-0">
-            Điểm Danh Lớp {{ selectedSlotForAttendance?.lop }}
-          </h4>
-          <div class="modal-subtitle-text fs-7">
-            Tiết {{ selectedSlotForAttendance?.tiet }} - Thứ {{ selectedSlotForAttendance?.thu }} (Ngày {{ selectedSlotForAttendance?.ngay }})
+          <div class="d-flex align-items-center gap-2">
+            <h4 class="fw-bold modal-title-text fs-4 mb-0">
+              Điểm Danh Lớp {{ selectedSlotForAttendance?.lop }}
+            </h4>
+            <span class="badge badge-light-primary fw-bold fs-8 px-2 py-1">vnEdu Trực Tiếp</span>
+          </div>
+          <div class="modal-subtitle-text fs-7 mt-1">
+            Tiết {{ selectedSlotForAttendance?.tiet }} • Thứ {{ selectedSlotForAttendance?.thu }} ({{ selectedSlotForAttendance?.ngay }})
+            <span *ngIf="selectedSlotForAttendance?.mon" class="ms-1 text-gray-600">• Môn: <strong>{{ selectedSlotForAttendance?.mon }}</strong></span>
           </div>
         </div>
       </div>
       <button type="button" class="btn-close-custom" (click)="closeAttendanceModal()" title="Đóng">✕</button>
     </div>
 
-    <div class="modal-stats-bar p-3 d-flex flex-wrap align-items-center justify-content-between gap-2 border-bottom">
-      <div class="d-flex align-items-center gap-2">
-        <span class="badge stat-badge-total fs-7 px-3 py-2 fw-bold border">
-          Tổng số: {{ attendanceStudents.length }} học sinh
-        </span>
-        <span class="badge bg-success bg-opacity-25 text-success fs-7 px-3 py-2 fw-bold">
-          Đi học: {{ attendanceStudents.length - countTotalVang }} em
-        </span>
-        <span class="badge fs-7 px-3 py-2 fw-bold"
-              [ngClass]="countTotalVang > 0 ? 'bg-danger bg-opacity-25 text-danger' : 'bg-info bg-opacity-25 text-info'">
-          Vắng: {{ countTotalVang }} em ({{ countVangPhep }} phép, {{ countVangKhongPhep }} không phép)
-        </span>
+    <!-- Stats Bar (Capsule Cards) -->
+    <div class="modal-stats-bar p-3 px-4 d-flex flex-wrap align-items-center justify-content-between gap-3 border-bottom">
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <div class="stat-capsule stat-total">
+          <span class="stat-icon">👥</span>
+          <span class="stat-label">Tổng số:</span>
+          <span class="stat-num">{{ attendanceStudents.length }} học sinh</span>
+        </div>
+        <div class="stat-capsule stat-present">
+          <span class="stat-icon">✅</span>
+          <span class="stat-label">Đi học:</span>
+          <span class="stat-num">{{ attendanceStudents.length - countTotalVang }} em</span>
+        </div>
+        <div class="stat-capsule" [ngClass]="countTotalVang > 0 ? 'stat-absent' : 'stat-all-present'">
+          <span class="stat-icon">{{ countTotalVang > 0 ? '⚠️' : '🎉' }}</span>
+          <span class="stat-label">Vắng:</span>
+          <span class="stat-num">{{ countTotalVang }} em</span>
+          <span *ngIf="countTotalVang > 0" class="stat-detail">({{ countVangPhep }} phép, {{ countVangKhongPhep }} k.phép)</span>
+        </div>
       </div>
 
       <div class="d-flex align-items-center gap-2">
-        <button type="button" class="pill-btn pill-giamthi shadow-xs"
+        <button type="button" class="pill-btn pill-sapphire shadow-xs"
                 (click)="scanSupervisorAttendance()"
                 [disabled]="isScanningGiamThi || isLoadingAttendance"
                 title="Quét đối chiếu danh sách vắng từ Sổ Điểm Danh vnEdu của Giám thị">
           <span *ngIf="isScanningGiamThi" class="spinner-border spinner-border-sm me-1" role="status"></span>
-          <span *ngIf="!isScanningGiamThi">🔄 Quét SĐĐ Giám Thị</span>
+          <span *ngIf="!isScanningGiamThi">🛡️ Quét SĐĐ Giám Thị</span>
         </button>
-        <button type="button" class="pill-btn pill-success shadow-xs" (click)="setAllPresent()" title="Đánh dấu cả lớp đi học đầy đủ">
+        <button type="button" class="pill-btn pill-emerald shadow-xs" (click)="setAllPresent()" title="Đánh dấu cả lớp đi học đầy đủ">
           ✓ Cả lớp đi học đủ
         </button>
       </div>
     </div>
 
+    <!-- Body Modal -->
     <div class="modal-body-custom p-4">
       <div class="position-relative mb-3">
         <input type="text"
@@ -440,19 +453,26 @@
       </div>
     </div>
 
-    <div class="modal-footer-custom p-4 border-top d-flex align-items-center justify-content-between">
+    <!-- Footer Modal -->
+    <div class="modal-footer-custom p-3 px-4 border-top d-flex align-items-center justify-content-between">
       <div class="fs-7">
-        <span *ngIf="countTotalVang === 0" class="text-success fw-bold">✓ Cả lớp đi học đầy đủ</span>
-        <span *ngIf="countTotalVang > 0" class="text-danger fw-bold">⚠ Đang chọn vắng {{ countTotalVang }} học sinh</span>
+        <div *ngIf="countTotalVang === 0" class="footer-status-pill status-all-good">
+          <span>✅</span>
+          <span>Cả lớp đi học đầy đủ ({{ attendanceStudents.length }}/{{ attendanceStudents.length }})</span>
+        </div>
+        <div *ngIf="countTotalVang > 0" class="footer-status-pill status-has-absent">
+          <span>⚠️</span>
+          <span>Đang chọn vắng <strong>{{ countTotalVang }}</strong> học sinh ({{ countVangPhep }} phép, {{ countVangKhongPhep }} không phép)</span>
+        </div>
       </div>
       <div class="d-flex gap-2">
-        <button type="button" class="btn btn-sm btn-modal-close fw-bold rounded-2 px-4" (click)="closeAttendanceModal()">
+        <button type="button" class="btn btn-sm btn-footer-close fw-bold rounded-pill px-4" (click)="closeAttendanceModal()">
           Đóng
         </button>
-        <button type="button" class="pill-btn pill-primary px-4 shadow-xs"
+        <button type="button" class="pill-btn pill-primary-save px-4 shadow-sm"
                 (click)="saveAttendanceData()" [disabled]="isSavingAttendance">
           <span *ngIf="isSavingAttendance" class="spinner-border spinner-border-sm me-2" role="status"></span>
-          Lưu Điểm Danh
+          💾 Lưu Điểm Danh
         </button>
       </div>
     </div>
