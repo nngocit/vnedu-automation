@@ -652,10 +652,26 @@ app.post('/api/sync-batch', async (req, res) => {
     }
 });
 
-// Fallback mọi route trang sang index.html của Angular
+// API 404 handler: luôn trả JSON thay vì HTML để tránh lỗi JSON parse trên web
+// API 404 handler: luôn trả JSON thay vì HTML để tránh lỗi JSON parse trên web
+app.use('/api', (req, res) => {
+    res.status(404).json({ success: false, error: `API endpoint không tồn tại: ${req.method} ${req.path}` });
+});
+
+// Fallback mọi route trang SPA sang index.html của Angular (tương thích 100% Express 5 & Windows)
 if (fs.existsSync(DIST_DIR)) {
-    app.use((req, res) => {
-        res.sendFile(path.join(DIST_DIR, 'index.html'));
+    const indexPath = path.join(DIST_DIR, 'index.html');
+    app.use((req, res, next) => {
+        if (req.method === 'GET') {
+            try {
+                const html = fs.readFileSync(indexPath, 'utf8');
+                res.setHeader('Content-Type', 'text/html; charset=utf-8');
+                return res.send(html);
+            } catch (err) {
+                return res.status(500).send('Không thể nạp index.html: ' + err.message);
+            }
+        }
+        next();
     });
 }
 
