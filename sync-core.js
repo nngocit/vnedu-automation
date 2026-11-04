@@ -958,21 +958,21 @@ function getAvailableWeeks(source = 'vnedu') {
         const classInfo = CLASS_MAP[lopName] || CLASS_MAP[lopName + 'AL'] || CLASS_MAP[Object.keys(CLASS_MAP).find(k => k.includes(lopName))];
         if (!classInfo) return { success: false, msg: 'Không tìm thấy lớp ' + lopName, absentByDay: {} };
 
-        let { token, context } = await ensureVnEduToken();
-        const url = `https://uaevcmanmsgdbinhduong.vnedu.vn/v5/?load=edu.so_diem_danh.nhap&app_nam_hoc=${namHoc}&my_token=${token}`;
-
-        const params = new URLSearchParams({
-            my_token: token,
-            app_nam_hoc: namHoc,
-            winid: 'check_sdd_' + lopName,
-            nam_hoc: namHoc,
-            lop: classInfo.id,
-            thang: thangNam,
-            ten_thang: 'Tháng ' + thangNam.replace('-', ' - '),
-            khoi: classInfo.khoi
-        });
-
         try {
+            let { token, context } = await ensureVnEduToken();
+            const url = `https://uaevcmanmsgdbinhduong.vnedu.vn/v5/?load=edu.so_diem_danh.nhap&app_nam_hoc=${namHoc}&my_token=${token}`;
+
+            const params = new URLSearchParams({
+                my_token: token,
+                app_nam_hoc: namHoc,
+                winid: 'check_sdd_' + lopName,
+                nam_hoc: namHoc,
+                lop: classInfo.id,
+                thang: thangNam,
+                ten_thang: 'Tháng ' + thangNam.replace('-', ' - '),
+                khoi: classInfo.khoi
+            });
+
             const res = await vnEduPost(url, params);
             const html = await res.text();
             const rows = html.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || [];

@@ -22,6 +22,11 @@ export interface VnEduSlot {
   diemVs?: string | number;
   soLuongNghi?: number;
   hsVangList?: AbsentStudent[];
+  isMatched?: boolean;
+  sdbSoLuongNghi?: number;
+  sdbDsVang?: string[];
+  giamThiSoLuongNghi?: number;
+  giamThiDsVang?: any[];
   isSynced?: boolean;
   chitietId?: string | null;
   liveId?: string | null;

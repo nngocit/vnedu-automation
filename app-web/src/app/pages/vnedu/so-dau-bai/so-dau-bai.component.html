@@ -16,86 +16,52 @@
 </div>
 
 <div class="vnedu-app-container">
-  <!-- THANH CÔNG CỤ TRÊN CÙNG (TOP BAR GIỐNG HÌNH MẪU) -->
+  <!-- THANH CÔNG CỤ TRÊN CÙNG GỌN GÀNG, ĐẲNG CẤP (TẤT CẢ TRÊN 1 DÒNG) -->
   <div class="top-nav-bar d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-    <!-- Nguồn dữ liệu & Kênh thông tường lửa -->
-    <div class="d-flex align-items-center gap-2 flex-wrap">
-      <button type="button"
-              class="pill-btn"
-              [ngClass]="dataSource === 'vnedu' ? 'pill-success' : 'pill-outline'"
-              (click)="toggleSource('vnedu')">
-        <span class="bullet bullet-dot bg-white me-2" *ngIf="dataSource === 'vnedu'"></span>
-        vnEdu Trực Tiếp
+    <!-- Cụm nút hành động nghiệp vụ -->
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <button class="pill-btn pill-primary shadow-xs" (click)="syncBatch('all')" [disabled]="isSavingBatch" title="Đồng bộ toàn bộ tiết trong tuần vào Sổ Đầu Bài vnEdu">
+        <app-keenicon name="double-check" class="fs-4 me-1 text-white"></app-keenicon>
+        Đồng bộ cả tuần
       </button>
 
-      <button type="button"
-              class="pill-btn"
-              [ngClass]="dataSource === 'excel' ? 'pill-success' : 'pill-outline'"
-              (click)="toggleSource('excel')">
-        <app-keenicon name="file" class="fs-5 me-1"></app-keenicon>
-        File Excel
+      <button class="pill-btn pill-success shadow-xs" (click)="syncBatch('today')" [disabled]="isSavingBatch" title="Đồng bộ các tiết dạy hôm nay">
+        <app-keenicon name="check-circle" class="fs-4 me-1 text-white"></app-keenicon>
+        Đồng bộ hôm nay
       </button>
 
-      <div class="pill-btn pill-channel">
-        <span class="bullet bullet-dot bg-success me-2"></span>
-        Kênh 4G/Wi-Fi • Thông Tường Lửa
-      </div>
+      <button class="pill-btn pill-warning shadow-xs" (click)="scanAllSupervisorAttendance()" [disabled]="isScanningAllGiamThi" title="Quét đối chiếu toàn bộ dữ liệu vắng từ Sổ Điểm Danh của Giám thị trên vnEdu">
+        <span *ngIf="isScanningAllGiamThi" class="spinner-border spinner-border-sm me-1" role="status"></span>
+        <app-keenicon *ngIf="!isScanningAllGiamThi" name="arrows-circle" class="fs-4 me-1 text-white"></app-keenicon>
+        🛡️ Quét SĐĐ Giám Thị
+      </button>
 
-      <!-- Nút Quản Lý / Đăng Nhập vnEdu -->
-      <button type="button"
-              class="pill-btn"
-              [ngClass]="status?.connected ? 'pill-outline' : 'pill-warning text-white'"
-              (click)="openLoginModal()"
-              title="Quản lý và gia hạn phiên kết nối vnEdu">
-        <span class="bullet bullet-dot me-2" [ngClass]="status?.connected ? 'bg-success' : 'bg-danger'"></span>
-        {{ status?.connected ? 'Gia Hạn Phiên vnEdu' : '🔑 Đăng Nhập vnEdu' }}
+      <button class="pill-btn pill-outline shadow-xs" (click)="autoPlanNewWeek()" [disabled]="isLoading" title="Tự động chuẩn bị KHDH cho tuần mới">
+        <app-keenicon name="calendar-add" class="fs-4 me-1 text-gray-700"></app-keenicon>
+        Lập trước KHDH
+      </button>
+
+      <button class="pill-btn pill-outline shadow-xs" (click)="loadSchedule(currentWeek)" [disabled]="isLoading" title="Tải lại dữ liệu tuần">
+        <app-keenicon name="arrows-circle" class="fs-4 me-1 text-gray-700" [ngClass]="{'fa-spin': isLoading}"></app-keenicon>
+        Làm mới
       </button>
     </div>
 
-    <!-- Cụm chọn tuần dạng Pill -->
+    <!-- Cụm chọn tuần dạng Pill - Mặc định tuần hiện tại -->
     <div class="week-pill-control">
       <button type="button" class="nav-btn" (click)="prevWeek()" [disabled]="currentWeek <= 1" title="Tuần trước">
         ❮
       </button>
       <span class="bullet bullet-dot bg-success me-1"></span>
-      <select class="week-select-pill" [value]="currentWeek" (change)="onWeekChange($event)" title="Chọn tuần học">
+      <select class="week-select-pill" [(ngModel)]="currentWeek" (change)="onWeekChange($event)" title="Chọn tuần học">
         <option *ngFor="let opt of weeksList" [value]="opt.weekNumber">
-          Tuần {{ opt.weekNumber }}{{ opt.isCurrentRealWeek ? ' • HK I (Hiện tại)' : '' }}
+          Tuần {{ opt.weekNumber }}{{ opt.weekNumber === 9 ? ' • HK I (Hiện tại)' : '' }}
         </option>
       </select>
       <button type="button" class="nav-btn" (click)="nextWeek()" [disabled]="currentWeek >= 35" title="Tuần sau">
         ❯
       </button>
     </div>
-  </div>
-
-  <!-- HÀNG NÚT HÀNH ĐỘNG CHÍNH (ĐỒNG BỘ CẢ TUẦN / HÔM NAY / QUÉT VẮNG) -->
-  <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-    <button class="pill-btn pill-primary shadow-xs" (click)="syncBatch('all')" [disabled]="isSavingBatch">
-      <app-keenicon name="double-check" class="fs-4 me-1 text-white"></app-keenicon>
-      Đồng bộ cả tuần
-    </button>
-
-    <button class="pill-btn pill-success shadow-xs" (click)="syncBatch('today')" [disabled]="isSavingBatch">
-      <app-keenicon name="check-circle" class="fs-4 me-1 text-white"></app-keenicon>
-      Đồng bộ hôm nay
-    </button>
-
-    <button class="pill-btn pill-warning shadow-xs" (click)="scanAllSupervisorAttendance()" [disabled]="isScanningAllGiamThi" title="Quét đối chiếu toàn bộ dữ liệu vắng từ Sổ Điểm Danh của Giám thị trên vnEdu">
-      <span *ngIf="isScanningAllGiamThi" class="spinner-border spinner-border-sm me-1" role="status"></span>
-      <app-keenicon *ngIf="!isScanningAllGiamThi" name="arrows-circle" class="fs-4 me-1 text-white"></app-keenicon>
-      Quét SĐĐ Giám Thị
-    </button>
-
-    <button class="pill-btn pill-outline shadow-xs" (click)="autoPlanNewWeek()" [disabled]="isLoading">
-      <app-keenicon name="calendar-add" class="fs-4 me-1 text-gray-700"></app-keenicon>
-      Lập trước KHDH
-    </button>
-
-    <button class="pill-btn pill-outline shadow-xs" (click)="loadSchedule(currentWeek)" [disabled]="isLoading">
-      <app-keenicon name="arrows-circle" class="fs-4 me-1 text-gray-700" [ngClass]="{'fa-spin': isLoading}"></app-keenicon>
-      Làm mới
-    </button>
   </div>
 
   <!-- BANNER THÔNG BÁO VÀNG CAM NỔI BẬT (NHẮC NHỞ CÔ GIÁO) -->
@@ -154,9 +120,6 @@
     <div class="d-flex align-items-center gap-2">
       <span class="text-gray-700 fs-7 fw-bold">
         Tuần {{ currentWeek }} • Từ ngày {{ scheduleData?.tuNgay }} đến {{ scheduleData?.denNgay }}
-      </span>
-      <span class="badge bg-success bg-opacity-25 text-success fw-bold px-2 py-1 rounded-pill fs-8">
-        ⚡ vnEdu Trực Tiếp
       </span>
     </div>
   </div>
@@ -497,62 +460,262 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- MODAL: ĐĂNG NHẬP VNEDU                                      -->
+<!-- MODAL: QUÉT SĐĐ GIÁM THỊ (CYBER RADAR / ANTIVIRUS SCANNER)   -->
 <!-- ============================================================ -->
-<div *ngIf="showLoginModal" class="modal-backdrop-custom d-flex align-items-center justify-content-center">
-  <div class="modal-dialog-custom modal-md">
+<div *ngIf="showScanModal" class="modal-backdrop-custom d-flex align-items-center justify-content-center p-4">
+  <div class="modal-dialog-custom modal-cyber-scan modal-lg shadow-2xl">
+    <!-- Header -->
     <div class="modal-header-custom p-4 border-bottom d-flex align-items-center justify-content-between">
-      <h4 class="fw-bold modal-title-text fs-4 mb-0">🔑 Xác Thực Tài Khoản vnEdu</h4>
-      <button type="button" class="btn-close-custom" (click)="closeLoginModal()" title="Đóng">✕</button>
+      <div class="d-flex align-items-center gap-3">
+        <div class="cyber-header-icon pulse-glow">
+          🛡️
+        </div>
+        <div>
+          <h4 class="fw-bolder modal-title-text fs-4 mb-0">
+            Hệ Thống Quét SĐĐ Giám Thị • Tuần {{ currentWeek }}
+          </h4>
+          <span class="fs-8 text-gray-500 fw-semibold">
+            Đối chiếu tự động giữa Sổ Điểm Danh Điện Tử và Sổ Đầu Bài
+          </span>
+        </div>
+      </div>
+      <button type="button" class="btn-close-custom" (click)="closeScanModal()" title="Đóng">✕</button>
     </div>
 
+    <!-- Body -->
     <div class="modal-body-custom p-5">
-      <div *ngIf="loginErrorMessage" class="alert alert-danger p-3 mb-4 rounded-2 fs-7 fw-semibold">
-        {{ loginErrorMessage }}
-      </div>
+      <!-- TRẠNG THÁI 1: ĐANG QUÉT (SCANNING) -->
+      <div *ngIf="scanModalStatus === 'scanning'" class="cyber-scanning-container text-center py-4">
+        <!-- Radar Dish Animation -->
+        <div class="cyber-radar-wrapper mx-auto mb-4">
+          <div class="radar-circle radar-c1"></div>
+          <div class="radar-circle radar-c2"></div>
+          <div class="radar-circle radar-c3"></div>
+          <div class="radar-crosshair-h"></div>
+          <div class="radar-crosshair-v"></div>
+          <div class="radar-sweep-beam"></div>
+          <div class="radar-blip b1"></div>
+          <div class="radar-blip b2"></div>
+          <div class="radar-blip b3"></div>
+        </div>
 
-      <div *ngIf="loginSuccessMessage" class="alert alert-success p-3 mb-4 rounded-2 fs-7 fw-semibold">
-        {{ loginSuccessMessage }}
-      </div>
+        <!-- Thanh phần trăm tiến trình -->
+        <div class="w-100 max-w-500px mx-auto mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="fs-7 fw-bold text-gray-700">{{ scanCurrentStep }}</span>
+            <span class="fs-6 fw-bolder text-primary">{{ scanProgress }}%</span>
+          </div>
+          <div class="progress cyber-progress-bar rounded-pill" style="height: 10px;">
+            <div class="progress-bar progress-bar-striped progress-bar-animated bg-gradient-primary"
+                 role="progressbar"
+                 [style.width.%]="scanProgress"></div>
+          </div>
+        </div>
 
-      <div class="mb-3">
-        <label class="form-label fs-7 fw-bold form-field-label">Tên Đăng Nhập / SĐT vnEdu:</label>
-        <input type="text"
-               class="form-control form-control-solid rounded-2 fw-bold modal-input"
-               [(ngModel)]="loginUsername"
-               placeholder="Nhập số điện thoại hoặc mã giáo viên">
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label fs-7 fw-bold form-field-label">Mật Khẩu vnEdu:</label>
-        <div class="position-relative">
-          <input [type]="showPassword ? 'text' : 'password'"
-                 class="form-control form-control-solid pe-9 rounded-2 fw-bold modal-input"
-                 [(ngModel)]="loginPassword"
-                 placeholder="Nhập mật khẩu vnEdu"
-                 (keyup.enter)="submitLogin()">
-          <button type="button"
-                  class="btn btn-sm btn-icon position-absolute top-50 end-0 translate-middle-y me-1 text-gray-500 border-0 bg-transparent"
-                  (click)="togglePasswordVisibility()" title="Ẩn/hiện mật khẩu">
-            {{ showPassword ? '🙈' : '👁️' }}
-          </button>
+        <!-- Terminal Live Stream Logs -->
+        <div class="cyber-terminal-box p-3 rounded-3 text-start mx-auto max-w-650px">
+          <div class="d-flex align-items-center gap-2 mb-2 pb-2 border-bottom border-secondary border-opacity-25">
+            <span class="terminal-dot bg-danger"></span>
+            <span class="terminal-dot bg-warning"></span>
+            <span class="terminal-dot bg-success"></span>
+            <span class="fs-8 text-gray-400 ms-2 font-monospace">vnEdu Live Inspection Monitor</span>
+          </div>
+          <div class="cyber-terminal-logs font-monospace fs-8">
+            <div *ngFor="let log of scanLogs"
+                 class="log-line"
+                 [ngClass]="{'log-warn': log.type === 'warning', 'log-succ': log.type === 'success', 'log-info': log.type === 'info'}">
+              <span class="log-cursor">❯</span> {{ log.text }}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="modal-tip-box p-3 rounded-2 fs-8 border">
-        🛡️ Phiên đăng nhập được mã hóa an toàn và chỉ lưu trên máy tính của bạn.
+      <!-- TRẠNG THÁI 2: ĐÃ QUÉT XONG (COMPLETED) & ĐỐI CHIẾU SĐB - GIÁM THỊ -->
+      <div *ngIf="scanModalStatus === 'completed'" class="cyber-result-container py-2">
+        <!-- Thẻ tóm tắt kết quả đối chiếu thông minh -->
+        <div class="result-summary-card p-4 rounded-3 mb-4"
+             [ngClass]="scanMismatchCount > 0 ? 'summary-warn' : 'summary-clean'">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+            <div class="d-flex align-items-center gap-3">
+              <span class="fs-1">{{ scanMismatchCount > 0 ? '⚠️' : '🎉' }}</span>
+              <div>
+                <h5 class="fw-bolder mb-1 fs-5">
+                  {{ scanMismatchCount > 0 ? ('Phát hiện ' + scanMismatchCount + ' tiết chưa khớp giữa Sổ Đầu Bài và Giám Thị!') : 'Tuyệt vời! Tất cả các tiết học đã KHỚP 100% với Sổ Đầu Bài!' }}
+                </h5>
+                <div class="fs-8 text-gray-600">
+                  {{ scanMismatchCount > 0 ? 'Dưới đây là bảng so sánh trực tiếp giữa dữ liệu cô đã lưu trên Sổ Đầu Bài và dữ liệu Giám thị trường ghi nhận.' : 'Dữ liệu sĩ số và học sinh vắng trên Sổ Đầu Bài hoàn toàn trùng khớp với Sổ Giám thị vnEdu. Cô không cần nhập lại!' }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Nút đồng bộ nhanh tất cả nếu có lệch -->
+            <div *ngIf="scanMismatchCount > 0">
+              <button type="button"
+                      class="pill-btn pill-warning px-4 py-2 shadow-xs fw-bolder fs-7"
+                      (click)="syncAllMismatchedSlots()"
+                      [disabled]="isSyncingAllMismatches">
+                <span *ngIf="isSyncingAllMismatches" class="spinner-border spinner-border-sm me-1" role="status"></span>
+                ⚡ Đồng Bộ Khớp Tất Cả ({{ scanMismatchCount }} Tiết)
+              </button>
+            </div>
+          </div>
+
+          <!-- 3 Thống kê số liệu mini -->
+          <div class="d-flex flex-wrap gap-2 pt-2 border-top border-secondary border-opacity-15">
+            <span class="badge bg-primary bg-opacity-15 text-primary fw-bold px-3 py-2 rounded-pill fs-8">
+              📊 Tổng vắng trong tuần: {{ scanTotalAbsents }} lượt (trên {{ scanAbsentSlots.length }} tiết)
+            </span>
+            <span class="badge bg-success bg-opacity-20 text-success fw-bold px-3 py-2 rounded-pill fs-8">
+              ✅ Đã khớp Sổ Đầu Bài: {{ scanMatchedCount }} tiết
+            </span>
+            <span class="badge bg-warning bg-opacity-25 text-warning-emphasis fw-bold px-3 py-2 rounded-pill fs-8"
+                  *ngIf="scanMismatchCount > 0">
+              ⚠️ Cần cập nhật vào SĐB: {{ scanMismatchCount }} tiết
+            </span>
+          </div>
+        </div>
+
+        <!-- BẢNG ĐỐI CHIẾU SONG SONG TỪNG TIẾT (SIDE-BY-SIDE RECONCILIATION) -->
+        <div *ngIf="scanAbsentSlots.length > 0" class="absent-slots-list">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <span class="fs-7 fw-bold text-gray-700">
+              📋 Bảng Đối Chiếu Chi Tiết: Sổ Đầu Bài Hiện Tại ⇄ Sổ Giám Thị vnEdu:
+            </span>
+            <span class="fs-8 text-gray-500">
+              (Nhấn nút Đồng Bộ để cập nhật dữ liệu Giám thị vào SĐB)
+            </span>
+          </div>
+
+          <div class="d-flex flex-column gap-3 max-h-400px overflow-y-auto pe-1">
+            <div *ngFor="let slot of scanAbsentSlots"
+                 class="absent-slot-card p-3 rounded-3 border shadow-xs"
+                 [ngClass]="slot.isMatched ? 'card-matched' : 'card-mismatched'">
+              <!-- Hàng trên: Thông tin tiết và Huy hiệu Trạng thái Đối Chiếu -->
+              <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2 pb-2 border-bottom border-secondary border-opacity-10">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-secondary bg-opacity-25 text-secondary-emphasis fw-bold fs-8">
+                    Thứ {{ slot.thu }} • Tiết {{ slot.tiet }}
+                  </span>
+                  <span class="badge badge-light-primary fw-bolder fs-8">Lớp {{ slot.lop }}</span>
+                  <span class="fs-8 fw-semibold text-gray-700">{{ slot.mon }}</span>
+                  <span class="text-gray-400 fs-8">• {{ slot.ngay }}</span>
+                </div>
+
+                <!-- Huy hiệu đối chiếu -->
+                <div>
+                  <span *ngIf="slot.isMatched" class="badge bg-success bg-opacity-20 text-success fw-bolder px-3 py-1 rounded-pill fs-8">
+                    ✅ ĐÃ KHỚP HOÀN TOÀN ({{ slot.giamThiSoLuongNghi || slot.soLuongNghi }} em)
+                  </span>
+                  <span *ngIf="!slot.isMatched" class="badge bg-warning bg-opacity-25 text-warning-emphasis fw-bolder px-3 py-1 rounded-pill fs-8">
+                    ⚠️ LỆCH: SĐB ({{ slot.sdbSoLuongNghi || 0 }} em) ≠ Giám Thị ({{ slot.giamThiSoLuongNghi || slot.soLuongNghi }} em)
+                  </span>
+                </div>
+              </div>
+
+              <!-- Hàng giữa: 2 Cột Đối Chiếu Song Song Trực Quan -->
+              <div class="row g-2 align-items-center my-1">
+                <!-- Cột 1: Sổ Đầu Bài Hiện Có -->
+                <div class="col-12 col-md-5">
+                  <div class="reconcile-box p-2 rounded-2">
+                    <div class="fs-8 fw-bold text-gray-600 mb-1 d-flex align-items-center gap-1">
+                      <span>📘 Sổ Đầu Bài Hiện Tại:</span>
+                      <span class="badge badge-light-info fs-8 py-0">{{ slot.sdbSoLuongNghi || 0 }} vắng</span>
+                    </div>
+                    <div class="d-flex flex-wrap gap-1">
+                      <ng-container *ngIf="slot.sdbDsVang && slot.sdbDsVang.length > 0; else noSdbVang">
+                        <span *ngFor="let s of slot.sdbDsVang" class="student-tag tag-sdb rounded-pill px-2 py-0 fs-8">
+                          {{ s }}
+                        </span>
+                      </ng-container>
+                      <ng-template #noSdbVang>
+                        <span class="text-gray-500 fs-8 fst-italic">Chưa có học sinh vắng trên SĐB</span>
+                      </ng-template>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Mũi tên đối sánh -->
+                <div class="col-12 col-md-1 text-center">
+                  <span class="fs-5 text-gray-400 fw-bold">{{ slot.isMatched ? '✅' : '⇄' }}</span>
+                </div>
+
+                <!-- Cột 2: Sổ Giám Thị Quét Được -->
+                <div class="col-12 col-md-6">
+                  <div class="reconcile-box p-2 rounded-2" [ngClass]="{'border-warning': !slot.isMatched}">
+                    <div class="fs-8 fw-bold text-gray-600 mb-1 d-flex align-items-center gap-1">
+                      <span>🛡️ Sổ Giám Thị vnEdu:</span>
+                      <span class="badge badge-light-danger fs-8 py-0">{{ slot.giamThiSoLuongNghi || slot.soLuongNghi }} vắng</span>
+                    </div>
+                    <div class="d-flex flex-wrap gap-1">
+                      <span *ngFor="let hs of (slot.giamThiDsVang || slot.hsVangList)"
+                            class="student-tag rounded-pill px-2 py-0 fs-8"
+                            [ngClass]="hs.coPhep ? 'tag-phep' : 'tag-khongphep'">
+                        {{ hs.fullName }} ({{ hs.coPhep ? 'P' : 'K' }})
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Hàng dưới: Nút thao tác tương ứng trạng thái -->
+              <div class="d-flex align-items-center justify-content-between pt-2 mt-1">
+                <span class="fs-8 text-gray-500">
+                  {{ slot.tenBai || slot.noiDung }}
+                </span>
+
+                <div class="d-flex gap-2">
+                  <!-- Nếu chưa khớp: nút Đồng Bộ Khớp Ngay -->
+                  <button *ngIf="!slot.isMatched"
+                          type="button"
+                          class="pill-btn pill-warning px-3 py-1 fs-8 shadow-xs"
+                          (click)="syncSingleSlotFromGiamThi(slot)"
+                          title="Lưu danh sách Giám thị vào Sổ Đầu Bài tiết này">
+                    ⚡ Đồng Bộ Khớp Ngay
+                  </button>
+
+                  <!-- Nút Mở Điểm Danh xem/sửa -->
+                  <button type="button"
+                          class="pill-btn px-3 py-1 fs-8 shadow-xs"
+                          [ngClass]="slot.isMatched ? 'pill-outline text-primary' : 'pill-primary'"
+                          (click)="openAttendanceFromScanResult(slot)">
+                    {{ slot.isMatched ? '👁️ Xem Lại' : '📝 Sửa Điểm Danh' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRẠNG THÁI 3: LỖI (ERROR) -->
+      <div *ngIf="scanModalStatus === 'error'" class="text-center py-5">
+        <div class="fs-1 mb-2">❌</div>
+        <h5 class="fw-bold text-danger mb-2">Quá trình quét SĐĐ Giám thị gặp lỗi</h5>
+        <p class="fs-7 text-gray-600 mb-4 max-w-450px mx-auto">
+          Không thể lấy được dữ liệu điểm danh từ vnEdu. Vui lòng thử lại hoặc kiểm tra kết nối mạng.
+        </p>
+        <button type="button" class="pill-btn pill-primary px-4 py-2" (click)="scanAllSupervisorAttendance()">
+          🔄 Thử Quét Lại
+        </button>
       </div>
     </div>
 
-    <div class="modal-footer-custom p-4 border-top d-flex justify-content-end gap-2">
-      <button type="button" class="btn btn-sm btn-modal-close fw-bold rounded-2 px-4" (click)="closeLoginModal()">
-        Hủy
-      </button>
-      <button type="button" class="pill-btn pill-primary px-4 shadow-xs"
-              (click)="submitLogin()" [disabled]="isLoggingIn">
-        <span *ngIf="isLoggingIn" class="spinner-border spinner-border-sm me-2" role="status"></span>
-        Đăng Nhập & Kết Nối
-      </button>
+    <!-- Footer -->
+    <div class="modal-footer-custom p-4 border-top d-flex justify-content-between align-items-center">
+      <span class="fs-8 text-gray-500">
+        🛡️ Dữ liệu được đồng bộ trực tiếp từ Sổ Giám thị / Ban Quản viện trường THCS An Lập
+      </span>
+      <div class="d-flex gap-2">
+        <button *ngIf="scanModalStatus === 'completed'"
+                type="button"
+                class="btn btn-sm btn-outline btn-outline-dashed btn-outline-primary fw-bold rounded-2 px-3"
+                (click)="scanAllSupervisorAttendance()">
+          🔄 Quét Lại
+        </button>
+        <button type="button" class="btn btn-sm btn-modal-close fw-bold rounded-2 px-4" (click)="closeScanModal()">
+          Đóng
+        </button>
+      </div>
     </div>
   </div>
 </div>

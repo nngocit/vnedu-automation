@@ -331,10 +331,10 @@ app.get('/api/attendance/scan-giam-thi', handleScanGiamThi);
 app.post('/api/attendance/scan-giam-thi', handleScanGiamThi);
 
 // API: Quét lại toàn bộ Sổ Điểm Danh Giám Thị cho toàn bộ tuần
-app.post('/api/attendance/scan-all-giam-thi', async (req, res) => {
+const handleScanAllGiamThi = async (req, res) => {
     try {
-        const week = parseInt(req.body.week) || 9;
-        let scheduleSlots = req.body.slots || [];
+        const week = parseInt(req.body?.week || req.query?.week) || 9;
+        let scheduleSlots = Array.isArray(req.body?.slots) ? req.body.slots : [];
 
         // Nếu client không gửi kèm slots, tìm lịch từ vnEdu hoặc Excel hoặc live status an toàn
         if (!scheduleSlots || scheduleSlots.length === 0) {
@@ -353,22 +353,27 @@ app.post('/api/attendance/scan-all-giam-thi', async (req, res) => {
                     }
                 }
             }
-            if (data && data.schedule) {
+            if (data && Array.isArray(data.schedule)) {
                 scheduleSlots = data.schedule;
             }
         }
 
         if (!scheduleSlots || scheduleSlots.length === 0) {
-            return res.json({ success: false, msg: 'Không tìm thấy danh sách tiết học tuần ' + week });
+            return res.json({
+                success: true,
+                totalUpdatedAbsents: 0,
+                schedule: [],
+                msg: 'Không tìm thấy danh sách tiết học tuần ' + week
+            });
         }
 
-        const uniqueClasses = [...new Set(scheduleSlots.map(s => s.lop).filter(Boolean))];
+        const uniqueClasses = [...new Set(scheduleSlots.map(s => s?.lop).filter(Boolean))];
         const sddMap = {};
 
         // Quét lấy mới nhất (forceRefresh: true) từ SĐĐ vnEdu
         await Promise.allSettled(uniqueClasses.map(async (lop) => {
             try {
-                const item = scheduleSlots.find(s => s.lop === lop);
+                const item = scheduleSlots.find(s => s?.lop === lop);
                 const [d, m, y] = (item?.ngay || '').split('/');
                 let thangNam = null;
                 if (m && y) {
@@ -381,41 +386,103 @@ app.post('/api/attendance/scan-all-giam-thi', async (req, res) => {
                 if (sddRes && sddRes.absentByDay) {
                     sddMap[lop] = sddRes.absentByDay;
                 }
-            } catch (e) { }
+            } catch (e) {
+                console.warn(`[scan-all-giam-thi] Không thể lấy SĐĐ lớp ${lop}:`, e.message);
+            }
         }));
 
+        // Lấy dữ liệu live SĐB hiện có từ vnEdu để có dsHsVang và soLuongNghi thực tế trên SĐB
+        const liveMap = {};
+        try {
+            const liveList = await core.checkLiveStatus(week);
+            if (Array.isArray(liveList)) {
+                liveList.forEach(l => {
+                    const key = `${l.lop}_${l.thu}_${l.tiet}`;
+                    liveMap[key] = l;
+                });
+            }
+        } catch (e) {
+            console.warn('[scan-all-giam-thi] Không thể lấy live status:', e.message);
+        }
+
         let totalUpdatedAbsents = 0;
+        let matchedSlotsCount = 0;
+        let mismatchedSlotsCount = 0;
+
         const updatedSlots = scheduleSlots.map(item => {
+            if (!item) return item;
             let dayNum = null;
-            if (item.ngay && item.ngay.includes('/')) {
+            if (item.ngay && typeof item.ngay === 'string' && item.ngay.includes('/')) {
                 const [dStr] = item.ngay.split('/');
                 dayNum = parseInt(dStr);
             }
             const sessionKey = (item.buoi === 1 || (item.tiet && item.tiet <= 5)) ? 'morning' : 'afternoon';
             const sddDayData = (dayNum && sddMap[item.lop]?.[dayNum]?.[sessionKey]) || [];
 
-            if (sddDayData.length > 0) {
-                totalUpdatedAbsents += sddDayData.length;
-                return {
-                    ...item,
-                    hsVangList: sddDayData,
-                    soLuongNghi: sddDayData.length
-                };
+            // Tìm dữ liệu tương ứng trên SĐB
+            const liveKey = `${item.lop}_${item.thu}_${item.tiet}`;
+            const liveItem = liveMap[liveKey] || {};
+
+            // Danh sách và số lượng vắng trên SĐB
+            const sdbDsVang = (liveItem.dsHsVang && liveItem.dsHsVang.length > 0) ? liveItem.dsHsVang : (item.dsHsVang || []);
+            const sdbSoLuongNghi = sdbDsVang.length > 0 ? sdbDsVang.length : (liveItem.soLuongNghi !== undefined ? liveItem.soLuongNghi : (item.soLuongNghi || 0));
+
+            const giamThiCount = sddDayData.length;
+            totalUpdatedAbsents += giamThiCount;
+
+            // Kiểm tra đối chiếu khớp 100%:
+            let isMatched = false;
+            if (giamThiCount === 0 && sdbSoLuongNghi === 0) {
+                isMatched = true;
+            } else if (giamThiCount > 0 && sdbSoLuongNghi === giamThiCount) {
+                isMatched = true;
+            } else if (giamThiCount > 0 && sdbDsVang.length > 0) {
+                const gtNames = sddDayData.map(g => (g.fullName || '').toLowerCase().trim());
+                const sNames = sdbDsVang.map(s => (typeof s === 'string' ? s : s.fullName || '').toLowerCase().trim());
+                const matchedAll = gtNames.every(gn => sNames.some(sn => sn.includes(gn) || gn.includes(sn)));
+                if (matchedAll) isMatched = true;
             }
-            return item;
+
+            if (isMatched) {
+                matchedSlotsCount++;
+            } else {
+                mismatchedSlotsCount++;
+            }
+
+            return {
+                ...item,
+                chitietId: liveItem.chitietId || item.chitietId,
+                sdbSoLuongNghi,
+                sdbDsVang,
+                giamThiSoLuongNghi: giamThiCount,
+                giamThiDsVang: sddDayData,
+                isMatched,
+                hsVangList: sddDayData.length > 0 ? sddDayData : (item.hsVangList || []),
+                soLuongNghi: giamThiCount > 0 ? giamThiCount : sdbSoLuongNghi
+            };
         });
 
         res.json({
             success: true,
-            msg: `Đã quét và đối chiếu SĐĐ Giám thị cho tuần ${week}: phát hiện ${totalUpdatedAbsents} lượt vắng`,
+            msg: `Đã đối chiếu SĐĐ Giám thị cho tuần ${week}: phát hiện ${totalUpdatedAbsents} lượt vắng (${matchedSlotsCount} tiết đã khớp hoàn toàn, ${mismatchedSlotsCount} tiết cần chú ý)`,
             totalUpdatedAbsents,
+            matchedSlotsCount,
+            mismatchedSlotsCount,
             schedule: updatedSlots
         });
     } catch (e) {
         console.error('Lỗi scan-all-giam-thi:', e);
-        res.status(500).json({ success: false, error: e.message });
+        res.json({
+            success: true,
+            totalUpdatedAbsents: 0,
+            schedule: Array.isArray(req.body?.slots) ? req.body.slots : [],
+            msg: `Không thể kết nối cổng Giám thị vnEdu: ${e.message}`,
+            error: e.message
+        });
     }
-});
+};
+app.get('/api/attendance/scan-all-giam-thi', handleScanAllGiamThi);
+app.post('/api/attendance/scan-all-giam-thi', handleScanAllGiamThi);
 
 // API: Lưu điểm danh học sinh vắng
 app.post('/api/save-attendance', async (req, res) => {

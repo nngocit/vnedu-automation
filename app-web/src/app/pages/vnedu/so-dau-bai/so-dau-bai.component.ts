@@ -1,4 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
+import { Router } from '@angular/router';
 import { VnEduService } from '../services/vnedu.service';
 import {
   VnEduInfo,
@@ -49,6 +50,20 @@ export class SoDauBaiComponent implements OnInit {
   loginErrorMessage = '';
   loginSuccessMessage = '';
 
+  // Trạng thái modal Quét Radar SĐĐ Giám thị (Cyber Antivirus Scanner)
+  showScanModal = false;
+  scanModalStatus: 'scanning' | 'completed' | 'error' = 'scanning';
+  scanProgress = 0;
+  scanCurrentStep = '';
+  scanLogs: Array<{ text: string; type: 'info' | 'warning' | 'success' }> = [];
+  scanResultSchedule: any[] = [];
+  scanAbsentSlots: any[] = [];
+  scanTotalAbsents = 0;
+  scanMatchedCount = 0;
+  scanMismatchCount = 0;
+  isSyncingAllMismatches = false;
+  private scanAnimationTimer: any = null;
+
   // Toast / Thông báo
   toastMessage: { text: string; type: 'success' | 'danger' | 'info' } | null = null;
 
@@ -61,6 +76,7 @@ export class SoDauBaiComponent implements OnInit {
 
   constructor(
     private vneduService: VnEduService,
+    private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -68,6 +84,16 @@ export class SoDauBaiComponent implements OnInit {
     const now = new Date();
     this.todayStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
     this.loadInitialData();
+  }
+
+  redirectToLogin(): void {
+    this.showToast('Phiên làm việc vnEdu đã kết thúc. Đang chuyển về trang Đăng nhập...', 'info');
+    setTimeout(() => {
+      localStorage.removeItem('v8.1.8-authf649fc9a5f55');
+      localStorage.removeItem('vnedu_token');
+      localStorage.removeItem('vnedu_cookies');
+      this.router.navigate(['/auth/login']);
+    }, 1200);
   }
 
   showToast(text: string, type: 'success' | 'danger' | 'info' = 'success'): void {
@@ -85,13 +111,13 @@ export class SoDauBaiComponent implements OnInit {
       next: (status) => {
         this.status = status;
         if (!status || !status.connected) {
-          this.openLoginModal();
+          this.redirectToLogin();
+          return;
         }
         this.checkSessionAndLoadInfo();
       },
       error: () => {
-        this.openLoginModal();
-        this.checkSessionAndLoadInfo();
+        this.redirectToLogin();
       }
     });
   }
@@ -366,13 +392,40 @@ export class SoDauBaiComponent implements OnInit {
     });
   }
 
-  // Quét đối chiếu toàn bộ SĐĐ Giám thị cho cả tuần
+  // Quét đối chiếu toàn bộ SĐĐ Giám thị cho cả tuần phong cách Cyber Antivirus Scanner
   scanAllSupervisorAttendance(): void {
+    if (this.isScanningAllGiamThi) return;
     this.isScanningAllGiamThi = true;
+    this.showScanModal = true;
+    this.scanModalStatus = 'scanning';
+    this.scanProgress = 8;
+    this.scanCurrentStep = 'Khởi tạo kết nối cổng Giám thị vnEdu...';
+    this.scanLogs = [
+      { text: `📡 Bắt đầu quét SĐĐ Giám thị cho Tuần ${this.currentWeek}...`, type: 'info' }
+    ];
+    this.scanAbsentSlots = [];
+    this.scanTotalAbsents = 0;
+
     this.vneduService.scanAllGiamThi(this.currentWeek, this.slots).subscribe({
       next: (res) => {
         this.isScanningAllGiamThi = false;
         if (res.success && res.schedule) {
+          this.scanResultSchedule = res.schedule;
+          // Lọc các tiết có học sinh vắng (hoặc từ Giám thị hoặc từ SĐB)
+          this.scanAbsentSlots = res.schedule.filter((s: any) =>
+            (s.giamThiSoLuongNghi && s.giamThiSoLuongNghi > 0) ||
+            (s.sdbSoLuongNghi && s.sdbSoLuongNghi > 0) ||
+            (s.soLuongNghi && s.soLuongNghi > 0) ||
+            (s.hsVangList && s.hsVangList.length > 0)
+          );
+
+          this.scanMatchedCount = this.scanAbsentSlots.filter((s: any) => s.isMatched).length;
+          this.scanMismatchCount = this.scanAbsentSlots.filter((s: any) => !s.isMatched).length;
+          this.scanTotalAbsents = this.scanAbsentSlots.reduce((sum: number, s: any) =>
+            sum + (s.giamThiSoLuongNghi || s.soLuongNghi || s.hsVangList?.length || 0), 0
+          );
+
+          // Cập nhật dữ liệu vào slots chính
           res.schedule.forEach((updatedSlot: any) => {
             const localSlot = this.slots.find(s =>
               s.lop === updatedSlot.lop &&
@@ -383,19 +436,177 @@ export class SoDauBaiComponent implements OnInit {
             if (localSlot) {
               localSlot.hsVangList = updatedSlot.hsVangList || [];
               localSlot.soLuongNghi = updatedSlot.soLuongNghi || 0;
+              localSlot.isMatched = updatedSlot.isMatched;
+              localSlot.sdbSoLuongNghi = updatedSlot.sdbSoLuongNghi;
+              localSlot.sdbDsVang = updatedSlot.sdbDsVang;
+              localSlot.giamThiSoLuongNghi = updatedSlot.giamThiSoLuongNghi;
+              localSlot.giamThiDsVang = updatedSlot.giamThiDsVang;
             }
           });
-          this.showToast(res.msg || `Đã cập nhật lại SĐĐ Giám thị cho toàn bộ tuần ${this.currentWeek}!`, 'success');
+          this.updateDayGroups();
+
+          // Chạy animation quét từng tiết sinh động như antivirus scanner
+          this.animateScanProgress(res.schedule);
         } else {
-          this.showToast(res.msg || 'Không thể quét SĐĐ Giám thị tuần', 'danger');
+          this.scanModalStatus = 'error';
+          this.scanLogs.push({ text: '❌ Lỗi: ' + (res.msg || 'Không thể lấy dữ liệu'), type: 'warning' });
+          this.cdr.detectChanges();
         }
-        this.cdr.detectChanges();
       },
       error: (err) => {
         this.isScanningAllGiamThi = false;
-        this.showToast('Lỗi quét SĐĐ Giám thị tuần: ' + (err.error?.msg || err.message), 'danger');
+        this.scanModalStatus = 'error';
+        this.scanLogs.push({ text: '❌ Lỗi kết nối: ' + (err.error?.msg || err.message), type: 'warning' });
         this.cdr.detectChanges();
       }
+    });
+  }
+
+  animateScanProgress(schedule: any[]): void {
+    if (this.scanAnimationTimer) clearInterval(this.scanAnimationTimer);
+    let index = 0;
+    const total = schedule.length;
+    this.scanAnimationTimer = setInterval(() => {
+      if (index < total) {
+        const item = schedule[index];
+        const vangs = item.soLuongNghi || 0;
+        this.scanProgress = Math.min(95, Math.round(((index + 1) / total) * 90) + 5);
+        this.scanCurrentStep = `Đang quét: Thứ ${item.thu} - Tiết ${item.tiet} (Lớp ${item.lop})...`;
+
+        if (vangs > 0) {
+          const names = (item.hsVangList || []).map((h: any) => h.fullName).join(', ');
+          this.scanLogs.unshift({
+            text: `[${index + 1}/${total}] Thứ ${item.thu} • Tiết ${item.tiet} • Lớp ${item.lop}: ⚠️ ${vangs} em vắng (${names})`,
+            type: 'warning'
+          });
+        } else {
+          this.scanLogs.unshift({
+            text: `[${index + 1}/${total}] Thứ ${item.thu} • Tiết ${item.tiet} • Lớp ${item.lop}: ✓ Đủ 100% sĩ số`,
+            type: 'info'
+          });
+        }
+        index++;
+        this.cdr.detectChanges();
+      } else {
+        clearInterval(this.scanAnimationTimer);
+        this.scanAnimationTimer = null;
+        this.scanProgress = 100;
+        this.scanCurrentStep = `✓ Hoàn tất quét toàn bộ ${total} tiết học!`;
+        this.scanLogs.unshift({
+          text: `🎉 Quét hoàn tất: Phát hiện ${this.scanTotalAbsents} lượt vắng trên ${this.scanAbsentSlots.length} tiết học!`,
+          type: 'success'
+        });
+        setTimeout(() => {
+          this.scanModalStatus = 'completed';
+          this.cdr.detectChanges();
+        }, 500);
+      }
+    }, 100);
+  }
+
+  openAttendanceFromScanResult(slot: any): void {
+    const targetSlot = this.slots.find(s =>
+      s.lop === slot.lop &&
+      s.thu === slot.thu &&
+      s.tiet === slot.tiet &&
+      s.buoi === slot.buoi
+    ) || slot;
+
+    this.showScanModal = false;
+    this.openAttendanceModal(targetSlot);
+  }
+
+  closeScanModal(): void {
+    this.showScanModal = false;
+    if (this.scanAnimationTimer) {
+      clearInterval(this.scanAnimationTimer);
+      this.scanAnimationTimer = null;
+    }
+  }
+
+  // Đồng bộ nhanh 1 tiết từ Giám thị vào SĐB 1 cú nhấp
+  syncSingleSlotFromGiamThi(slot: any): void {
+    const absentList = (slot.giamThiDsVang || slot.hsVangList || []).map((h: any) => ({
+      id: h.id,
+      maHs: h.maHs,
+      fullName: h.fullName,
+      coPhep: !!h.coPhep,
+      khongPhep: !!h.khongPhep
+    }));
+
+    this.vneduService.saveAttendance(
+      slot.chitietId || slot.liveId || '',
+      absentList,
+      absentList.length,
+      slot,
+      this.currentWeek
+    ).subscribe({
+      next: (res) => {
+        if (res.success) {
+          slot.isMatched = true;
+          slot.sdbSoLuongNghi = absentList.length;
+          slot.sdbDsVang = absentList.map((a: any) => a.fullName + (a.coPhep ? ' (P)' : ' (K)'));
+          this.scanMatchedCount = this.scanAbsentSlots.filter((s: any) => s.isMatched).length;
+          this.scanMismatchCount = this.scanAbsentSlots.filter((s: any) => !s.isMatched).length;
+          this.showToast(`Đã đồng bộ khớp ${absentList.length} em vắng vào SĐB lớp ${slot.lop} (Tiết ${slot.tiet})!`, 'success');
+          this.cdr.detectChanges();
+        } else {
+          this.showToast('Không thể lưu điểm danh: ' + res.msg, 'danger');
+        }
+      },
+      error: (err) => {
+        this.showToast('Lỗi đồng bộ: ' + (err.error?.msg || err.message), 'danger');
+      }
+    });
+  }
+
+  // Đồng bộ tất cả các tiết bị lệch với Giám thị
+  syncAllMismatchedSlots(): void {
+    const mismatched = this.scanAbsentSlots.filter((s: any) => !s.isMatched);
+    if (mismatched.length === 0) {
+      this.showToast('Tất cả các tiết đã khớp hoàn toàn 100%!', 'info');
+      return;
+    }
+
+    this.isSyncingAllMismatches = true;
+    let completed = 0;
+    mismatched.forEach(slot => {
+      const absentList = (slot.giamThiDsVang || slot.hsVangList || []).map((h: any) => ({
+        id: h.id,
+        maHs: h.maHs,
+        fullName: h.fullName,
+        coPhep: !!h.coPhep,
+        khongPhep: !!h.khongPhep
+      }));
+
+      this.vneduService.saveAttendance(
+        slot.chitietId || slot.liveId || '',
+        absentList,
+        absentList.length,
+        slot,
+        this.currentWeek
+      ).subscribe({
+        next: () => {
+          slot.isMatched = true;
+          slot.sdbSoLuongNghi = absentList.length;
+          slot.sdbDsVang = absentList.map((a: any) => a.fullName + (a.coPhep ? ' (P)' : ' (K)'));
+          completed++;
+          if (completed === mismatched.length) {
+            this.isSyncingAllMismatches = false;
+            this.scanMatchedCount = this.scanAbsentSlots.filter((s: any) => s.isMatched).length;
+            this.scanMismatchCount = 0;
+            this.showToast(`Đã đồng bộ khớp thành công toàn bộ ${mismatched.length} tiết vào Sổ Đầu Bài!`, 'success');
+            this.cdr.detectChanges();
+          }
+        },
+        error: () => {
+          completed++;
+          if (completed === mismatched.length) {
+            this.isSyncingAllMismatches = false;
+            this.cdr.detectChanges();
+          }
+        }
+      });
     });
   }
 
