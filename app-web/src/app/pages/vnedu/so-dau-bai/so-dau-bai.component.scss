@@ -13,15 +13,13 @@
   transition: all 0.2s ease;
 }
 
-// Thanh công cụ trên cùng phong cách Ocean Breeze Glassmorphism
+// Thanh công cụ trên cùng phong cách Minimalist Crisp White
 .top-nav-bar {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: #ffffff;
   padding: 0.85rem 1.25rem;
-  border-radius: 16px;
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  box-shadow: 0 8px 24px rgba(2, 132, 199, 0.08);
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   transition: all 0.2s ease;
 }
 
@@ -200,14 +198,12 @@
   }
 }
 
-// Thẻ card cho từng ngày (Thứ hai, Thứ ba...) phong cách Ocean Breeze Glassmorphism
+// Thẻ card cho từng ngày (Thứ hai, Thứ ba...) phong cách Minimalist Crisp White
 .day-card {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-radius: 16px;
-  border: 1px solid rgba(56, 189, 248, 0.28);
-  box-shadow: 0 10px 30px rgba(2, 132, 199, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
   margin-bottom: 1.5rem;
   overflow: visible;
   transition: all 0.2s ease;
@@ -218,35 +214,35 @@
 
   .day-card-header {
     padding: 1rem 1.5rem;
-    background: linear-gradient(90deg, rgba(224, 242, 254, 0.9) 0%, rgba(240, 249, 255, 0.7) 100%);
-    border-bottom: 1px solid rgba(56, 189, 248, 0.25);
-    border-top-left-radius: 16px;
-    border-top-right-radius: 16px;
+    background: #ffffff;
+    border-bottom: 1px solid #f1f5f9;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: space-between;
 
     .day-title {
-      font-size: 1.15rem;
-      font-weight: 800;
-      color: #0369a1;
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #0f172a;
     }
 
     .date-badge {
-      background: #0284c7;
-      color: #ffffff;
-      padding: 0.25rem 0.65rem;
+      background: #f1f5f9;
+      color: #334155;
+      padding: 0.2rem 0.65rem;
       border-radius: 6px;
       font-size: 0.75rem;
-      font-weight: 700;
+      font-weight: 600;
       margin-left: 0.65rem;
-      box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+      border: 1px solid #e2e8f0;
     }
 
     .slot-count {
-      color: #0284c7;
+      color: #64748b;
       font-size: 0.8125rem;
-      font-weight: 700;
+      font-weight: 600;
     }
   }
 }
@@ -257,27 +253,27 @@
   border-collapse: collapse;
 
   thead th {
-    background: rgba(240, 249, 255, 0.95);
-    color: #0284c7;
-    font-size: 0.75rem;
-    font-weight: 800;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.725rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
-    padding: 12px 16px;
-    border-bottom: 2px solid rgba(56, 189, 248, 0.35);
+    letter-spacing: 0.05em;
+    padding: 11px 16px;
+    border-bottom: 1px solid #e2e8f0;
   }
 
   tbody td {
-    padding: 14px 16px;
+    padding: 12px 16px;
     vertical-align: middle;
-    border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+    border-bottom: 1px solid #f1f5f9;
   }
 
   tbody tr {
-    transition: background-color 0.1s ease;
+    transition: background-color 0.12s ease;
 
     &:hover {
-      background-color: rgba(56, 189, 248, 0.07);
+      background-color: #f8fafc;
     }
   }
 
@@ -345,14 +341,11 @@
               visibility 0.2s;
   transition-delay: 0.1s;
 
-  background: rgba(255, 255, 255, 0.97);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(56, 189, 248, 0.4);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 12px 14px;
-  box-shadow: 0 16px 36px rgba(2, 132, 199, 0.15),
-              0 0 20px rgba(56, 189, 248, 0.15);
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.06);
   pointer-events: none;
 
   .tooltip-header {
@@ -362,7 +355,7 @@
     gap: 8px;
     padding-bottom: 6px;
     margin-bottom: 8px;
-    border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+    border-bottom: 1px solid #f1f5f9;
 
     .tooltip-badge {
       display: inline-flex;
@@ -370,7 +363,7 @@
       gap: 5px;
       font-size: 0.725rem;
       font-weight: 700;
-      color: #0284c7;
+      color: #2563eb;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -380,7 +373,7 @@
       color: #64748b;
 
       strong {
-        color: #0369a1;
+        color: #0f172a;
       }
     }
   }
@@ -400,9 +393,9 @@
     gap: 4px;
     margin-top: 8px;
     padding-top: 6px;
-    border-top: 1px dashed rgba(56, 189, 248, 0.25);
+    border-top: 1px dashed #e2e8f0;
     font-size: 0.6875rem;
-    color: #0284c7;
+    color: #64748b;
     font-style: italic;
   }
 
@@ -415,7 +408,7 @@
     height: 0;
     border-left: 7px solid transparent;
     border-right: 7px solid transparent;
-    border-top: 7px solid rgba(255, 255, 255, 0.97);
+    border-top: 7px solid #ffffff;
 
     &::before {
       content: '';
@@ -426,7 +419,7 @@
       height: 0;
       border-left: 8px solid transparent;
       border-right: 8px solid transparent;
-      border-top: 8px solid rgba(56, 189, 248, 0.4);
+      border-top: 8px solid #cbd5e1;
       z-index: -1;
     }
   }
@@ -453,17 +446,18 @@
   }
 }
 
-// Badge Tên Lớp màu xanh đậm dạng Pill bo tròn (9A2AL, 7A3AL...)
+// Badge Tên Lớp màu Slate thanh lịch dạng Capsule (9A2AL, 7A3AL...)
 .badge-class-bold {
-  background-color: #2563eb;
-  color: #ffffff;
-  font-weight: 800;
+  background-color: #f1f5f9;
+  color: #0f172a;
+  font-weight: 700;
   font-size: 0.8125rem;
-  padding: 0.35rem 0.95rem;
-  border-radius: 9999px;
+  padding: 0.3rem 0.85rem;
+  border-radius: 8px;
   display: inline-block;
-  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25);
-  letter-spacing: 0.5px;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  letter-spacing: 0.3px;
 }
 
 // Chip điểm danh đối chiếu dạng Pill
