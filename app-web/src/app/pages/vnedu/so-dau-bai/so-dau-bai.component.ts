@@ -61,8 +61,23 @@ export class SoDauBaiComponent implements OnInit {
   scanTotalAbsents = 0;
   scanMatchedCount = 0;
   scanMismatchCount = 0;
+  scanFilterTab: 'mismatched' | 'matched' | 'all' = 'mismatched';
   isSyncingAllMismatches = false;
   private scanAnimationTimer: any = null;
+
+  get displayScanSlots(): any[] {
+    if (this.scanFilterTab === 'mismatched') {
+      return this.scanAbsentSlots.filter((s: any) => !s.isMatched);
+    }
+    if (this.scanFilterTab === 'matched') {
+      return this.scanAbsentSlots.filter((s: any) => s.isMatched);
+    }
+    return this.scanAbsentSlots;
+  }
+
+  setScanFilterTab(tab: 'mismatched' | 'matched' | 'all'): void {
+    this.scanFilterTab = tab;
+  }
 
   // Toast / Thông báo
   toastMessage: { text: string; type: 'success' | 'danger' | 'info' } | null = null;
@@ -421,6 +436,9 @@ export class SoDauBaiComponent implements OnInit {
 
           this.scanMatchedCount = this.scanAbsentSlots.filter((s: any) => s.isMatched).length;
           this.scanMismatchCount = this.scanAbsentSlots.filter((s: any) => !s.isMatched).length;
+          if (this.scanMismatchCount === 0) {
+            this.scanFilterTab = 'matched';
+          }
           this.scanTotalAbsents = this.scanAbsentSlots.reduce((sum: number, s: any) =>
             sum + (s.giamThiSoLuongNghi || s.soLuongNghi || s.hsVangList?.length || 0), 0
           );
@@ -498,6 +516,7 @@ export class SoDauBaiComponent implements OnInit {
         });
         setTimeout(() => {
           this.scanModalStatus = 'completed';
+          this.scanFilterTab = this.scanMismatchCount > 0 ? 'mismatched' : 'matched';
           this.cdr.detectChanges();
         }, 500);
       }
@@ -548,6 +567,9 @@ export class SoDauBaiComponent implements OnInit {
           slot.sdbDsVang = absentList.map((a: any) => a.fullName + (a.coPhep ? ' (P)' : ' (K)'));
           this.scanMatchedCount = this.scanAbsentSlots.filter((s: any) => s.isMatched).length;
           this.scanMismatchCount = this.scanAbsentSlots.filter((s: any) => !s.isMatched).length;
+          if (this.scanMismatchCount === 0) {
+            this.scanFilterTab = 'matched';
+          }
           this.showToast(`Đã đồng bộ khớp ${absentList.length} em vắng vào SĐB lớp ${slot.lop} (Tiết ${slot.tiet})!`, 'success');
           this.cdr.detectChanges();
         } else {
@@ -595,6 +617,7 @@ export class SoDauBaiComponent implements OnInit {
             this.isSyncingAllMismatches = false;
             this.scanMatchedCount = this.scanAbsentSlots.filter((s: any) => s.isMatched).length;
             this.scanMismatchCount = 0;
+            this.scanFilterTab = 'matched';
             this.showToast(`Đã đồng bộ khớp thành công toàn bộ ${mismatched.length} tiết vào Sổ Đầu Bài!`, 'success');
             this.cdr.detectChanges();
           }

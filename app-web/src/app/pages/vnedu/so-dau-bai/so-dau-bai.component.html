@@ -580,16 +580,75 @@
           </div>
         </div>
 
-        <!-- BẢNG ĐỐI CHIẾU SONG SONG TỪNG TIẾT -->
-        <div *ngIf="scanAbsentSlots.length > 0" class="absent-slots-list">
-          <div class="d-flex align-items-center justify-content-between mb-2">
-            <span class="fs-7 fw-bold text-gray-700">
-              📋 Bảng Đối Chiếu Chi Tiết: Sổ Đầu Bài Hiện Tại ⇄ Sổ Giám Thị vnEdu:
-            </span>
+        <!-- THANH TAB CHỌN XEM KẾT QUẢ: MẶC ĐỊNH CHƯA KHỚP - XEM KHỚP QUA TAB RIÊNG -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 border-bottom border-gray-200 pb-2">
+          <!-- Cụm Tabs chuyển đổi phong cách Zalo -->
+          <div class="d-flex align-items-center gap-1 scan-tabs-group">
+            <button type="button"
+                    class="scan-tab-btn"
+                    [class.active]="scanFilterTab === 'mismatched'"
+                    (click)="setScanFilterTab('mismatched')">
+              <span class="tab-icon">⚠️</span>
+              <span class="tab-label">Chưa Khớp / Cần Đối Chiếu</span>
+              <span class="badge rounded-pill ms-1"
+                    [ngClass]="scanMismatchCount > 0 ? 'bg-danger text-white' : 'bg-secondary bg-opacity-25 text-gray-700'">
+                {{ scanMismatchCount }}
+              </span>
+            </button>
+
+            <button type="button"
+                    class="scan-tab-btn"
+                    [class.active]="scanFilterTab === 'matched'"
+                    (click)="setScanFilterTab('matched')">
+              <span class="tab-icon">✅</span>
+              <span class="tab-label">Đã Khớp Hoàn Toàn</span>
+              <span class="badge rounded-pill ms-1 bg-success text-white">
+                {{ scanMatchedCount }}
+              </span>
+            </button>
+
+            <button type="button"
+                    class="scan-tab-btn"
+                    [class.active]="scanFilterTab === 'all'"
+                    (click)="setScanFilterTab('all')">
+              <span class="tab-icon">📋</span>
+              <span class="tab-label">Tất Cả</span>
+              <span class="badge rounded-pill ms-1 bg-primary text-white">
+                {{ scanAbsentSlots.length }}
+              </span>
+            </button>
           </div>
 
+          <span class="fs-8 text-gray-500">
+            Hiển thị <strong>{{ displayScanSlots.length }}</strong>/{{ scanAbsentSlots.length }} tiết
+          </span>
+        </div>
+
+        <!-- EMPTY STATE KHI TAB CHƯA KHỚP = 0 (TOÀN BỘ ĐÃ KHỚP 100%) -->
+        <div *ngIf="displayScanSlots.length === 0 && scanFilterTab === 'mismatched'"
+             class="text-center py-6 px-4 bg-light-success rounded-3 border border-success border-opacity-25 my-2">
+          <div class="fs-1 mb-2">🎉</div>
+          <h5 class="fw-bolder text-success mb-1">Tuyệt vời! Không có tiết nào bị lệch số liệu</h5>
+          <p class="fs-7 text-gray-600 mb-3 max-w-500px mx-auto">
+            Toàn bộ <strong>{{ scanMatchedCount }} tiết học có vắng</strong> trong tuần đều đã trùng khớp 100% giữa Sổ Đầu Bài và Sổ Giám Thị.
+          </p>
+          <button type="button"
+                  class="btn btn-sm btn-success fw-bold px-4 rounded-pill shadow-xs"
+                  (click)="setScanFilterTab('matched')">
+            👁️ Xem {{ scanMatchedCount }} tiết đã khớp hoàn toàn
+          </button>
+        </div>
+
+        <!-- EMPTY STATE KHI TAB ĐÃ KHỚP = 0 -->
+        <div *ngIf="displayScanSlots.length === 0 && scanFilterTab === 'matched'"
+             class="text-center py-5 text-gray-500">
+          Chưa có tiết nào khớp hoàn toàn. Vui lòng bấm vào tab "Chưa Khớp" để kiểm tra và đồng bộ.
+        </div>
+
+        <!-- BẢNG ĐỐI CHIẾU SONG SONG TỪNG TIẾT THEO TAB ĐANG CHỌN -->
+        <div *ngIf="displayScanSlots.length > 0" class="absent-slots-list">
           <div class="d-flex flex-column gap-2 pe-1">
-            <div *ngFor="let slot of scanAbsentSlots"
+            <div *ngFor="let slot of displayScanSlots"
                  class="absent-slot-card p-3 rounded-3 border shadow-xs"
                  [ngClass]="slot.isMatched ? 'card-matched' : 'card-mismatched'">
               <!-- Hàng trên: Thông tin tiết và Huy hiệu Trạng thái Đối Chiếu -->
