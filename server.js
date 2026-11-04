@@ -312,53 +312,87 @@ app.get('/api/attendance', async (req, res) => {
     }
 });
 
-// API: Quét đối chiếu Sổ Điểm Danh Giám Thị cho 1 tiết học
-app.get('/api/attendance/scan-giam-thi', async (req, res) => {
+// API: Quét đối chiếu Sổ Điểm Danh Giám Thị cho 1 tiết học (Hỗ trợ cả GET và POST)
+const handleScanGiamThi = async (req, res) => {
     try {
-        const { lop, date, ngay, tiet, forceRefresh } = req.query;
-        const dateStr = date || ngay || '';
+        const lop = req.query.lop || req.body?.lop || req.body?.className;
+        const dateStr = req.query.date || req.query.ngay || req.body?.date || req.body?.ngay || '';
+        const tiet = req.query.tiet || req.body?.tiet || req.body?.slot || 1;
+        const forceRefresh = req.query.forceRefresh || req.body?.forceRefresh;
         const isForce = forceRefresh === 'true' || forceRefresh === true || forceRefresh === '1';
 
-        const result = await core.scanAbsentFromGiamThi(lop, dateStr, tiet || 1, isForce);
+        const result = await core.scanAbsentFromGiamThi(lop, dateStr, tiet, isForce);
         res.json(result);
     } catch (e) {
         res.status(500).json({ success: false, error: e.message });
     }
-});
+};
+app.get('/api/attendance/scan-giam-thi', handleScanGiamThi);
+app.post('/api/attendance/scan-giam-thi', handleScanGiamThi);
 
 // API: Quét lại toàn bộ Sổ Điểm Danh Giám Thị cho toàn bộ tuần
 app.post('/api/attendance/scan-all-giam-thi', async (req, res) => {
     try {
         const week = parseInt(req.body.week) || 9;
-        const data = await core.parseWeekSchedule(week);
-        if (!data || !data.schedule || data.schedule.length === 0) {
-            return res.json({ success: false, msg: 'Không tìm thấy lịch tuần ' + week });
+        let scheduleSlots = req.body.slots || [];
+
+        // Nếu client không gửi kèm slots, tìm lịch từ vnEdu hoặc Excel hoặc live status an toàn
+        if (!scheduleSlots || scheduleSlots.length === 0) {
+            let data = null;
+            try {
+                data = await core.getWeekScheduleFromVnEdu(week);
+            } catch (vneduErr) {
+                try {
+                    data = core.parseWeekSchedule(week);
+                } catch (excelErr) {
+                    try {
+                        const liveList = await core.checkLiveStatus(week);
+                        data = { schedule: liveList };
+                    } catch (e) {
+                        data = { schedule: [] };
+                    }
+                }
+            }
+            if (data && data.schedule) {
+                scheduleSlots = data.schedule;
+            }
         }
 
-        const uniqueClasses = [...new Set(data.schedule.map(s => s.lop).filter(Boolean))];
+        if (!scheduleSlots || scheduleSlots.length === 0) {
+            return res.json({ success: false, msg: 'Không tìm thấy danh sách tiết học tuần ' + week });
+        }
+
+        const uniqueClasses = [...new Set(scheduleSlots.map(s => s.lop).filter(Boolean))];
         const sddMap = {};
 
         // Quét lấy mới nhất (forceRefresh: true) từ SĐĐ vnEdu
         await Promise.allSettled(uniqueClasses.map(async (lop) => {
             try {
-                const item = data.schedule.find(s => s.lop === lop);
+                const item = scheduleSlots.find(s => s.lop === lop);
                 const [d, m, y] = (item?.ngay || '').split('/');
+                let thangNam = null;
                 if (m && y) {
-                    const thangNam = `${m}-${y}`;
-                    const sddRes = await core.getSoDiemDanhNamHoc(lop, thangNam, '2026', true);
-                    if (sddRes && sddRes.absentByDay) {
-                        sddMap[lop] = sddRes.absentByDay;
-                    }
+                    thangNam = `${m}-${y}`;
+                } else {
+                    const now = new Date();
+                    thangNam = `${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
+                }
+                const sddRes = await core.getSoDiemDanhNamHoc(lop, thangNam, '2026', true);
+                if (sddRes && sddRes.absentByDay) {
+                    sddMap[lop] = sddRes.absentByDay;
                 }
             } catch (e) { }
         }));
 
         let totalUpdatedAbsents = 0;
-        const updatedSlots = data.schedule.map(item => {
-            const [dStr] = (item.ngay || '').split('/');
-            const dayNum = parseInt(dStr);
-            const sessionKey = item.buoi === 1 ? 'morning' : 'afternoon';
-            const sddDayData = sddMap[item.lop]?.[dayNum]?.[sessionKey] || [];
+        const updatedSlots = scheduleSlots.map(item => {
+            let dayNum = null;
+            if (item.ngay && item.ngay.includes('/')) {
+                const [dStr] = item.ngay.split('/');
+                dayNum = parseInt(dStr);
+            }
+            const sessionKey = (item.buoi === 1 || (item.tiet && item.tiet <= 5)) ? 'morning' : 'afternoon';
+            const sddDayData = (dayNum && sddMap[item.lop]?.[dayNum]?.[sessionKey]) || [];
 
             if (sddDayData.length > 0) {
                 totalUpdatedAbsents += sddDayData.length;
@@ -373,11 +407,12 @@ app.post('/api/attendance/scan-all-giam-thi', async (req, res) => {
 
         res.json({
             success: true,
-            msg: `Đã quét và đồng bộ SĐĐ Giám thị cho tuần ${week}: phát hiện ${totalUpdatedAbsents} lượt vắng`,
+            msg: `Đã quét và đối chiếu SĐĐ Giám thị cho tuần ${week}: phát hiện ${totalUpdatedAbsents} lượt vắng`,
             totalUpdatedAbsents,
             schedule: updatedSlots
         });
     } catch (e) {
+        console.error('Lỗi scan-all-giam-thi:', e);
         res.status(500).json({ success: false, error: e.message });
     }
 });

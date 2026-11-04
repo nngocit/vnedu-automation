@@ -83,10 +83,10 @@ export class VnEduService {
     );
   }
 
-  scanAllGiamThi(week: number): Observable<any> {
+  scanAllGiamThi(week: number, slots?: any[]): Observable<any> {
     return this.http.post<any>(
       `${this.baseUrl}/attendance/scan-all-giam-thi`,
-      { week },
+      { week, slots },
       { headers: this.getHeaders() }
     );
   }

@@ -15,103 +15,156 @@
 /* FIX TOÀN DIỆN DARK MODE VNEDU THEME                       */
 /* ========================================================= */
 [data-bs-theme="dark"] {
+  // Giao diện tổng thể Sapphire Dark Mode đồng bộ như Auth Hero
+  body,
+  #kt_app_root,
+  #kt_app_page,
+  .app-page,
+  .app-wrapper,
+  .app-main {
+    background: radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.15) 0%, transparent 45%),
+                radial-gradient(circle at 10% 85%, rgba(30, 58, 138, 0.3) 0%, transparent 55%),
+                linear-gradient(135deg, #07152e 0%, #0d264f 45%, #082042 100%) !important;
+  }
+
+  #kt_app_header {
+    background: rgba(9, 26, 56, 0.85) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-bottom: 1px solid rgba(56, 189, 248, 0.2) !important;
+  }
+
+  #kt_app_sidebar {
+    background: linear-gradient(180deg, #061329 0%, #091e3d 100%) !important;
+    border-right: 1px solid rgba(56, 189, 248, 0.15) !important;
+  }
+
   .vnedu-app-container {
-    background-color: transparent !important;
+    background: transparent !important;
   }
 
   .top-nav-bar {
-    background-color: #1e1e2d !important;
-    border-color: #2b2b40 !important;
+    background: rgba(13, 33, 67, 0.78) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(56, 189, 248, 0.22) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37) !important;
+    border-radius: 16px !important;
   }
 
   .day-card {
-    background-color: #1e1e2d !important;
-    border-color: #2b2b40 !important;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+    background: rgba(13, 33, 67, 0.72) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(56, 189, 248, 0.22) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    border-radius: 16px !important;
 
     .day-card-header {
-      background-color: #1b1b28 !important;
-      border-color: #2b2b40 !important;
+      background: rgba(9, 24, 52, 0.85) !important;
+      border-bottom: 1px solid rgba(56, 189, 248, 0.18) !important;
 
       .day-title {
         color: #ffffff !important;
+        font-weight: 800 !important;
       }
     }
 
     .day-table {
       thead th {
-        background-color: #1b1b28 !important;
-        color: #7e8299 !important;
-        border-color: #2b2b40 !important;
+        background: rgba(8, 22, 48, 0.95) !important;
+        color: #7dd3fc !important;
+        border-bottom: 2px solid rgba(56, 189, 248, 0.25) !important;
+        font-weight: 700 !important;
       }
 
       tbody td {
-        border-color: #252538 !important;
-        color: #cdcdde !important;
+        border-bottom: 1px solid rgba(56, 189, 248, 0.12) !important;
+        color: #e0f2fe !important;
       }
 
       tbody tr:hover {
-        background-color: #25253a !important;
+        background-color: rgba(56, 189, 248, 0.08) !important;
       }
 
       .form-control.form-control-solid,
       .form-select.form-select-solid {
-        background-color: #151521 !important;
+        background-color: rgba(7, 21, 46, 0.85) !important;
         color: #ffffff !important;
-        border-color: #3b3b54 !important;
+        border: 1px solid rgba(56, 189, 248, 0.28) !important;
+        border-radius: 10px !important;
+
+        &:focus {
+          background-color: rgba(10, 30, 65, 0.95) !important;
+          border-color: #38bdf8 !important;
+          box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.3) !important;
+        }
       }
     }
   }
 
   .modal-dialog-custom {
-    background-color: #1e1e2d !important;
-    border-color: #2b2b40 !important;
-    color: #e1e3ea !important;
+    background: linear-gradient(145deg, #091a38 0%, #0f2c59 60%, #071732 100%) !important;
+    border: 1px solid rgba(56, 189, 248, 0.35) !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 35px rgba(56, 189, 248, 0.2) !important;
+    color: #e0f2fe !important;
+    border-radius: 18px !important;
 
     .modal-header-custom,
     .modal-footer-custom {
-      background-color: #1b1b28 !important;
-      border-color: #2b2b40 !important;
+      background: rgba(8, 22, 48, 0.9) !important;
+      border-color: rgba(56, 189, 248, 0.25) !important;
     }
 
     .modal-stats-bar {
-      background-color: #181824 !important;
-      border-color: #2b2b40 !important;
+      background: rgba(12, 31, 62, 0.75) !important;
+      border-color: rgba(56, 189, 248, 0.2) !important;
     }
 
     .modal-body-custom {
-      background-color: #1e1e2d !important;
-      color: #e1e3ea !important;
+      background: transparent !important;
+      color: #e0f2fe !important;
     }
 
     .attendance-scroll-wrap {
-      background-color: #181824 !important;
-      border-color: #2b2b40 !important;
+      background: rgba(7, 19, 42, 0.7) !important;
+      border-color: rgba(56, 189, 248, 0.2) !important;
 
       table {
         thead th {
-          background-color: #151521 !important;
-          color: #7e8299 !important;
-          border-color: #2b2b40 !important;
+          background-color: rgba(7, 19, 42, 0.95) !important;
+          color: #7dd3fc !important;
+          border-bottom: 2px solid rgba(56, 189, 248, 0.25) !important;
         }
 
         tbody tr.student-row {
-          background-color: #1e1e2d !important;
-          border-color: #252538 !important;
+          background-color: rgba(12, 31, 62, 0.45) !important;
+          border-color: rgba(56, 189, 248, 0.1) !important;
 
           td {
-            border-color: #252538 !important;
+            border-color: rgba(56, 189, 248, 0.1) !important;
           }
 
           .student-name {
             color: #ffffff !important;
           }
 
-          &.row-absent {
-            background-color: rgba(241, 65, 108, 0.22) !important;
+          &.row-absent-phep {
+            background-color: rgba(245, 158, 11, 0.18) !important;
+            border-color: rgba(245, 158, 11, 0.4) !important;
 
             .student-name {
-              color: #ff6b8b !important;
+              color: #fde047 !important;
+            }
+          }
+
+          &.row-absent,
+          &.row-absent-khongphep {
+            background-color: rgba(239, 68, 68, 0.2) !important;
+            border-color: rgba(239, 68, 68, 0.45) !important;
+
+            .student-name {
+              color: #fca5a5 !important;
             }
           }
         }

@@ -938,54 +938,63 @@
 :host-context(.theme-dark) {
 
   .vnedu-app-container {
-    background-color: transparent !important;
-    color: #e1e3ea !important;
+    background: radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 10% 85%, rgba(30, 58, 138, 0.22) 0%, transparent 50%),
+                linear-gradient(135deg, #071224 0%, #0d2040 50%, #081a33 100%) !important;
+    color: #e0f2fe !important;
+    min-height: 100vh;
+    padding-bottom: 2rem;
   }
 
-  // Top Nav Bar
+  // Top Nav Bar Glassmorphism
   .top-nav-bar {
-    background: #1e1e2d !important;
-    border-color: #2b2b40 !important;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+    background: rgba(13, 32, 64, 0.75) !important;
+    backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(56, 189, 248, 0.2) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+    border-radius: 16px !important;
   }
 
   .pill-btn {
     &.pill-outline {
-      background-color: #1e1e2d !important;
-      color: #cdcdde !important;
-      border-color: #3b3b54 !important;
+      background-color: rgba(255, 255, 255, 0.08) !important;
+      color: #e0f2fe !important;
+      border: 1px solid rgba(56, 189, 248, 0.25) !important;
+      backdrop-filter: blur(8px) !important;
       box-shadow: none !important;
 
       &:hover {
-        background-color: #2b2b40 !important;
+        background-color: rgba(56, 189, 248, 0.18) !important;
         color: #ffffff !important;
-        border-color: #4e4e6d !important;
+        border-color: rgba(56, 189, 248, 0.45) !important;
       }
     }
 
     &.pill-channel {
-      background-color: rgba(5, 150, 105, 0.18) !important;
+      background-color: rgba(5, 150, 105, 0.22) !important;
       color: #34d399 !important;
-      border-color: rgba(5, 150, 105, 0.4) !important;
+      border: 1px solid rgba(5, 150, 105, 0.45) !important;
+      backdrop-filter: blur(8px) !important;
     }
   }
 
   // Bộ chuyển tuần
   .week-pill-control {
-    background: #1e1e2d !important;
-    border-color: #3b3b54 !important;
+    background: rgba(9, 24, 48, 0.75) !important;
+    border: 1px solid rgba(56, 189, 248, 0.25) !important;
+    backdrop-filter: blur(10px) !important;
     box-shadow: none !important;
 
     .nav-btn {
-      color: #a1a5b7 !important;
+      color: #93c5fd !important;
 
       &:hover:not(:disabled) {
-        background: #2b2b40 !important;
+        background: rgba(56, 189, 248, 0.18) !important;
         color: #ffffff !important;
       }
 
       &:disabled {
-        color: #4b4b66 !important;
+        color: rgba(147, 197, 253, 0.3) !important;
       }
     }
 
@@ -993,110 +1002,127 @@
       color: #ffffff !important;
 
       option {
-        background: #1e1e2d !important;
+        background: #0d2040 !important;
         color: #ffffff !important;
       }
     }
   }
 
-  // Banner nhắc nhở
+  // Banner nhắc nhở dạng Sapphire Glassmorphism
   .notice-banner {
-    background-color: rgba(245, 158, 11, 0.12) !important;
-    border-color: rgba(245, 158, 11, 0.35) !important;
-    color: #fcd34d !important;
-    box-shadow: none !important;
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.35) 0%, rgba(2, 132, 199, 0.2) 100%) !important;
+    border: 1px solid rgba(56, 189, 248, 0.3) !important;
+    backdrop-filter: blur(12px) !important;
+    color: #fef08a !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25) !important;
+    border-radius: 14px !important;
   }
 
   // Lọc lớp
   .class-filter-pill {
-    background: #1e1e2d !important;
-    color: #a1a5b7 !important;
-    border-color: #3b3b54 !important;
+    background: rgba(13, 32, 64, 0.7) !important;
+    color: #93c5fd !important;
+    border: 1px solid rgba(56, 189, 248, 0.2) !important;
+    backdrop-filter: blur(8px) !important;
 
     &:hover {
-      background: #2b2b40 !important;
+      background: rgba(56, 189, 248, 0.18) !important;
       color: #ffffff !important;
-      border-color: #4e4e6d !important;
+      border-color: rgba(56, 189, 248, 0.45) !important;
     }
 
     &.active {
-      background-color: #3699ff !important;
+      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
       color: #ffffff !important;
-      border-color: #3699ff !important;
-      box-shadow: 0 2px 8px rgba(54, 153, 255, 0.35) !important;
+      border-color: #38bdf8 !important;
+      box-shadow: 0 2px 10px rgba(37, 99, 235, 0.45) !important;
     }
   }
 
   // Search Input Top
   .top-search-input {
-    background-color: #151521 !important;
-    border-color: #3b3b54 !important;
+    background-color: rgba(9, 24, 48, 0.75) !important;
+    border: 1px solid rgba(56, 189, 248, 0.25) !important;
     color: #ffffff !important;
+    backdrop-filter: blur(8px) !important;
 
     &::placeholder {
-      color: #64647a !important;
+      color: rgba(147, 197, 253, 0.5) !important;
     }
 
     &:focus {
-      background-color: #151521 !important;
-      border-color: #3699ff !important;
-      box-shadow: 0 0 0 3px rgba(54, 153, 255, 0.25) !important;
+      background-color: rgba(13, 32, 64, 0.95) !important;
+      border-color: #38bdf8 !important;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25) !important;
     }
   }
 
-  // THẺ NGÀY (DAY CARD)
+  // THẺ NGÀY (DAY CARD) - HIỆU ỨNG GLASSMORPHISM SAPPHIRE CAO CẤP
   .day-card {
-    background: #1e1e2d !important;
-    border-color: #2b2b40 !important;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+    background: rgba(13, 32, 64, 0.65) !important;
+    backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(56, 189, 248, 0.2) !important;
+    box-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+    border-radius: 16px !important;
 
     .day-card-header {
-      background: #1b1b28 !important;
-      border-color: #2b2b40 !important;
+      background: rgba(9, 24, 48, 0.8) !important;
+      border-bottom: 1px solid rgba(56, 189, 248, 0.18) !important;
 
       .day-title {
         color: #ffffff !important;
+        font-weight: 800 !important;
       }
 
       .date-badge {
-        background: #2b2b40 !important;
-        color: #a1a5b7 !important;
+        background: rgba(56, 189, 248, 0.15) !important;
+        color: #38bdf8 !important;
+        border: 1px solid rgba(56, 189, 248, 0.3) !important;
       }
 
       .slot-count {
-        color: #a1a5b7 !important;
+        color: #93c5fd !important;
       }
     }
   }
 
-  // Bảng tiết học
+  // Bảng tiết học phong cách Sapphire Glassmorphism
   .day-table {
     thead th {
-      background: #1b1b28 !important;
-      color: #7e8299 !important;
-      border-bottom: 2px solid #2b2b40 !important;
+      background: rgba(8, 22, 48, 0.95) !important;
+      color: #7dd3fc !important;
+      border-bottom: 2px solid rgba(56, 189, 248, 0.25) !important;
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+      font-size: 0.75rem !important;
+      letter-spacing: 0.03em !important;
     }
 
     tbody td {
-      border-bottom: 1px solid #252538 !important;
-      color: #cdcdde !important;
+      border-bottom: 1px solid rgba(56, 189, 248, 0.12) !important;
+      color: #e0f2fe !important;
+      background: transparent !important;
     }
 
     tbody tr:hover {
-      background-color: #25253a !important;
+      background-color: rgba(56, 189, 248, 0.08) !important;
     }
 
-    // Input & Select trong bảng
+    // Input & Select trong bảng phong cách kính Sapphire
     .form-control.form-control-solid,
     .form-select.form-select-solid {
-      background-color: #151521 !important;
+      background-color: rgba(7, 21, 46, 0.85) !important;
       color: #ffffff !important;
-      border: 1px solid #3b3b54 !important;
+      border: 1px solid rgba(56, 189, 248, 0.28) !important;
+      border-radius: 10px !important;
+      backdrop-filter: blur(8px) !important;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25) !important;
+      transition: all 0.2s ease !important;
 
       &:focus {
-        background-color: #151521 !important;
-        border-color: #3699ff !important;
-        box-shadow: 0 0 0 2px rgba(54, 153, 255, 0.2) !important;
+        background-color: rgba(10, 30, 65, 0.95) !important;
+        border-color: #38bdf8 !important;
+        box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.3) !important;
       }
     }
 
@@ -1105,25 +1131,26 @@
     }
 
     .text-gray-600 {
-      color: #a1a5b7 !important;
+      color: #93c5fd !important;
     }
   }
 
   // Dark Mode cho Custom Tooltip
   .custom-lesson-tooltip {
-    background: #151521 !important;
-    border-color: #3b3b54 !important;
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7), 0 0 1px 1px rgba(255, 255, 255, 0.1) !important;
+    background: rgba(8, 24, 52, 0.97) !important;
+    border-color: rgba(56, 189, 248, 0.4) !important;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65), 0 0 20px rgba(56, 189, 248, 0.25) !important;
+    backdrop-filter: blur(14px) !important;
 
     .tooltip-header {
-      border-bottom-color: #252538 !important;
+      border-bottom-color: rgba(56, 189, 248, 0.2) !important;
 
       .tooltip-badge {
-        color: #60a5fa !important;
+        color: #38bdf8 !important;
       }
 
       .tooltip-meta {
-        color: #a1a5b7 !important;
+        color: #93c5fd !important;
 
         strong {
           color: #ffffff !important;
@@ -1136,29 +1163,29 @@
     }
 
     .tooltip-footer {
-      border-top-color: #2b2b40 !important;
-      color: #7e8299 !important;
+      border-top-color: rgba(56, 189, 248, 0.2) !important;
+      color: #7dd3fc !important;
     }
 
     .tooltip-arrow {
-      border-top-color: #151521 !important;
+      border-top-color: rgba(8, 24, 52, 0.97) !important;
 
       &::before {
-        border-top-color: #3b3b54 !important;
+        border-top-color: rgba(56, 189, 248, 0.4) !important;
       }
     }
   }
 
   // Nút hành động Lưu SĐB
   .btn-save-action.btn-synced {
-    background-color: #1e1e2d !important;
-    color: #cdcdde !important;
-    border-color: #3b3b54 !important;
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #93c5fd !important;
+    border: 1px solid rgba(56, 189, 248, 0.25) !important;
 
     &:hover {
-      background-color: #2b2b40 !important;
+      background-color: rgba(56, 189, 248, 0.2) !important;
       color: #ffffff !important;
-      border-color: #4e4e6d !important;
+      border-color: rgba(56, 189, 248, 0.5) !important;
     }
   }
 
@@ -1207,136 +1234,145 @@
     }
   }
 
-  // Loading state Dark mode
+  // Loading state Dark mode phong cách Sapphire
   .loading-state-card {
-    background: #1e1e2d !important;
-    border: 1px solid #2b2b40 !important;
-    color: #cdcdde !important;
+    background: rgba(13, 33, 67, 0.72) !important;
+    border: 1px solid rgba(56, 189, 248, 0.22) !important;
+    backdrop-filter: blur(16px) !important;
+    color: #e0f2fe !important;
+    border-radius: 16px !important;
 
     .loading-state-text {
       color: #ffffff !important;
     }
 
     .loading-state-sub {
-      color: #7e8299 !important;
+      color: #93c5fd !important;
     }
   }
 
   .btn-scroll-top {
-    background-color: #3699ff !important;
+    background-color: #0284c7 !important;
     color: #ffffff !important;
-    box-shadow: 0 4px 12px rgba(54, 153, 255, 0.35) !important;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4) !important;
 
     &:hover {
-      background-color: #1b84ff !important;
+      background-color: #0369a1 !important;
     }
   }
 
   // Empty state & Footer
   .empty-state-card {
-    background: #1e1e2d !important;
-    border-color: #2b2b40 !important;
-    color: #cdcdde !important;
+    background: rgba(13, 33, 67, 0.72) !important;
+    border: 1px solid rgba(56, 189, 248, 0.22) !important;
+    backdrop-filter: blur(16px) !important;
+    color: #e0f2fe !important;
+    border-radius: 16px !important;
 
     .text-gray-800 {
       color: #ffffff !important;
     }
 
     .text-gray-500 {
-      color: #7e8299 !important;
+      color: #93c5fd !important;
     }
   }
 
   .kbd-badge {
-    background: #1e1e2d !important;
-    color: #a1a5b7 !important;
-    border-color: #2b2b40 !important;
+    background: rgba(9, 24, 48, 0.8) !important;
+    color: #93c5fd !important;
+    border-color: rgba(56, 189, 248, 0.25) !important;
   }
 
   // ==========================================
   // MODAL ĐIỂM DANH & MODAL ĐĂNG NHẬP TRONG DARK
   // ==========================================
   .modal-dialog-custom {
-    background: #1e1e2d !important;
-    border-color: #2b2b40 !important;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
+    background: linear-gradient(145deg, #091a38 0%, #0f2c59 60%, #071732 100%) !important;
+    border: 1px solid rgba(56, 189, 248, 0.35) !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 35px rgba(56, 189, 248, 0.2) !important;
+    border-radius: 18px !important;
   }
 
   .modal-header-custom {
-    background: #1b1b28 !important;
-    border-color: #2b2b40 !important;
+    background: rgba(8, 22, 48, 0.9) !important;
+    border-bottom: 1px solid rgba(56, 189, 248, 0.25) !important;
   }
 
   .modal-title-text {
     color: #ffffff !important;
+    font-weight: 800 !important;
   }
 
   .modal-subtitle-text {
-    color: #a1a5b7 !important;
+    color: #93c5fd !important;
   }
 
   .btn-close-custom {
-    color: #a1a5b7 !important;
+    color: #93c5fd !important;
 
     &:hover {
-      background: #2b2b40 !important;
+      background: rgba(56, 189, 248, 0.2) !important;
       color: #ffffff !important;
     }
   }
 
   .modal-stats-bar {
-    background: #181824 !important;
-    border-color: #2b2b40 !important;
+    background: rgba(12, 31, 62, 0.75) !important;
+    border: 1px solid rgba(56, 189, 248, 0.2) !important;
+    border-radius: 12px !important;
   }
 
   .stat-badge-total {
-    background: #242436 !important;
-    color: #e1e3ea !important;
-    border-color: #3b3b54 !important;
+    background: rgba(8, 22, 48, 0.85) !important;
+    color: #e0f2fe !important;
+    border: 1px solid rgba(56, 189, 248, 0.25) !important;
   }
 
   .modal-body-custom {
-    background: #1e1e2d !important;
-    color: #e1e3ea !important;
+    background: transparent !important;
+    color: #e0f2fe !important;
   }
 
   .modal-search-input {
-    background-color: #151521 !important;
-    border-color: #3b3b54 !important;
+    background-color: rgba(7, 21, 46, 0.85) !important;
+    border: 1px solid rgba(56, 189, 248, 0.3) !important;
     color: #ffffff !important;
 
     &::placeholder {
-      color: #64647a !important;
+      color: rgba(147, 197, 253, 0.5) !important;
     }
 
     &:focus {
-      background-color: #151521 !important;
-      border-color: #3699ff !important;
+      background-color: rgba(10, 30, 65, 0.95) !important;
+      border-color: #38bdf8 !important;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.3) !important;
     }
   }
 
   .attendance-scroll-wrap {
-    background: #181824 !important;
-    border-color: #2b2b40 !important;
+    background: rgba(7, 19, 42, 0.7) !important;
+    border: 1px solid rgba(56, 189, 248, 0.2) !important;
+    border-radius: 12px !important;
   }
 
   .modal-attendance-table {
     .modal-table-head th {
-      background-color: #151521 !important;
-      color: #7e8299 !important;
-      border-bottom: 2px solid #2b2b40 !important;
+      background-color: rgba(7, 19, 42, 0.95) !important;
+      color: #7dd3fc !important;
+      border-bottom: 2px solid rgba(56, 189, 248, 0.25) !important;
     }
 
     .student-row {
-      background-color: #1e1e2d !important;
-      border-color: #252538 !important;
+      background-color: rgba(12, 31, 62, 0.45) !important;
+      border-bottom: 1px solid rgba(56, 189, 248, 0.1) !important;
 
       &:hover {
-        background-color: #25253a !important;
+        background-color: rgba(56, 189, 248, 0.12) !important;
       }
 
       .col-stt {
-        color: #7e8299 !important;
+        color: #93c5fd !important;
       }
 
       .student-name {
@@ -1344,39 +1380,41 @@
       }
 
       .col-mahs {
-        color: #7e8299 !important;
+        color: #93c5fd !important;
       }
 
       &.row-absent,
       &.row-absent-khongphep {
-        background-color: rgba(239, 68, 68, 0.16) !important;
-        border-color: rgba(239, 68, 68, 0.35) !important;
+        background-color: rgba(239, 68, 68, 0.2) !important;
+        border-color: rgba(239, 68, 68, 0.45) !important;
 
         .student-name {
-          color: #f87171 !important;
+          color: #fca5a5 !important;
         }
       }
 
       &.row-absent-phep {
-        background-color: rgba(245, 158, 11, 0.14) !important;
-        border-color: rgba(245, 158, 11, 0.32) !important;
+        background-color: rgba(245, 158, 11, 0.18) !important;
+        border-color: rgba(245, 158, 11, 0.4) !important;
 
         .student-name {
-          color: #fbbf24 !important;
+          color: #fde047 !important;
         }
       }
     }
   }
 
   .pill-giamthi {
-    background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%) !important;
+    background: linear-gradient(135deg, #0284c7 0%, #1e40af 100%) !important;
     color: #ffffff !important;
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.45) !important;
+    border: 1px solid rgba(56, 189, 248, 0.4) !important;
+    box-shadow: 0 2px 10px rgba(2, 132, 199, 0.45) !important;
   }
 
   .attendance-pill-group {
-    background: #1e1e2d !important;
-    border-color: #2b2b40 !important;
+    background: rgba(7, 20, 44, 0.85) !important;
+    border: 1px solid rgba(56, 189, 248, 0.25) !important;
+    border-radius: 9999px !important;
   }
 
   .pill-status-btn {
@@ -1384,7 +1422,7 @@
       color: #fbbf24 !important;
 
       &:hover:not(.active) {
-        background: rgba(245, 158, 11, 0.22) !important;
+        background: rgba(245, 158, 11, 0.25) !important;
       }
 
       &.active {
@@ -1398,7 +1436,7 @@
       color: #f87171 !important;
 
       &:hover:not(.active) {
-        background: rgba(239, 68, 68, 0.22) !important;
+        background: rgba(239, 68, 68, 0.25) !important;
       }
 
       &.active {
@@ -1409,10 +1447,10 @@
     }
 
     &.pill-btn-comat {
-      color: #92929f !important;
+      color: #93c5fd !important;
 
       &:hover:not(.active) {
-        background: #2b2b40 !important;
+        background: rgba(56, 189, 248, 0.2) !important;
         color: #ffffff !important;
       }
 
@@ -1448,51 +1486,51 @@
 
   .btn-status-toggle {
     &.btn-outline-status {
-      background: #2b2b40 !important;
-      color: #cdcdde !important;
-      border: 1px solid #3b3b54 !important;
+      background: rgba(255, 255, 255, 0.08) !important;
+      color: #e0f2fe !important;
+      border: 1px solid rgba(56, 189, 248, 0.25) !important;
 
       &:hover {
-        background: #363652 !important;
+        background: rgba(56, 189, 248, 0.2) !important;
         color: #ffffff !important;
       }
     }
   }
 
   .modal-footer-custom {
-    background: #1b1b28 !important;
-    border-color: #2b2b40 !important;
-    color: #cdcdde !important;
+    background: rgba(8, 22, 48, 0.95) !important;
+    border-top: 1px solid rgba(56, 189, 248, 0.25) !important;
+    color: #e0f2fe !important;
   }
 
   .btn-modal-close {
-    background: #2b2b40 !important;
+    background: rgba(255, 255, 255, 0.08) !important;
     color: #ffffff !important;
-    border: 1px solid #3b3b54 !important;
+    border: 1px solid rgba(56, 189, 248, 0.25) !important;
 
     &:hover {
-      background: #363652 !important;
+      background: rgba(56, 189, 248, 0.2) !important;
     }
   }
 
   .form-field-label {
-    color: #e1e3ea !important;
+    color: #e0f2fe !important;
   }
 
   .modal-input {
-    background-color: #151521 !important;
-    border-color: #3b3b54 !important;
+    background-color: rgba(7, 21, 46, 0.85) !important;
+    border: 1px solid rgba(56, 189, 248, 0.28) !important;
     color: #ffffff !important;
 
     &:focus {
-      background-color: #151521 !important;
-      border-color: #3699ff !important;
+      background-color: rgba(10, 30, 65, 0.95) !important;
+      border-color: #38bdf8 !important;
     }
   }
 
   .modal-tip-box {
-    background: #181824 !important;
-    border-color: #2b2b40 !important;
-    color: #a1a5b7 !important;
+    background: rgba(12, 31, 62, 0.7) !important;
+    border: 1px solid rgba(56, 189, 248, 0.2) !important;
+    color: #93c5fd !important;
   }
 }

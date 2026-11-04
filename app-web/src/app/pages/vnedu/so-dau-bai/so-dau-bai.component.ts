@@ -369,7 +369,7 @@ export class SoDauBaiComponent implements OnInit {
   // Quét đối chiếu toàn bộ SĐĐ Giám thị cho cả tuần
   scanAllSupervisorAttendance(): void {
     this.isScanningAllGiamThi = true;
-    this.vneduService.scanAllGiamThi(this.currentWeek).subscribe({
+    this.vneduService.scanAllGiamThi(this.currentWeek, this.slots).subscribe({
       next: (res) => {
         this.isScanningAllGiamThi = false;
         if (res.success && res.schedule) {
