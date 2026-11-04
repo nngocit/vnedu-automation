@@ -604,10 +604,10 @@
                 <!-- Huy hiệu đối chiếu -->
                 <div>
                   <span *ngIf="slot.isMatched" class="badge bg-success bg-opacity-20 text-success fw-bolder px-3 py-1 rounded-pill fs-8">
-                    ✅ ĐÃ KHỚP HOÀN TOÀN ({{ slot.giamThiSoLuongNghi || slot.soLuongNghi }} em)
+                    ✅ ĐÃ KHỚP HOÀN TOÀN ({{ slot.sdbSoLuongNghi || slot.soLuongNghi || 0 }} em vắng)
                   </span>
                   <span *ngIf="!slot.isMatched" class="badge bg-warning bg-opacity-25 text-warning-emphasis fw-bolder px-3 py-1 rounded-pill fs-8">
-                    ⚠️ LỆCH: SĐB ({{ slot.sdbSoLuongNghi || 0 }} em) ≠ Giám Thị ({{ slot.giamThiSoLuongNghi || slot.soLuongNghi }} em)
+                    ⚠️ LỆCH: SĐB ({{ slot.sdbSoLuongNghi || 0 }} em) ≠ Giám Thị ({{ slot.giamThiSoLuongNghi !== undefined ? slot.giamThiSoLuongNghi : 0 }} em)
                   </span>
                 </div>
               </div>
@@ -619,12 +619,12 @@
                   <div class="reconcile-box p-2 rounded-2">
                     <div class="fs-8 fw-bold text-gray-600 mb-1 d-flex align-items-center gap-1">
                       <span>📘 Sổ Đầu Bài Hiện Tại:</span>
-                      <span class="badge badge-light-info fs-8 py-0">{{ slot.sdbSoLuongNghi || 0 }} vắng</span>
+                      <span class="badge badge-light-info fs-8 py-0">{{ slot.sdbSoLuongNghi || slot.soLuongNghi || 0 }} vắng</span>
                     </div>
                     <div class="d-flex flex-wrap gap-1">
-                      <ng-container *ngIf="slot.sdbDsVang && slot.sdbDsVang.length > 0; else noSdbVang">
-                        <span *ngFor="let s of slot.sdbDsVang" class="student-tag tag-sdb rounded-pill px-2 py-0 fs-8">
-                          {{ s }}
+                      <ng-container *ngIf="(slot.sdbDsVang && slot.sdbDsVang.length > 0) || (slot.hsVangList && slot.hsVangList.length > 0); else noSdbVang">
+                        <span *ngFor="let s of (slot.sdbDsVang || slot.hsVangList)" class="student-tag tag-sdb rounded-pill px-2 py-0 fs-8">
+                          {{ s.fullName || s }}
                         </span>
                       </ng-container>
                       <ng-template #noSdbVang>
@@ -644,14 +644,21 @@
                   <div class="reconcile-box p-2 rounded-2" [ngClass]="{'border-warning': !slot.isMatched}">
                     <div class="fs-8 fw-bold text-gray-600 mb-1 d-flex align-items-center gap-1">
                       <span>🛡️ Sổ Giám Thị vnEdu:</span>
-                      <span class="badge badge-light-danger fs-8 py-0">{{ slot.giamThiSoLuongNghi || slot.soLuongNghi }} vắng</span>
+                      <span class="badge badge-light-danger fs-8 py-0">{{ slot.giamThiSoLuongNghi || slot.sdbSoLuongNghi || slot.soLuongNghi || 0 }} vắng</span>
                     </div>
                     <div class="d-flex flex-wrap gap-1">
-                      <span *ngFor="let hs of (slot.giamThiDsVang || slot.hsVangList)"
-                            class="student-tag rounded-pill px-2 py-0 fs-8"
-                            [ngClass]="hs.coPhep ? 'tag-phep' : 'tag-khongphep'">
-                        {{ hs.fullName }} ({{ hs.coPhep ? 'P' : 'K' }})
-                      </span>
+                      <ng-container *ngIf="(slot.giamThiDsVang && slot.giamThiDsVang.length > 0) || (slot.hsVangList && slot.hsVangList.length > 0); else noGiamThiVang">
+                        <span *ngFor="let hs of (slot.giamThiDsVang && slot.giamThiDsVang.length > 0 ? slot.giamThiDsVang : (slot.hsVangList || slot.sdbDsVang))"
+                              class="student-tag rounded-pill px-2 py-0 fs-8"
+                              [ngClass]="hs.coPhep ? 'tag-phep' : 'tag-khongphep'">
+                          {{ hs.fullName || hs }} {{ hs.coPhep !== undefined ? (hs.coPhep ? '(Có phép)' : '(Không phép)') : '' }}
+                        </span>
+                      </ng-container>
+                      <ng-template #noGiamThiVang>
+                        <span class="badge bg-success bg-opacity-15 text-success fs-8 py-1 px-2">
+                          ✅ Đã đồng bộ khớp theo Sổ Đầu Bài
+                        </span>
+                      </ng-template>
                     </div>
                   </div>
                 </div>

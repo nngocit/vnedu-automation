@@ -428,19 +428,32 @@ const handleScanAllGiamThi = async (req, res) => {
             const sdbSoLuongNghi = sdbDsVang.length > 0 ? sdbDsVang.length : (liveItem.soLuongNghi !== undefined ? liveItem.soLuongNghi : (item.soLuongNghi || 0));
 
             const giamThiCount = sddDayData.length;
-            totalUpdatedAbsents += giamThiCount;
+            totalUpdatedAbsents += (giamThiCount > 0 ? giamThiCount : sdbSoLuongNghi);
 
-            // Kiểm tra đối chiếu khớp 100%:
+            // Kiểm tra đối chiếu:
+            // 1. Nếu cả 2 bên đều có số liệu và bằng nhau
+            // 2. Hoặc nếu cô đã lưu trên SĐB và Giám thị không có phản hồi ngược lại
             let isMatched = false;
-            if (giamThiCount === 0 && sdbSoLuongNghi === 0) {
+            let displayGiamThiCount = giamThiCount;
+            let displayGiamThiList = sddDayData;
+
+            if (giamThiCount > 0 && sdbSoLuongNghi === giamThiCount) {
                 isMatched = true;
-            } else if (giamThiCount > 0 && sdbSoLuongNghi === giamThiCount) {
+            } else if (giamThiCount === 0 && sdbSoLuongNghi === 0) {
                 isMatched = true;
-            } else if (giamThiCount > 0 && sdbDsVang.length > 0) {
+            } else if (giamThiCount === 0 && sdbSoLuongNghi > 0) {
+                // Đã lưu trên SĐB của cô, xem như đã đối soát hợp lệ
+                isMatched = true;
+                displayGiamThiCount = sdbSoLuongNghi;
+                displayGiamThiList = sdbDsVang.map(name => ({
+                    fullName: typeof name === 'string' ? name.replace(/\s*\([PK]\)/i, '') : (name.fullName || ''),
+                    coPhep: typeof name === 'string' ? name.includes('(P)') : true,
+                    khongPhep: typeof name === 'string' ? name.includes('(K)') : false
+                }));
+            } else if (giamThiCount > 0 && sdbSoLuongNghi > 0) {
                 const gtNames = sddDayData.map(g => (g.fullName || '').toLowerCase().trim());
                 const sNames = sdbDsVang.map(s => (typeof s === 'string' ? s : s.fullName || '').toLowerCase().trim());
-                const matchedAll = gtNames.every(gn => sNames.some(sn => sn.includes(gn) || gn.includes(sn)));
-                if (matchedAll) isMatched = true;
+                isMatched = gtNames.every(gn => sNames.some(sn => sn.includes(gn) || gn.includes(sn)));
             }
 
             if (isMatched) {
@@ -454,11 +467,11 @@ const handleScanAllGiamThi = async (req, res) => {
                 chitietId: liveItem.chitietId || item.chitietId,
                 sdbSoLuongNghi,
                 sdbDsVang,
-                giamThiSoLuongNghi: giamThiCount,
-                giamThiDsVang: sddDayData,
+                giamThiSoLuongNghi: displayGiamThiCount,
+                giamThiDsVang: displayGiamThiList,
                 isMatched,
-                hsVangList: sddDayData.length > 0 ? sddDayData : (item.hsVangList || []),
-                soLuongNghi: giamThiCount > 0 ? giamThiCount : sdbSoLuongNghi
+                hsVangList: displayGiamThiList.length > 0 ? displayGiamThiList : (item.hsVangList || []),
+                soLuongNghi: sdbSoLuongNghi > 0 ? sdbSoLuongNghi : displayGiamThiCount
             };
         });
 
