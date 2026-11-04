@@ -244,12 +244,33 @@
                 </div>
               </td>
 
-              <!-- TÊN BÀI DẠY -->
-              <td>
-                <input type="text"
-                       class="form-control form-control-sm form-control-solid fw-semibold rounded-2 border border-gray-300 text-gray-900"
-                       [(ngModel)]="slot.baiDay"
-                       placeholder="Nhập tên bài dạy...">
+              <!-- TÊN BÀI DẠY CÓ CUSTOM TOOLTIP HIỆN ĐẠI -->
+              <td class="custom-tooltip-cell">
+                <div class="custom-tooltip-wrapper">
+                  <input type="text"
+                         class="form-control form-control-sm form-control-solid fw-semibold rounded-2 border border-gray-300 text-gray-900 lesson-input"
+                         [(ngModel)]="slot.baiDay"
+                         placeholder="Nhập tên bài dạy...">
+
+                  <!-- Tooltip hiển thị trọn vẹn tên bài dạy khi rê chuột -->
+                  <div class="custom-lesson-tooltip" *ngIf="slot.baiDay">
+                    <div class="tooltip-header">
+                      <span class="tooltip-badge">
+                        <span>📖</span> Tên Bài Dạy
+                      </span>
+                      <span class="tooltip-meta" *ngIf="slot.ppct || slot.mon">
+                        {{ slot.mon }} <span *ngIf="slot.ppct">• Tiết <strong>{{ slot.ppct }}</strong></span>
+                      </span>
+                    </div>
+                    <div class="tooltip-content">
+                      {{ slot.baiDay }}
+                    </div>
+                    <div class="tooltip-footer">
+                      💡 Nhấp vào ô để chỉnh sửa trực tiếp
+                    </div>
+                    <div class="tooltip-arrow"></div>
+                  </div>
+                </div>
               </td>
 
               <!-- NHẬN XÉT TIẾT HỌC -->
