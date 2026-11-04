@@ -160,10 +160,13 @@
     </div>
   </div>
 
-  <!-- LOADING -->
-  <div *ngIf="isLoading" class="loading-state-card p-12 text-center rounded-3 shadow-xs my-4">
-    <div class="spinner-border text-primary my-3" role="status"></div>
-    <div class="loading-state-text fw-bold fs-6">Đang tải dữ liệu thời khóa biểu vnEdu...</div>
+  <!-- LOADING SKELETON / SPINNER MƯỢT MÀ -->
+  <div *ngIf="isLoading" class="loading-state-card p-8 text-center rounded-3 shadow-xs my-4">
+    <div class="d-inline-flex align-items-center justify-content-center p-3 mb-2 rounded-circle bg-light-primary text-primary">
+      <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+    </div>
+    <div class="loading-state-text fw-bold fs-6">Đang tải và cập nhật lịch dạy Tuần {{ currentWeek }} từ vnEdu...</div>
+    <div class="loading-state-sub fs-8 mt-1">Hệ thống đang đối chiếu sổ đầu bài và sổ điểm danh điện tử</div>
   </div>
 
   <!-- DANH SÁCH BẢNG THEO TỪNG THỨ TRONG TUẦN (CARD PER DAY) -->
@@ -302,6 +305,14 @@
       <span class="badge kbd-badge px-2 py-1">R Làm mới</span>
       <span class="badge kbd-badge px-2 py-1">D Nền tối/sáng</span>
     </div>
+
+    <!-- NÚT CUỘN LÊN ĐẦU TRANG -->
+    <button type="button"
+            class="btn-scroll-top shadow-sm"
+            (click)="scrollToTop()"
+            title="Cuộn lên đầu trang">
+      ▲
+    </button>
   </div>
 </div>
 

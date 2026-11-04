@@ -5,9 +5,39 @@ const core = require('./sync-core');
 
 const app = express();
 const PORT = 3000;
-const DIST_DIR = path.join(__dirname, '..', 'dist', 'demo1', 'browser');
+
+// Tìm thư mục chứa bản build tĩnh của Angular thông minh
+function resolveDistDir() {
+    const candidates = [
+        path.join(__dirname, '..', 'dist', 'demo1', 'browser'),
+        path.join(__dirname, 'dist', 'demo1', 'browser'),
+        path.join(__dirname, 'app-web', 'dist', 'demo1', 'browser'),
+        path.join(__dirname, '..', 'app-web', 'dist', 'demo1', 'browser'),
+        path.join(__dirname, 'public'),
+        path.join(__dirname, '..', 'public')
+    ];
+    for (const dir of candidates) {
+        if (fs.existsSync(path.join(dir, 'index.html'))) {
+            return dir;
+        }
+    }
+    return candidates[0];
+}
+const DIST_DIR = resolveDistDir();
 
 app.use(express.json({ limit: '20mb' }));
+
+// Health Check API
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        app: 'vnEdu Smart Sync Fullstack',
+        school: 'Trường THCS An Lập',
+        teacher: 'Cô Lê Thị Diệu Huyên',
+        uptime: Math.round(process.uptime()) + 's',
+        distLoaded: fs.existsSync(DIST_DIR)
+    });
+});
 
 // CORS & Session Header Middleware
 app.use((req, res, next) => {
@@ -24,9 +54,16 @@ app.use((req, res, next) => {
     next();
 });
 
-// Phục vụ file tĩnh của Angular Web App nếu đã build
+// Phục vụ file tĩnh của Angular Web App với cache tối ưu
 if (fs.existsSync(DIST_DIR)) {
-    app.use(express.static(DIST_DIR));
+    app.use(express.static(DIST_DIR, {
+        maxAge: '1d',
+        setHeaders: (res, pathUrl) => {
+            if (pathUrl.endsWith('.html')) {
+                res.setHeader('Cache-Control', 'no-cache');
+            }
+        }
+    }));
 }
 
 // API: Tải lên file Excel tùy chọn

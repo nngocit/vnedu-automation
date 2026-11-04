@@ -409,6 +409,37 @@
   .loading-state-text {
     color: #1e293b;
   }
+
+  .loading-state-sub {
+    color: #64748b;
+  }
+}
+
+// Nút cuộn lên đầu trang
+.btn-scroll-top {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #2563eb;
+  color: #ffffff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  z-index: 999;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: #1d4ed8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+  }
 }
 
 // Empty state
@@ -851,6 +882,20 @@
 
     .loading-state-text {
       color: #ffffff !important;
+    }
+
+    .loading-state-sub {
+      color: #7e8299 !important;
+    }
+  }
+
+  .btn-scroll-top {
+    background-color: #3699ff !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(54, 153, 255, 0.35) !important;
+
+    &:hover {
+      background-color: #1b84ff !important;
     }
   }
 

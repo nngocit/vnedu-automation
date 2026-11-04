@@ -2,18 +2,23 @@
 node_modules/
 package-lock.json
 
-# Angular Web App dependencies & build
+# Angular dependencies & cache
 app-web/node_modules/
 app-web/.angular/
-app-web/dist/
 app-web/package-lock.json
 **/node_modules/
 **/.angular/
-**/dist/
 
-# Cloudflare & Build
+# Raw SCSS & raw plugins inside build (not needed for runtime)
+**/assets/sass/
+**/assets/plugins/
+app-web/dist/demo1/browser/assets/sass/
+app-web/dist/demo1/browser/assets/plugins/
+public/assets/sass/
+public/assets/plugins/
+
+# Cloudflare
 .wrangler/
-dist/
 
 # Browser user data & temp sessions
 user_data/

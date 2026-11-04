@@ -1072,12 +1072,16 @@ function getAvailableWeeks(source = 'vnedu') {
                 return { school: 'Trường THCS An Lập', branch: 'Phân hiệu An Lập' };
             }
             const url = `https://uaevcmanmsgdbinhduong.vnedu.vn/v5/?call=edu.so_diem_danh.getDiemTruongTheoQuyen&my_token=${token}&my_user_id=${cachedUserId || '7365493419'}&app_nam_hoc=2026`;
-            const res = await fetchWithTimeout(url, {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 6000);
+            const res = await fetch(url, {
                 headers: {
                     'Cookie': cachedCookies || '',
                     'User-Agent': 'Mozilla/5.0'
-                }
-            }, 6000);
+                },
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
             const data = await res.json();
             if (Array.isArray(data)) {
                 const anLap = data.find(d => d.id === 790826 || (d.ten && d.ten.toLowerCase().includes('an lập')));

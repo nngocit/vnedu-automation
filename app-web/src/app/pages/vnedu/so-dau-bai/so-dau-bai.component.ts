@@ -542,7 +542,19 @@ export class SoDauBaiComponent implements OnInit {
 
   @HostListener('window:keydown', ['$event'])
   handleKeyboardShortcuts(event: KeyboardEvent): void {
-    // Không nhận phím tắt khi đang gõ trong input / textarea / modal
+    // Xử lý phím Escape để đóng Modal bất kỳ lúc nào
+    if (event.key === 'Escape') {
+      if (this.showAttendanceModal) {
+        this.closeAttendanceModal();
+        return;
+      }
+      if (this.showLoginModal) {
+        this.closeLoginModal();
+        return;
+      }
+    }
+
+    // Không nhận các phím tắt khác khi đang gõ trong input / textarea / select
     const tag = (event.target as HTMLElement)?.tagName?.toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'select' || this.showAttendanceModal || this.showLoginModal) {
       return;
@@ -558,6 +570,25 @@ export class SoDauBaiComponent implements OnInit {
     } else if (key === 'r') {
       event.preventDefault();
       this.loadSchedule(this.currentWeek);
+    } else if (key === 'd') {
+      event.preventDefault();
+      const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-bs-theme', newTheme);
+      document.body.setAttribute('data-bs-theme', newTheme);
+      localStorage.setItem('kt_theme_mode_value', newTheme);
+      this.showToast(`Đã chuyển sang giao diện ${newTheme === 'dark' ? 'Tối' : 'Sáng'}`, 'info');
+    } else if (key === 'b') {
+      event.preventDefault();
+      const toggleBtn = document.getElementById('kt_app_sidebar_toggle');
+      if (toggleBtn) {
+        toggleBtn.click();
+      }
     }
+  }
+
+  // Cuộn mượt lên đầu trang
+  scrollToTop(): void {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }
