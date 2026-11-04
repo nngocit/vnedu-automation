@@ -427,34 +427,31 @@ const handleScanAllGiamThi = async (req, res) => {
             const sdbDsVang = (liveItem.dsHsVang && liveItem.dsHsVang.length > 0) ? liveItem.dsHsVang : (item.dsHsVang || []);
             const sdbSoLuongNghi = sdbDsVang.length > 0 ? sdbDsVang.length : (liveItem.soLuongNghi !== undefined ? liveItem.soLuongNghi : (item.soLuongNghi || 0));
 
-            const giamThiCount = sddDayData.length;
-            totalUpdatedAbsents += (giamThiCount > 0 ? giamThiCount : sdbSoLuongNghi);
-
-            // Kiểm tra đối chiếu:
-            // 1. Nếu cả 2 bên đều có số liệu và bằng nhau
-            // 2. Hoặc nếu cô đã lưu trên SĐB và Giám thị không có phản hồi ngược lại
-            let isMatched = false;
-            let displayGiamThiCount = giamThiCount;
+            // Số lượng vắng chính xác trên SĐB
+            const displaySdbCount = (sdbDsVang && sdbDsVang.length > 0) ? sdbDsVang.length : (sdbSoLuongNghi || 0);
+            let displayGiamThiCount = sddDayData.length;
             let displayGiamThiList = sddDayData;
 
-            if (giamThiCount > 0 && sdbSoLuongNghi === giamThiCount) {
+            // Kiểm tra đối chiếu chặt chẽ:
+            let isMatched = false;
+            if (displayGiamThiCount > 0 && displaySdbCount === displayGiamThiCount) {
                 isMatched = true;
-            } else if (giamThiCount === 0 && sdbSoLuongNghi === 0) {
+            } else if (displayGiamThiCount === 0 && displaySdbCount === 0) {
                 isMatched = true;
-            } else if (giamThiCount === 0 && sdbSoLuongNghi > 0) {
-                // Đã lưu trên SĐB của cô, xem như đã đối soát hợp lệ
+            } else if (displayGiamThiCount === 0 && displaySdbCount > 0) {
+                // Đã có dữ liệu trên SĐB, xem như đã đối soát chuẩn
                 isMatched = true;
-                displayGiamThiCount = sdbSoLuongNghi;
+                displayGiamThiCount = displaySdbCount;
                 displayGiamThiList = sdbDsVang.map(name => ({
                     fullName: typeof name === 'string' ? name.replace(/\s*\([PK]\)/i, '') : (name.fullName || ''),
                     coPhep: typeof name === 'string' ? name.includes('(P)') : true,
                     khongPhep: typeof name === 'string' ? name.includes('(K)') : false
                 }));
-            } else if (giamThiCount > 0 && sdbSoLuongNghi > 0) {
-                const gtNames = sddDayData.map(g => (g.fullName || '').toLowerCase().trim());
-                const sNames = sdbDsVang.map(s => (typeof s === 'string' ? s : s.fullName || '').toLowerCase().trim());
-                isMatched = gtNames.every(gn => sNames.some(sn => sn.includes(gn) || gn.includes(sn)));
+            } else {
+                isMatched = false;
             }
+
+            totalUpdatedAbsents += (displayGiamThiCount > 0 ? displayGiamThiCount : displaySdbCount);
 
             if (isMatched) {
                 matchedSlotsCount++;
@@ -465,13 +462,13 @@ const handleScanAllGiamThi = async (req, res) => {
             return {
                 ...item,
                 chitietId: liveItem.chitietId || item.chitietId,
-                sdbSoLuongNghi,
+                sdbSoLuongNghi: displaySdbCount,
                 sdbDsVang,
                 giamThiSoLuongNghi: displayGiamThiCount,
                 giamThiDsVang: displayGiamThiList,
                 isMatched,
                 hsVangList: displayGiamThiList.length > 0 ? displayGiamThiList : (item.hsVangList || []),
-                soLuongNghi: sdbSoLuongNghi > 0 ? sdbSoLuongNghi : displayGiamThiCount
+                soLuongNghi: displayGiamThiCount > 0 ? displayGiamThiCount : displaySdbCount
             };
         });
 

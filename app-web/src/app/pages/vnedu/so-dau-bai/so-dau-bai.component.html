@@ -531,67 +531,49 @@
       </div>
 
       <!-- TRẠNG THÁI 2: ĐÃ QUÉT XONG (COMPLETED) & ĐỐI CHIẾU SĐB - GIÁM THỊ -->
-      <div *ngIf="scanModalStatus === 'completed'" class="cyber-result-container py-2">
-        <!-- Thẻ tóm tắt kết quả đối chiếu thông minh -->
-        <div class="result-summary-card p-4 rounded-3 mb-4"
+      <div *ngIf="scanModalStatus === 'completed'" class="cyber-result-container py-1">
+        <!-- Thẻ tóm tắt kết quả đối chiếu nhỏ gọn, tinh tế -->
+        <div class="result-summary-card p-3 rounded-3 mb-3"
              [ngClass]="scanMismatchCount > 0 ? 'summary-warn' : 'summary-clean'">
-          <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-            <div class="d-flex align-items-center gap-3">
-              <span class="fs-1">{{ scanMismatchCount > 0 ? '⚠️' : '🎉' }}</span>
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div class="d-flex align-items-center gap-2">
+              <span class="fs-3">{{ scanMismatchCount > 0 ? '⚠️' : '🎉' }}</span>
               <div>
-                <h5 class="fw-bolder mb-1 fs-5">
-                  {{ scanMismatchCount > 0 ? ('Phát hiện ' + scanMismatchCount + ' tiết chưa khớp giữa Sổ Đầu Bài và Giám Thị!') : 'Tuyệt vời! Tất cả các tiết học đã KHỚP 100% với Sổ Đầu Bài!' }}
-                </h5>
+                <div class="fw-bolder fs-6">
+                  {{ scanMismatchCount > 0 ? ('Phát hiện ' + scanMismatchCount + ' tiết chưa khớp số liệu SĐB và Giám thị!') : 'Tuyệt vời! Tất cả các tiết học đã KHỚP 100% với Sổ Đầu Bài!' }}
+                </div>
                 <div class="fs-8 text-gray-600">
-                  {{ scanMismatchCount > 0 ? 'Dưới đây là bảng so sánh trực tiếp giữa dữ liệu cô đã lưu trên Sổ Đầu Bài và dữ liệu Giám thị trường ghi nhận.' : 'Dữ liệu sĩ số và học sinh vắng trên Sổ Đầu Bài hoàn toàn trùng khớp với Sổ Giám thị vnEdu. Cô không cần nhập lại!' }}
+                  Tổng vắng trong tuần: <strong>{{ scanTotalAbsents }} lượt</strong> • Đã khớp SĐB: <strong class="text-success">{{ scanMatchedCount }} tiết</strong> • Cần đối chiếu: <strong class="text-warning">{{ scanMismatchCount }} tiết</strong>
                 </div>
               </div>
             </div>
 
             <!-- Nút đồng bộ nhanh tất cả nếu có lệch -->
-            <div *ngIf="scanMismatchCount > 0">
-              <button type="button"
-                      class="pill-btn pill-warning px-4 py-2 shadow-xs fw-bolder fs-7"
-                      (click)="syncAllMismatchedSlots()"
-                      [disabled]="isSyncingAllMismatches">
-                <span *ngIf="isSyncingAllMismatches" class="spinner-border spinner-border-sm me-1" role="status"></span>
-                ⚡ Đồng Bộ Khớp Tất Cả ({{ scanMismatchCount }} Tiết)
-              </button>
-            </div>
-          </div>
-
-          <!-- 3 Thống kê số liệu mini -->
-          <div class="d-flex flex-wrap gap-2 pt-2 border-top border-secondary border-opacity-15">
-            <span class="badge bg-primary bg-opacity-15 text-primary fw-bold px-3 py-2 rounded-pill fs-8">
-              📊 Tổng vắng trong tuần: {{ scanTotalAbsents }} lượt (trên {{ scanAbsentSlots.length }} tiết)
-            </span>
-            <span class="badge bg-success bg-opacity-20 text-success fw-bold px-3 py-2 rounded-pill fs-8">
-              ✅ Đã khớp Sổ Đầu Bài: {{ scanMatchedCount }} tiết
-            </span>
-            <span class="badge bg-warning bg-opacity-25 text-warning-emphasis fw-bold px-3 py-2 rounded-pill fs-8"
-                  *ngIf="scanMismatchCount > 0">
-              ⚠️ Cần cập nhật vào SĐB: {{ scanMismatchCount }} tiết
-            </span>
+            <button *ngIf="scanMismatchCount > 0"
+                    type="button"
+                    class="pill-btn pill-warning px-3 py-1 fs-8 shadow-xs fw-bolder"
+                    (click)="syncAllMismatchedSlots()"
+                    [disabled]="isSyncingAllMismatches">
+              <span *ngIf="isSyncingAllMismatches" class="spinner-border spinner-border-sm me-1" role="status"></span>
+              ⚡ Đồng Bộ Khớp Tất Cả ({{ scanMismatchCount }} Tiết)
+            </button>
           </div>
         </div>
 
-        <!-- BẢNG ĐỐI CHIẾU SONG SONG TỪNG TIẾT (SIDE-BY-SIDE RECONCILIATION) -->
+        <!-- BẢNG ĐỐI CHIẾU SONG SONG TỪNG TIẾT -->
         <div *ngIf="scanAbsentSlots.length > 0" class="absent-slots-list">
           <div class="d-flex align-items-center justify-content-between mb-2">
             <span class="fs-7 fw-bold text-gray-700">
               📋 Bảng Đối Chiếu Chi Tiết: Sổ Đầu Bài Hiện Tại ⇄ Sổ Giám Thị vnEdu:
             </span>
-            <span class="fs-8 text-gray-500">
-              (Nhấn nút Đồng Bộ để cập nhật dữ liệu Giám thị vào SĐB)
-            </span>
           </div>
 
-          <div class="d-flex flex-column gap-3 max-h-400px overflow-y-auto pe-1">
+          <div class="d-flex flex-column gap-2 pe-1">
             <div *ngFor="let slot of scanAbsentSlots"
                  class="absent-slot-card p-3 rounded-3 border shadow-xs"
                  [ngClass]="slot.isMatched ? 'card-matched' : 'card-mismatched'">
               <!-- Hàng trên: Thông tin tiết và Huy hiệu Trạng thái Đối Chiếu -->
-              <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2 pb-2 border-bottom border-secondary border-opacity-10">
+              <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2 pb-1 border-bottom border-secondary border-opacity-10">
                 <div class="d-flex align-items-center gap-2">
                   <span class="badge bg-secondary bg-opacity-25 text-secondary-emphasis fw-bold fs-8">
                     Thứ {{ slot.thu }} • Tiết {{ slot.tiet }}
@@ -665,8 +647,8 @@
               </div>
 
               <!-- Hàng dưới: Nút thao tác tương ứng trạng thái -->
-              <div class="d-flex align-items-center justify-content-between pt-2 mt-1">
-                <span class="fs-8 text-gray-500">
+              <div class="d-flex align-items-center justify-content-between pt-1">
+                <span class="fs-8 text-gray-500 text-truncate max-w-400px">
                   {{ slot.tenBai || slot.noiDung }}
                 </span>
 
@@ -682,10 +664,10 @@
 
                   <!-- Nút Mở Điểm Danh xem/sửa -->
                   <button type="button"
-                          class="pill-btn px-3 py-1 fs-8 shadow-xs"
-                          [ngClass]="slot.isMatched ? 'pill-outline text-primary' : 'pill-primary'"
+                          class="btn btn-sm fw-bold px-3 py-1 rounded-pill fs-8 shadow-xs"
+                          [ngClass]="slot.isMatched ? 'btn-light-primary text-primary' : 'btn-primary text-white'"
                           (click)="openAttendanceFromScanResult(slot)">
-                    {{ slot.isMatched ? '👁️ Xem Lại' : '📝 Sửa Điểm Danh' }}
+                    {{ slot.isMatched ? '👁️ Xem Điểm Danh' : '📝 Sửa Điểm Danh' }}
                   </button>
                 </div>
               </div>
