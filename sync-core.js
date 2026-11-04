@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const xlsx = require('xlsx');
 
-const SESSION_CACHE_FILE = path.join(__dirname, 'public', 'session_cache.json');
+const SESSION_CACHE_FILE = path.join(__dirname, 'session_cache.json');
 
 // USER_DATA no longer required (Playwright removed)
 const DOWNLOADS_DIR = 'C:\\Users\\DIEU HUYEN\\Downloads';
@@ -423,18 +423,39 @@ function getAvailableWeeks(source = 'vnedu') {
             bodyParams.set('my_token', token);
         }
 
+        // Chỉ lọc bỏ sso_key_login (> 2KB) đối với request load HTML sổ đầu bài (tránh lỗi ECONNRESET do buffer quá lớn trên vnEdu)
+        // Các API lưu (call=app.sodaubai.serv.so_dau_bai.save, saveHocSinhVang) BẮT BUỘC phải giữ sso_key_login để xác thực quyền ghi
+        let sendCookies = cookies || '';
+        if (url.includes('load=app.sodaubai.serv.so_dau_bai') && cookies) {
+            sendCookies = cookies.split(';')
+                .map(c => c.trim())
+                .filter(c => !c.startsWith('sso_key_login'))
+                .join('; ');
+        }
+
         const headers = {
             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'Cookie': cookies || '',
+            'Cookie': sendCookies,
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             ...customHeaders
         };
 
-        return await fetch(url, {
-            method: 'POST',
-            headers,
-            body: bodyParams.toString()
-        });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+        try {
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers,
+                body: bodyParams.toString(),
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            return resp;
+        } catch (err) {
+            clearTimeout(timeoutId);
+            throw err;
+        }
     }
 
     function parseTableRows(html, className, liveEntries) {
@@ -473,7 +494,7 @@ function getAvailableWeeks(source = 'vnedu') {
 
     // Kiểm tra trạng thái các tiết đã nhập trên vnEdu
     async function checkLiveStatus(weekNumber = 8) {
-        let { token, context } = await ensureVnEduToken();
+        let { token, context, userId } = await ensureVnEduToken();
         const liveEntries = [];
 
         const classes = [
@@ -482,11 +503,11 @@ function getAvailableWeeks(source = 'vnedu') {
             { id: '5004582186', name: '9A2AL', khoi: '9' }
         ];
 
-        for (const cls of classes) {
+        await Promise.allSettled(classes.map(async (cls) => {
             const url = `https://uaevcmanmsgdbinhduong.vnedu.vn/v5/?load=app.sodaubai.serv.so_dau_bai&app_nam_hoc=2026&my_token=${token}`;
             const params = new URLSearchParams({
                 my_token: token,
-                my_user_id: cachedUserId,
+                my_user_id: userId || cachedUserId,
                 app_nam_hoc: '2026',
                 winId: 'check_' + cls.name,
                 capHoc: '2',
@@ -515,7 +536,7 @@ function getAvailableWeeks(source = 'vnedu') {
             } catch (e) {
                 console.error(`Lỗi kiểm tra lớp ${cls.name}:`, e.message);
             }
-        }
+        }));
 
         return liveEntries;
     }
@@ -538,9 +559,9 @@ function getAvailableWeeks(source = 'vnedu') {
             id: item.chitietId || item.liveId || '0',
             tiet: String(item.tiet),
             ngay: item.ngay,
-            tiet_ppct: String(item.ppct),
-            soluong_nghi: String(item.soLuongNghi || 0),
-            noi_dung: item.tenBai,
+            tiet_ppct: String(item.ppct || ''),
+            soluong_nghi: String(item.soLuongNghi !== undefined ? item.soLuongNghi : (item.hsVangList ? item.hsVangList.length : 0)),
+            noi_dung: item.tenBai || item.baiDay || item.noiDung || '',
             dia_diem: '',
             kiem_tra_mieng: '',
             nhan_xet: item.nhanXet || 'Lớp học nghiêm túc, tích cực',
@@ -550,7 +571,7 @@ function getAvailableWeeks(source = 'vnedu') {
             cap_hoc: classInfo.cap,
             lop_hoc_id: classInfo.id,
             tuan_hoc: String(weekNumber),
-            buoi_hoc: String(item.buoi)
+            buoi_hoc: String(item.buoi || (Number(item.tiet) <= 5 ? 1 : 2))
         });
 
         let payload = buildPayload(token);
@@ -569,6 +590,26 @@ function getAvailableWeeks(source = 'vnedu') {
                 saveUrl = `https://uaevcmanmsgdbinhduong.vnedu.vn/v5/?call=app.sodaubai.serv.so_dau_bai.save&app_nam_hoc=${payload.app_nam_hoc}&my_token=${payload.my_token}`;
                 resp = await vnEduPost(saveUrl, payload, { 'X-Requested-With': 'XMLHttpRequest' });
                 json = await resp.json();
+            }
+
+            if (json && json.success) {
+                let assignedId = item.chitietId || item.liveId || null;
+                if (!assignedId || assignedId === '0') {
+                    try {
+                        const liveList = await checkLiveStatus(weekNumber);
+                        const matched = liveList.find(l =>
+                            (l.lop === item.lop || l.lop === item.lop + 'AL' || (item.lop && item.lop.includes(l.lop))) &&
+                            Number(l.thu) === Number(item.thu) &&
+                            Number(l.tiet) === Number(item.tiet)
+                        );
+                        if (matched && matched.chitietId) {
+                            assignedId = matched.chitietId;
+                        }
+                    } catch (checkErr) {
+                        console.warn('Lỗi tra cứu live chitietId sau khi lưu:', checkErr.message);
+                    }
+                }
+                json.chitietId = assignedId;
             }
 
             return json;
@@ -868,6 +909,12 @@ function getAvailableWeeks(source = 'vnedu') {
     async function saveHocSinhVangToVnEdu(chitietId, studentsData) {
         if (!chitietId) return { success: false, msg: 'Tiết học chưa có ID trên Sổ đầu bài' };
 
+        const absents = (studentsData || []).filter(s => s.coPhep || s.khongPhep || s.co_phep || s.khong_phep);
+        if (absents.length === 0) {
+            // Cả lớp đi học đầy đủ: vnEdu không có học sinh để lưu, thành công ngay
+            return { success: true, msg: 'Cả lớp đi học đầy đủ', data: [] };
+        }
+
         let { token, context } = await ensureVnEduToken();
         const url = `https://uaevcmanmsgdbinhduong.vnedu.vn/v5/?call=app.sodaubai.serv.so_dau_bai.saveHocSinhVang&app_nam_hoc=2026&my_token=${token}`;
 
@@ -878,7 +925,7 @@ function getAvailableWeeks(source = 'vnedu') {
             app_nam_hoc: '2026'
         };
 
-        studentsData.forEach((s, idx) => {
+        absents.forEach((s, idx) => {
             formObj[`data[${idx}][id]`] = String(s.id);
             formObj[`data[${idx}][co_phep]`] = String(s.coPhep || s.co_phep ? 1 : 0);
             formObj[`data[${idx}][khong_phep]`] = String(s.khongPhep || s.khong_phep ? 1 : 0);
@@ -1018,6 +1065,44 @@ function getAvailableWeeks(source = 'vnedu') {
         }
     }
 
+    async function getSchoolInfoFromVnEdu() {
+        try {
+            const token = await ensureVnEduToken();
+            if (!token) {
+                return { school: 'Trường THCS An Lập', branch: 'Phân hiệu An Lập' };
+            }
+            const url = `https://uaevcmanmsgdbinhduong.vnedu.vn/v5/?call=edu.so_diem_danh.getDiemTruongTheoQuyen&my_token=${token}&my_user_id=${cachedUserId || '7365493419'}&app_nam_hoc=2026`;
+            const res = await fetchWithTimeout(url, {
+                headers: {
+                    'Cookie': cachedCookies || '',
+                    'User-Agent': 'Mozilla/5.0'
+                }
+            }, 6000);
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                const anLap = data.find(d => d.id === 790826 || (d.ten && d.ten.toLowerCase().includes('an lập')));
+                if (anLap) {
+                    return {
+                        school: 'Trường THCS An Lập',
+                        branch: anLap.ten || 'THCS Thanh An - PH An Lập',
+                        diemTruongId: anLap.id
+                    };
+                }
+                const first = data.find(d => d.id !== 0 && d.ten);
+                if (first) {
+                    return {
+                        school: first.ten,
+                        branch: first.ten,
+                        diemTruongId: first.id
+                    };
+                }
+            }
+        } catch (e) {
+            console.warn('Lỗi lấy thông tin trường từ vnEdu:', e.message);
+        }
+        return { school: 'Trường THCS An Lập', branch: 'Phân hiệu An Lập' };
+    }
+
     module.exports = {
         getLatestExcelFile,
         getAvailableWeeks,
@@ -1025,6 +1110,7 @@ function getAvailableWeeks(source = 'vnedu') {
         ensureVnEduToken,
         loginVnEduHttp,
         getSessionStatus,
+        getSchoolInfoFromVnEdu,
         setSessionToken,
         clearSession,
         checkLiveStatus,

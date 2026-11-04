@@ -19,7 +19,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     username: '051197003685',
     password: '',
     teacherName: 'Cô Lê Thị Diệu Huyên',
-    school: 'Trường THCS Phú Hòa'
+    school: 'Trường THCS An Lập'
   };
 
   loginForm: FormGroup;

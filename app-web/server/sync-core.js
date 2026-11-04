@@ -1065,6 +1065,44 @@ function getAvailableWeeks(source = 'vnedu') {
         }
     }
 
+    async function getSchoolInfoFromVnEdu() {
+        try {
+            const token = await ensureVnEduToken();
+            if (!token) {
+                return { school: 'Trường THCS An Lập', branch: 'Phân hiệu An Lập' };
+            }
+            const url = `https://uaevcmanmsgdbinhduong.vnedu.vn/v5/?call=edu.so_diem_danh.getDiemTruongTheoQuyen&my_token=${token}&my_user_id=${cachedUserId || '7365493419'}&app_nam_hoc=2026`;
+            const res = await fetchWithTimeout(url, {
+                headers: {
+                    'Cookie': cachedCookies || '',
+                    'User-Agent': 'Mozilla/5.0'
+                }
+            }, 6000);
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                const anLap = data.find(d => d.id === 790826 || (d.ten && d.ten.toLowerCase().includes('an lập')));
+                if (anLap) {
+                    return {
+                        school: 'Trường THCS An Lập',
+                        branch: anLap.ten || 'THCS Thanh An - PH An Lập',
+                        diemTruongId: anLap.id
+                    };
+                }
+                const first = data.find(d => d.id !== 0 && d.ten);
+                if (first) {
+                    return {
+                        school: first.ten,
+                        branch: first.ten,
+                        diemTruongId: first.id
+                    };
+                }
+            }
+        } catch (e) {
+            console.warn('Lỗi lấy thông tin trường từ vnEdu:', e.message);
+        }
+        return { school: 'Trường THCS An Lập', branch: 'Phân hiệu An Lập' };
+    }
+
     module.exports = {
         getLatestExcelFile,
         getAvailableWeeks,
@@ -1072,6 +1110,7 @@ function getAvailableWeeks(source = 'vnedu') {
         ensureVnEduToken,
         loginVnEduHttp,
         getSessionStatus,
+        getSchoolInfoFromVnEdu,
         setSessionToken,
         clearSession,
         checkLiveStatus,

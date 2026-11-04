@@ -2,12 +2,15 @@
   display: block;
 }
 
-// Layout wrapper tươi sáng, tương phản chuẩn, dịu mắt (không bị chói lóa hay mờ lợt)
+// ====================================================
+// 1. LIGHT MODE (MẶC ĐỊNH - TƯƠI SÁNG, ĐẬM ĐÀ, RÕ NÉT)
+// ====================================================
 .vnedu-app-container {
   background-color: #f1f5f9;
   padding: 1.25rem;
   border-radius: 1rem;
   color: #1e293b;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 // Thanh công cụ trên cùng
@@ -17,9 +20,10 @@
   border-radius: 0.85rem;
   border: 1px solid #e2e8f0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
 }
 
-// Nút bấm kiểu Pill rực rỡ, đậm nét như hình mẫu
+// Nút bấm kiểu Pill rực rỡ, đậm nét
 .pill-btn {
   border-radius: 9999px !important;
   font-weight: 700;
@@ -93,6 +97,7 @@
   display: inline-flex;
   align-items: center;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
 
   .nav-btn {
     border: none;
@@ -146,6 +151,7 @@
   padding: 0.85rem 1.25rem;
   color: #92400e;
   box-shadow: 0 1px 2px rgba(245, 158, 11, 0.06);
+  transition: all 0.2s ease;
 }
 
 // Bộ lọc lớp học
@@ -175,9 +181,24 @@
   }
 }
 
-// ----------------------------------------------------
-// THẺ CARD CHO TỪNG NGÀY (THỨ HAI, THỨ BA...)
-// ----------------------------------------------------
+// Input tìm nhanh trên đầu
+.top-search-input {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+
+  &::placeholder {
+    color: #94a3b8;
+  }
+
+  &:focus {
+    border-color: #2563eb;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  }
+}
+
+// Thẻ card cho từng ngày (Thứ hai, Thứ ba...)
 .day-card {
   background: #ffffff;
   border-radius: 1rem;
@@ -185,6 +206,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
   margin-bottom: 1.5rem;
   overflow: hidden;
+  transition: all 0.2s ease;
 
   .day-card-header {
     padding: 1rem 1.5rem;
@@ -274,7 +296,7 @@
   }
 }
 
-// Badge Tên Lớp màu xanh đậm dạng Pill bo tròn như hình mẫu (9A2AL, 7A3AL...)
+// Badge Tên Lớp màu xanh đậm dạng Pill bo tròn (9A2AL, 7A3AL...)
 .badge-class-bold {
   background-color: #2563eb;
   color: #ffffff;
@@ -378,7 +400,33 @@
   }
 }
 
-// Modal System
+// Loading state
+.loading-state-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+
+  .loading-state-text {
+    color: #1e293b;
+  }
+}
+
+// Empty state
+.empty-state-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+}
+
+// Phím tắt kbd-badge
+.kbd-badge {
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  font-weight: 600;
+}
+
+// Modal Backdrop
 .modal-backdrop-custom {
   position: fixed;
   top: 0;
@@ -391,6 +439,7 @@
   padding: 1.5rem;
 }
 
+// Khung Modal Dialog
 .modal-dialog-custom {
   width: 100%;
   background: #ffffff;
@@ -400,6 +449,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: all 0.2s ease;
 
   &.modal-lg {
     max-width: 840px;
@@ -410,9 +460,573 @@
   }
 }
 
+.modal-header-custom {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  color: #0f172a;
+}
+
+.modal-title-text {
+  color: #0f172a;
+}
+
+.modal-subtitle-text {
+  color: #64748b;
+}
+
+.btn-close-custom {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 1.25rem;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+}
+
+.modal-stats-bar {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.stat-badge-total {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.modal-body-custom {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.modal-search-input {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+
+  &:focus {
+    border-color: #2563eb;
+    background: #ffffff;
+  }
+}
+
 .attendance-scroll-wrap {
   max-height: 420px;
   overflow-y: auto;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
+  background: #ffffff;
+}
+
+.modal-attendance-table {
+  width: 100%;
+
+  .modal-table-head th {
+    background: #f8fafc;
+    color: #475569;
+    border-bottom: 2px solid #e2e8f0;
+  }
+
+  .student-row {
+    background: #ffffff;
+    transition: background-color 0.1s ease;
+
+    &:hover {
+      background: #f8fafc;
+    }
+
+    .col-stt {
+      color: #64748b;
+    }
+
+    .student-name {
+      color: #0f172a;
+    }
+
+    .col-mahs {
+      color: #64748b;
+    }
+
+    &.row-absent {
+      background-color: #fff1f2 !important;
+
+      .student-name {
+        color: #e11d48 !important;
+      }
+    }
+  }
+}
+
+.btn-status-toggle {
+  &.btn-outline-status {
+    background: #ffffff;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+
+    &:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+  }
+}
+
+.modal-footer-custom {
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  color: #334155;
+}
+
+.btn-modal-close {
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+
+  &:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+}
+
+.form-field-label {
+  color: #334155;
+}
+
+.modal-tip-box {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #64748b;
+}
+
+// ====================================================
+// 2. DARK MODE (GIAO DIỆN TỐI SANG TRỌNG, ĐỒNG BỘ 100%)
+// Tương thích cả [data-bs-theme="dark"] và :host-context
+// ====================================================
+:host-context([data-bs-theme="dark"]),
+:host-context([data-theme="dark"]),
+:host-context(.theme-dark) {
+
+  .vnedu-app-container {
+    background-color: transparent !important;
+    color: #e1e3ea !important;
+  }
+
+  // Top Nav Bar
+  .top-nav-bar {
+    background: #1e1e2d !important;
+    border-color: #2b2b40 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+  }
+
+  .pill-btn {
+    &.pill-outline {
+      background-color: #1e1e2d !important;
+      color: #cdcdde !important;
+      border-color: #3b3b54 !important;
+      box-shadow: none !important;
+
+      &:hover {
+        background-color: #2b2b40 !important;
+        color: #ffffff !important;
+        border-color: #4e4e6d !important;
+      }
+    }
+
+    &.pill-channel {
+      background-color: rgba(5, 150, 105, 0.18) !important;
+      color: #34d399 !important;
+      border-color: rgba(5, 150, 105, 0.4) !important;
+    }
+  }
+
+  // Bộ chuyển tuần
+  .week-pill-control {
+    background: #1e1e2d !important;
+    border-color: #3b3b54 !important;
+    box-shadow: none !important;
+
+    .nav-btn {
+      color: #a1a5b7 !important;
+
+      &:hover:not(:disabled) {
+        background: #2b2b40 !important;
+        color: #ffffff !important;
+      }
+
+      &:disabled {
+        color: #4b4b66 !important;
+      }
+    }
+
+    .week-select-pill {
+      color: #ffffff !important;
+
+      option {
+        background: #1e1e2d !important;
+        color: #ffffff !important;
+      }
+    }
+  }
+
+  // Banner nhắc nhở
+  .notice-banner {
+    background-color: rgba(245, 158, 11, 0.12) !important;
+    border-color: rgba(245, 158, 11, 0.35) !important;
+    color: #fcd34d !important;
+    box-shadow: none !important;
+  }
+
+  // Lọc lớp
+  .class-filter-pill {
+    background: #1e1e2d !important;
+    color: #a1a5b7 !important;
+    border-color: #3b3b54 !important;
+
+    &:hover {
+      background: #2b2b40 !important;
+      color: #ffffff !important;
+      border-color: #4e4e6d !important;
+    }
+
+    &.active {
+      background-color: #3699ff !important;
+      color: #ffffff !important;
+      border-color: #3699ff !important;
+      box-shadow: 0 2px 8px rgba(54, 153, 255, 0.35) !important;
+    }
+  }
+
+  // Search Input Top
+  .top-search-input {
+    background-color: #151521 !important;
+    border-color: #3b3b54 !important;
+    color: #ffffff !important;
+
+    &::placeholder {
+      color: #64647a !important;
+    }
+
+    &:focus {
+      background-color: #151521 !important;
+      border-color: #3699ff !important;
+      box-shadow: 0 0 0 3px rgba(54, 153, 255, 0.25) !important;
+    }
+  }
+
+  // THẺ NGÀY (DAY CARD)
+  .day-card {
+    background: #1e1e2d !important;
+    border-color: #2b2b40 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+
+    .day-card-header {
+      background: #1b1b28 !important;
+      border-color: #2b2b40 !important;
+
+      .day-title {
+        color: #ffffff !important;
+      }
+
+      .date-badge {
+        background: #2b2b40 !important;
+        color: #a1a5b7 !important;
+      }
+
+      .slot-count {
+        color: #a1a5b7 !important;
+      }
+    }
+  }
+
+  // Bảng tiết học
+  .day-table {
+    thead th {
+      background: #1b1b28 !important;
+      color: #7e8299 !important;
+      border-bottom: 2px solid #2b2b40 !important;
+    }
+
+    tbody td {
+      border-bottom: 1px solid #252538 !important;
+      color: #cdcdde !important;
+    }
+
+    tbody tr:hover {
+      background-color: #25253a !important;
+    }
+
+    // Input & Select trong bảng
+    .form-control.form-control-solid,
+    .form-select.form-select-solid {
+      background-color: #151521 !important;
+      color: #ffffff !important;
+      border: 1px solid #3b3b54 !important;
+
+      &:focus {
+        background-color: #151521 !important;
+        border-color: #3699ff !important;
+        box-shadow: 0 0 0 2px rgba(54, 153, 255, 0.2) !important;
+      }
+    }
+
+    .text-gray-900 {
+      color: #ffffff !important;
+    }
+
+    .text-gray-600 {
+      color: #a1a5b7 !important;
+    }
+  }
+
+  // Nút hành động Lưu SĐB
+  .btn-save-action.btn-synced {
+    background-color: #1e1e2d !important;
+    color: #cdcdde !important;
+    border-color: #3b3b54 !important;
+
+    &:hover {
+      background-color: #2b2b40 !important;
+      color: #ffffff !important;
+      border-color: #4e4e6d !important;
+    }
+  }
+
+  // Trạng thái vnEdu
+  .status-badge-vnedu {
+    &.synced {
+      background-color: rgba(16, 185, 129, 0.18) !important;
+      color: #34d399 !important;
+      border-color: rgba(16, 185, 129, 0.4) !important;
+    }
+
+    &.pending {
+      background-color: rgba(59, 130, 246, 0.18) !important;
+      color: #60a5fa !important;
+      border-color: rgba(59, 130, 246, 0.4) !important;
+    }
+  }
+
+  // Chip đối chiếu vắng
+  .attendance-compare-chip {
+    &.has-absent {
+      background-color: rgba(245, 158, 11, 0.18) !important;
+      color: #fbbf24 !important;
+      border-color: rgba(245, 158, 11, 0.45) !important;
+    }
+
+    &.all-present {
+      background-color: rgba(16, 185, 129, 0.18) !important;
+      color: #34d399 !important;
+      border-color: rgba(16, 185, 129, 0.4) !important;
+    }
+  }
+
+  // Badge buổi sáng/chiều
+  .badge-session {
+    &.morning {
+      background-color: rgba(245, 158, 11, 0.2) !important;
+      color: #fbbf24 !important;
+      border-color: rgba(245, 158, 11, 0.4) !important;
+    }
+
+    &.afternoon {
+      background-color: rgba(139, 92, 246, 0.2) !important;
+      color: #c4b5fd !important;
+      border-color: rgba(139, 92, 246, 0.4) !important;
+    }
+  }
+
+  // Loading state Dark mode
+  .loading-state-card {
+    background: #1e1e2d !important;
+    border: 1px solid #2b2b40 !important;
+    color: #cdcdde !important;
+
+    .loading-state-text {
+      color: #ffffff !important;
+    }
+  }
+
+  // Empty state & Footer
+  .empty-state-card {
+    background: #1e1e2d !important;
+    border-color: #2b2b40 !important;
+    color: #cdcdde !important;
+
+    .text-gray-800 {
+      color: #ffffff !important;
+    }
+
+    .text-gray-500 {
+      color: #7e8299 !important;
+    }
+  }
+
+  .kbd-badge {
+    background: #1e1e2d !important;
+    color: #a1a5b7 !important;
+    border-color: #2b2b40 !important;
+  }
+
+  // ==========================================
+  // MODAL ĐIỂM DANH & MODAL ĐĂNG NHẬP TRONG DARK
+  // ==========================================
+  .modal-dialog-custom {
+    background: #1e1e2d !important;
+    border-color: #2b2b40 !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
+  }
+
+  .modal-header-custom {
+    background: #1b1b28 !important;
+    border-color: #2b2b40 !important;
+  }
+
+  .modal-title-text {
+    color: #ffffff !important;
+  }
+
+  .modal-subtitle-text {
+    color: #a1a5b7 !important;
+  }
+
+  .btn-close-custom {
+    color: #a1a5b7 !important;
+
+    &:hover {
+      background: #2b2b40 !important;
+      color: #ffffff !important;
+    }
+  }
+
+  .modal-stats-bar {
+    background: #181824 !important;
+    border-color: #2b2b40 !important;
+  }
+
+  .stat-badge-total {
+    background: #242436 !important;
+    color: #e1e3ea !important;
+    border-color: #3b3b54 !important;
+  }
+
+  .modal-body-custom {
+    background: #1e1e2d !important;
+    color: #e1e3ea !important;
+  }
+
+  .modal-search-input {
+    background-color: #151521 !important;
+    border-color: #3b3b54 !important;
+    color: #ffffff !important;
+
+    &::placeholder {
+      color: #64647a !important;
+    }
+
+    &:focus {
+      background-color: #151521 !important;
+      border-color: #3699ff !important;
+    }
+  }
+
+  .attendance-scroll-wrap {
+    background: #181824 !important;
+    border-color: #2b2b40 !important;
+  }
+
+  .modal-attendance-table {
+    .modal-table-head th {
+      background-color: #151521 !important;
+      color: #7e8299 !important;
+      border-bottom: 2px solid #2b2b40 !important;
+    }
+
+    .student-row {
+      background-color: #1e1e2d !important;
+      border-color: #252538 !important;
+
+      &:hover {
+        background-color: #25253a !important;
+      }
+
+      .col-stt {
+        color: #7e8299 !important;
+      }
+
+      .student-name {
+        color: #ffffff !important;
+      }
+
+      .col-mahs {
+        color: #7e8299 !important;
+      }
+
+      &.row-absent {
+        background-color: rgba(241, 65, 108, 0.22) !important;
+        border-color: rgba(241, 65, 108, 0.4) !important;
+
+        .student-name {
+          color: #ff6b8b !important;
+        }
+      }
+    }
+  }
+
+  .btn-status-toggle {
+    &.btn-outline-status {
+      background: #2b2b40 !important;
+      color: #cdcdde !important;
+      border: 1px solid #3b3b54 !important;
+
+      &:hover {
+        background: #363652 !important;
+        color: #ffffff !important;
+      }
+    }
+  }
+
+  .modal-footer-custom {
+    background: #1b1b28 !important;
+    border-color: #2b2b40 !important;
+    color: #cdcdde !important;
+  }
+
+  .btn-modal-close {
+    background: #2b2b40 !important;
+    color: #ffffff !important;
+    border: 1px solid #3b3b54 !important;
+
+    &:hover {
+      background: #363652 !important;
+    }
+  }
+
+  .form-field-label {
+    color: #e1e3ea !important;
+  }
+
+  .modal-input {
+    background-color: #151521 !important;
+    border-color: #3b3b54 !important;
+    color: #ffffff !important;
+
+    &:focus {
+      background-color: #151521 !important;
+      border-color: #3699ff !important;
+    }
+  }
+
+  .modal-tip-box {
+    background: #181824 !important;
+    border-color: #2b2b40 !important;
+    color: #a1a5b7 !important;
+  }
 }

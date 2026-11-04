@@ -70,7 +70,7 @@ export class AuthService implements OnDestroy {
         user.email = `${username}@vnedu.vn`;
         user.phone = username;
         user.occupation = 'Giáo viên THCS';
-        user.companyName = 'Trường THCS Phú Hòa';
+        user.companyName = 'Trường THCS An Lập';
         user.roles = [1];
         user.authToken = res.token || ('vnedu_auth_' + Date.now());
         user.pic = './assets/media/avatars/300-1.jpg';

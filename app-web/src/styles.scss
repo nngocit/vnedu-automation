@@ -10,3 +10,178 @@
 @import "./assets/plugins/keenicons/duotone/style.css";
 @import "./assets/plugins/keenicons/outline/style.css";
 @import "./assets/plugins/keenicons/solid/style.css";
+
+/* ========================================================= */
+/* FIX TOÀN DIỆN DARK MODE VNEDU THEME                       */
+/* ========================================================= */
+[data-bs-theme="dark"] {
+  .vnedu-app-container {
+    background-color: transparent !important;
+  }
+
+  .top-nav-bar {
+    background-color: #1e1e2d !important;
+    border-color: #2b2b40 !important;
+  }
+
+  .day-card {
+    background-color: #1e1e2d !important;
+    border-color: #2b2b40 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+
+    .day-card-header {
+      background-color: #1b1b28 !important;
+      border-color: #2b2b40 !important;
+
+      .day-title {
+        color: #ffffff !important;
+      }
+    }
+
+    .day-table {
+      thead th {
+        background-color: #1b1b28 !important;
+        color: #7e8299 !important;
+        border-color: #2b2b40 !important;
+      }
+
+      tbody td {
+        border-color: #252538 !important;
+        color: #cdcdde !important;
+      }
+
+      tbody tr:hover {
+        background-color: #25253a !important;
+      }
+
+      .form-control.form-control-solid,
+      .form-select.form-select-solid {
+        background-color: #151521 !important;
+        color: #ffffff !important;
+        border-color: #3b3b54 !important;
+      }
+    }
+  }
+
+  .modal-dialog-custom {
+    background-color: #1e1e2d !important;
+    border-color: #2b2b40 !important;
+    color: #e1e3ea !important;
+
+    .modal-header-custom,
+    .modal-footer-custom {
+      background-color: #1b1b28 !important;
+      border-color: #2b2b40 !important;
+    }
+
+    .modal-stats-bar {
+      background-color: #181824 !important;
+      border-color: #2b2b40 !important;
+    }
+
+    .modal-body-custom {
+      background-color: #1e1e2d !important;
+      color: #e1e3ea !important;
+    }
+
+    .attendance-scroll-wrap {
+      background-color: #181824 !important;
+      border-color: #2b2b40 !important;
+
+      table {
+        thead th {
+          background-color: #151521 !important;
+          color: #7e8299 !important;
+          border-color: #2b2b40 !important;
+        }
+
+        tbody tr.student-row {
+          background-color: #1e1e2d !important;
+          border-color: #252538 !important;
+
+          td {
+            border-color: #252538 !important;
+          }
+
+          .student-name {
+            color: #ffffff !important;
+          }
+
+          &.row-absent {
+            background-color: rgba(241, 65, 108, 0.22) !important;
+
+            .student-name {
+              color: #ff6b8b !important;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Auth Layout Dark Mode
+  .auth-form-aside {
+    background-color: #1e1e2d !important;
+    color: #e1e3ea !important;
+
+    .auth-sub-text {
+      color: #92929f !important;
+    }
+
+    .auth-footer-text {
+      color: #7e8299 !important;
+    }
+  }
+
+  #vnedu_login_form {
+    .login-title {
+      color: #ffffff !important;
+    }
+
+    .login-subtitle {
+      color: #a1a5b7 !important;
+    }
+
+    .teacher-quick-card {
+      background-color: rgba(37, 99, 235, 0.15) !important;
+      border-color: rgba(37, 99, 235, 0.4) !important;
+
+      .teacher-quick-name {
+        color: #ffffff !important;
+      }
+
+      .teacher-quick-sub {
+        color: #a1a5b7 !important;
+      }
+    }
+
+    .login-field-label {
+      color: #cdcdde !important;
+    }
+
+    .login-input {
+      background-color: #151521 !important;
+      border-color: #3b3b54 !important;
+      color: #ffffff !important;
+
+      &:focus {
+        background-color: #151521 !important;
+        border-color: #3699ff !important;
+      }
+    }
+
+    .login-security-text {
+      color: #7e8299 !important;
+    }
+  }
+
+  .loading-state-card {
+    background-color: #1e1e2d !important;
+    border-color: #2b2b40 !important;
+    color: #cdcdde !important;
+
+    .loading-state-text {
+      color: #ffffff !important;
+    }
+  }
+}

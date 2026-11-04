@@ -141,7 +141,7 @@
       <!-- Input tìm nhanh -->
       <div class="position-relative ms-2">
         <input type="text"
-               class="form-control form-control-sm rounded-pill ps-8 bg-white border border-gray-300 fs-8 w-220px"
+               class="form-control form-control-sm rounded-pill ps-8 fs-8 w-220px top-search-input"
                [(ngModel)]="searchQuery"
                (ngModelChange)="onSearchChange()"
                placeholder="Tìm nhanh bài dạy, phân môn...">
@@ -161,9 +161,9 @@
   </div>
 
   <!-- LOADING -->
-  <div *ngIf="isLoading" class="bg-white p-12 text-center rounded-3 shadow-xs border border-gray-200 my-4">
+  <div *ngIf="isLoading" class="loading-state-card p-12 text-center rounded-3 shadow-xs my-4">
     <div class="spinner-border text-primary my-3" role="status"></div>
-    <div class="text-gray-800 fw-bold fs-6">Đang tải dữ liệu thời khóa biểu vnEdu...</div>
+    <div class="loading-state-text fw-bold fs-6">Đang tải dữ liệu thời khóa biểu vnEdu...</div>
   </div>
 
   <!-- DANH SÁCH BẢNG THEO TỪNG THỨ TRONG TUẦN (CARD PER DAY) -->
@@ -287,7 +287,7 @@
     </div>
 
     <!-- Khi không có dữ liệu -->
-    <div *ngIf="dayGroups.length === 0" class="bg-white p-10 text-center rounded-3 shadow-xs border border-gray-200">
+    <div *ngIf="dayGroups.length === 0" class="empty-state-card p-10 text-center rounded-3 shadow-xs">
       <div class="fs-6 fw-bold text-gray-800">Không có tiết dạy nào phù hợp với bộ lọc</div>
       <div class="fs-7 text-gray-500 mt-1">Vui lòng chọn tuần khác hoặc bấm "Lập trước KHDH".</div>
     </div>
@@ -296,11 +296,11 @@
     <div class="d-flex align-items-center justify-content-end gap-2 text-gray-500 fs-8 py-2 mt-2">
       <span class="badge px-2 py-1 rounded-1 fw-bold fs-9" style="background-color: #3699ff; color: #fff;">PRO</span>
       <span class="fw-semibold">⌨ Phím tắt:</span>
-      <span class="badge bg-white text-gray-700 px-2 py-1 border border-gray-300">B Menu</span>
-      <span class="badge bg-white text-gray-700 px-2 py-1 border border-gray-300">T Hôm nay</span>
-      <span class="badge bg-white text-gray-700 px-2 py-1 border border-gray-300">W Cả tuần</span>
-      <span class="badge bg-white text-gray-700 px-2 py-1 border border-gray-300">R Làm mới</span>
-      <span class="badge bg-white text-gray-700 px-2 py-1 border border-gray-300">D Nền tối/sáng</span>
+      <span class="badge kbd-badge px-2 py-1">B Menu</span>
+      <span class="badge kbd-badge px-2 py-1">T Hôm nay</span>
+      <span class="badge kbd-badge px-2 py-1">W Cả tuần</span>
+      <span class="badge kbd-badge px-2 py-1">R Làm mới</span>
+      <span class="badge kbd-badge px-2 py-1">D Nền tối/sáng</span>
     </div>
   </div>
 </div>
@@ -310,16 +310,16 @@
 <!-- ============================================================ -->
 <div *ngIf="showAttendanceModal" class="modal-backdrop-custom d-flex align-items-center justify-content-center">
   <div class="modal-dialog-custom modal-lg">
-    <div class="p-4 border-bottom bg-light d-flex align-items-center justify-content-between">
+    <div class="modal-header-custom p-4 border-bottom d-flex align-items-center justify-content-between">
       <div class="d-flex align-items-center gap-3">
         <div class="symbol symbol-40px symbol-circle bg-primary text-white d-flex align-items-center justify-content-center">
           👥
         </div>
         <div>
-          <h4 class="fw-bold text-gray-900 fs-4 mb-0">
+          <h4 class="fw-bold modal-title-text fs-4 mb-0">
             Điểm Danh Lớp {{ selectedSlotForAttendance?.lop }}
           </h4>
-          <div class="text-gray-600 fs-7">
+          <div class="modal-subtitle-text fs-7">
             Tiết {{ selectedSlotForAttendance?.tiet }} - Thứ {{ selectedSlotForAttendance?.thu }} (Ngày {{ selectedSlotForAttendance?.ngay }})
           </div>
         </div>
@@ -327,9 +327,9 @@
       <button type="button" class="btn-close-custom" (click)="closeAttendanceModal()" title="Đóng">✕</button>
     </div>
 
-    <div class="p-3 bg-white d-flex flex-wrap align-items-center justify-content-between gap-2 border-bottom">
+    <div class="modal-stats-bar p-3 d-flex flex-wrap align-items-center justify-content-between gap-2 border-bottom">
       <div class="d-flex align-items-center gap-2">
-        <span class="badge bg-light text-dark fs-7 px-3 py-2 fw-bold border">
+        <span class="badge stat-badge-total fs-7 px-3 py-2 fw-bold border">
           Tổng số: {{ attendanceStudents.length }} học sinh
         </span>
         <span class="badge bg-success bg-opacity-25 text-success fs-7 px-3 py-2 fw-bold">
@@ -346,10 +346,10 @@
       </button>
     </div>
 
-    <div class="p-4 bg-white">
+    <div class="modal-body-custom p-4">
       <div class="position-relative mb-3">
         <input type="text"
-               class="form-control form-control-sm ps-8 fs-7 rounded-2 border border-gray-300"
+               class="form-control form-control-sm ps-8 fs-7 rounded-2 modal-search-input"
                [(ngModel)]="attendanceSearchText"
                placeholder="Tìm nhanh học sinh theo tên hoặc mã số...">
         <span class="position-absolute top-50 translate-middle-y ms-2 text-gray-500">🔍</span>
@@ -361,9 +361,9 @@
       </div>
 
       <div *ngIf="!isLoadingAttendance" class="attendance-scroll-wrap">
-        <table class="table table-sm align-middle fs-7 mb-0">
-          <thead class="sticky-top bg-light border-bottom">
-            <tr class="fw-bold text-gray-700 text-uppercase fs-8">
+        <table class="table table-sm align-middle fs-7 mb-0 modal-attendance-table">
+          <thead class="sticky-top modal-table-head border-bottom">
+            <tr class="fw-bold text-uppercase fs-8">
               <th class="ps-3 w-50px">STT</th>
               <th class="min-w-160px">Họ và Tên Học Sinh</th>
               <th class="w-100px text-gray-500 font-monospace">Mã HS</th>
@@ -372,25 +372,25 @@
           </thead>
           <tbody>
             <tr *ngFor="let stu of filteredStudents; let i = index"
-                [ngClass]="{'bg-danger bg-opacity-10': stu.coPhep || stu.khongPhep}"
-                class="border-bottom border-gray-200">
-              <td class="ps-3 fw-bold text-gray-600 font-monospace">{{ stu.stt || (i + 1) }}</td>
+                [ngClass]="{'row-absent': stu.coPhep || stu.khongPhep}"
+                class="border-bottom student-row">
+              <td class="ps-3 fw-bold font-monospace col-stt">{{ stu.stt || (i + 1) }}</td>
               <td>
-                <span class="fw-bold text-gray-900 fs-7">{{ stu.fullName }}</span>
+                <span class="fw-bold student-name fs-7">{{ stu.fullName }}</span>
               </td>
-              <td class="text-gray-500 fs-8 font-monospace">{{ stu.maHs || '---' }}</td>
+              <td class="fs-8 font-monospace col-mahs">{{ stu.maHs || '---' }}</td>
               <td class="text-end pe-3">
                 <div class="btn-group btn-group-sm" role="group">
                   <button type="button"
-                          class="btn btn-sm px-3 fw-bold"
-                          [ngClass]="stu.coPhep ? 'btn-success text-white' : 'btn-light border text-gray-800'"
+                          class="btn btn-sm px-3 fw-bold btn-status-toggle"
+                          [ngClass]="stu.coPhep ? 'btn-success text-white' : 'btn-outline-status'"
                           (click)="setStudentStatus(stu, 'P')"
                           title="Có phép (P)">
                     P (Phép)
                   </button>
                   <button type="button"
-                          class="btn btn-sm px-3 fw-bold"
-                          [ngClass]="stu.khongPhep ? 'btn-danger text-white' : 'btn-light border text-gray-800'"
+                          class="btn btn-sm px-3 fw-bold btn-status-toggle"
+                          [ngClass]="stu.khongPhep ? 'btn-danger text-white' : 'btn-outline-status'"
                           (click)="setStudentStatus(stu, 'K')"
                           title="Không phép (K)">
                     K (K.Phép)
@@ -409,13 +409,13 @@
       </div>
     </div>
 
-    <div class="p-4 border-top bg-light d-flex align-items-center justify-content-between">
-      <div class="text-gray-700 fs-7">
+    <div class="modal-footer-custom p-4 border-top d-flex align-items-center justify-content-between">
+      <div class="fs-7">
         <span *ngIf="countTotalVang === 0" class="text-success fw-bold">✓ Cả lớp đi học đầy đủ</span>
         <span *ngIf="countTotalVang > 0" class="text-danger fw-bold">⚠ Đang chọn vắng {{ countTotalVang }} học sinh</span>
       </div>
       <div class="d-flex gap-2">
-        <button type="button" class="btn btn-sm btn-white border border-gray-300 text-gray-800 fw-bold rounded-2 px-4" (click)="closeAttendanceModal()">
+        <button type="button" class="btn btn-sm btn-modal-close fw-bold rounded-2 px-4" (click)="closeAttendanceModal()">
           Đóng
         </button>
         <button type="button" class="pill-btn pill-primary px-4 shadow-xs"
@@ -433,12 +433,12 @@
 <!-- ============================================================ -->
 <div *ngIf="showLoginModal" class="modal-backdrop-custom d-flex align-items-center justify-content-center">
   <div class="modal-dialog-custom modal-md">
-    <div class="p-4 border-bottom bg-light d-flex align-items-center justify-content-between">
-      <h4 class="fw-bold text-gray-900 fs-4 mb-0">🔑 Xác Thực Tài Khoản vnEdu</h4>
+    <div class="modal-header-custom p-4 border-bottom d-flex align-items-center justify-content-between">
+      <h4 class="fw-bold modal-title-text fs-4 mb-0">🔑 Xác Thực Tài Khoản vnEdu</h4>
       <button type="button" class="btn-close-custom" (click)="closeLoginModal()" title="Đóng">✕</button>
     </div>
 
-    <div class="p-5 bg-white">
+    <div class="modal-body-custom p-5">
       <div *ngIf="loginErrorMessage" class="alert alert-danger p-3 mb-4 rounded-2 fs-7 fw-semibold">
         {{ loginErrorMessage }}
       </div>
@@ -448,36 +448,36 @@
       </div>
 
       <div class="mb-3">
-        <label class="form-label fs-7 fw-bold text-gray-800">Tên Đăng Nhập / SĐT vnEdu:</label>
+        <label class="form-label fs-7 fw-bold form-field-label">Tên Đăng Nhập / SĐT vnEdu:</label>
         <input type="text"
-               class="form-control form-control-solid rounded-2 fw-bold border border-gray-300"
+               class="form-control form-control-solid rounded-2 fw-bold modal-input"
                [(ngModel)]="loginUsername"
                placeholder="Nhập số điện thoại hoặc mã giáo viên">
       </div>
 
       <div class="mb-3">
-        <label class="form-label fs-7 fw-bold text-gray-800">Mật Khẩu vnEdu:</label>
+        <label class="form-label fs-7 fw-bold form-field-label">Mật Khẩu vnEdu:</label>
         <div class="position-relative">
           <input [type]="showPassword ? 'text' : 'password'"
-                 class="form-control form-control-solid pe-9 rounded-2 fw-bold border border-gray-300"
+                 class="form-control form-control-solid pe-9 rounded-2 fw-bold modal-input"
                  [(ngModel)]="loginPassword"
                  placeholder="Nhập mật khẩu vnEdu"
                  (keyup.enter)="submitLogin()">
           <button type="button"
-                  class="btn btn-sm btn-icon position-absolute top-50 end-0 translate-middle-y me-1 text-gray-600 border-0 bg-transparent"
+                  class="btn btn-sm btn-icon position-absolute top-50 end-0 translate-middle-y me-1 text-gray-500 border-0 bg-transparent"
                   (click)="togglePasswordVisibility()" title="Ẩn/hiện mật khẩu">
             {{ showPassword ? '🙈' : '👁️' }}
           </button>
         </div>
       </div>
 
-      <div class="p-3 bg-light rounded-2 text-gray-700 fs-8 border border-gray-200">
+      <div class="modal-tip-box p-3 rounded-2 fs-8 border">
         🛡️ Phiên đăng nhập được mã hóa an toàn và chỉ lưu trên máy tính của bạn.
       </div>
     </div>
 
-    <div class="p-4 border-top bg-light d-flex justify-content-end gap-2">
-      <button type="button" class="btn btn-sm btn-white border border-gray-300 text-gray-800 fw-bold rounded-2 px-4" (click)="closeLoginModal()">
+    <div class="modal-footer-custom p-4 border-top d-flex justify-content-end gap-2">
+      <button type="button" class="btn btn-sm btn-modal-close fw-bold rounded-2 px-4" (click)="closeLoginModal()">
         Hủy
       </button>
       <button type="button" class="pill-btn pill-primary px-4 shadow-xs"

@@ -110,12 +110,14 @@ app.get('/api/info', async (req, res) => {
         const source = req.query.source || 'vnedu';
         const file = core.getLatestExcelFile();
         const weekInfo = core.getAvailableWeeks(source);
+        const schoolInfo = await core.getSchoolInfoFromVnEdu();
         res.json({
             success: true,
             teacher: {
                 name: 'Lê Thị Diệu Huyên',
                 account: '051197003685',
-                school: 'Trường THCS Phú Hòa',
+                school: schoolInfo.school || 'Trường THCS An Lập',
+                branch: schoolInfo.branch || 'Phân hiệu An Lập',
                 year: '2025 - 2026'
             },
             file: file ? { name: file.name, time: file.time, isCustom: !!file.isCustom } : null,

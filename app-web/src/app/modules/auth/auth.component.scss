@@ -2,6 +2,37 @@
   display: block;
 }
 
+// Cột bên trái: FORM ĐĂNG NHẬP
+.auth-form-aside {
+  background-color: #ffffff;
+  color: #1e293b;
+  transition: background-color 0.2s ease, color 0.2s ease;
+
+  .auth-sub-text {
+    color: #475569;
+  }
+
+  .auth-footer-text {
+    color: #64748b;
+  }
+}
+
+// Hỗ trợ Dark Mode cho Auth Layout
+:host-context([data-bs-theme="dark"]) {
+  .auth-form-aside {
+    background-color: #1e1e2d !important;
+    color: #e1e3ea !important;
+
+    .auth-sub-text {
+      color: #92929f !important;
+    }
+
+    .auth-footer-text {
+      color: #7e8299 !important;
+    }
+  }
+}
+
 .auth-hero-aside {
   background: linear-gradient(135deg, #091a38 0%, #1e3a8a 45%, #0284c7 100%);
   position: relative;
