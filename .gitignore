@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Cloudflare & Build
+.wrangler/
+dist/
+
+# Browser user data & temp sessions
+user_data/
+
+# Temporary scraped / dump files
+last_table.html
+page_after_sso.html
+page_dump.html
+table_*.html
+sdd_*_raw.html
+edit_logs.txt
+current_lbg.xls
+*.log
+
+# Root test screenshots (keep public/ assets)
+/*.png
+
+# Scratch debug scripts
+scratch/
+
+# OS files
+.DS_Store
+Thumbs.db

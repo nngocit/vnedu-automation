@@ -1,0 +1,19 @@
+@echo off
+title vnEdu Smart Sync - May chu cuc bo
+chcp 65001 >nul
+color 0A
+cls
+echo ======================================================================
+echo           vnEdu Smart Sync - Máy chủ Cục bộ (IP Việt Nam)
+echo                     Giáo viên: Lê Thị Diệu Huyên
+echo ======================================================================
+echo.
+echo [1/2] Đang khởi động máy chủ hỗ trợ kết nối vnEdu...
+echo [2/2] Cổng hoạt động: http://localhost:3000
+echo.
+echo Máy chủ đang chạy ngầm để hỗ trợ kết nối nội địa tốc độ cao.
+echo Cô có thể thu nhỏ cửa sổ này xuống thanh Taskbar (không tắt cửa sổ này nhé cô).
+echo.
+echo ======================================================================
+node server.js
+pause

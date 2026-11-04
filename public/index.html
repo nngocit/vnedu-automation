@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme-style="ocean">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý & Tự Động Điền Sổ Đầu Bài vnEdu | Cô Lê Thị Diệu Huyên</title>
+    <meta name="description"
+        content="Hệ thống tự động hóa đồng bộ Lịch Báo Giảng vào Sổ đầu bài điện tử vnEdu trường THCS Thanh An dành riêng cho cô Lê Thị Diệu Huyên.">
+    <!-- PWA & Mobile Web App meta tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="vnEdu Sync">
+    <meta name="application-name" content="vnEdu Sync">
+    <meta name="theme-color" content="#0284c7">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="icon" type="image/png" href="/icon-192.png">
+    <link rel="manifest" href="/manifest.json">
+    <!-- Google Fonts: Be Vietnam Pro (Đặc quyền tiếng Việt chuyên nghiệp) & Plus Jakarta Sans & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="app.css?v=9.7">
+</head>
+
+<body>
+    <!-- App Container -->
+    <div id="app" class="app-layout">
+        <!-- Top Navigation Header -->
+        <header class="app-header">
+            <div class="header-container">
+                <div class="brand-section">
+                    <!-- Nút Toggle Menu Thanh Bên (Sidebar) -->
+                    <button class="btn btn-glass btn-icon btn-toggle-sidebar" id="btnToggleSidebar"
+                        title="Thu gọn / Mở rộng Menu Thanh bên phân cấp (Phím tắt: B hoặc M)" aria-label="Toggle Sidebar">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
+                    <div class="brand-logo">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                            <path d="M12 6v6"></path>
+                            <path d="m9 9 3-3 3 3"></path>
+                        </svg>
+                    </div>
+                    <div class="brand-meta">
+                        <h1 class="brand-title">vnEdu Smart Sync</h1>
+                        <span class="brand-subtitle">Trường THCS Thanh An &bull; Năm học 2026 - 2027</span>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <button type="button" class="btn-vnedu-login" id="btnVnEduLoginHeader" title="Trạng thái tài khoản vnEdu. Bấm để kiểm tra hoặc gia hạn phiên làm việc">
+                        <span class="status-dot"></span>
+                        <span id="vnEduLoginStatusText">vnEdu: Đã kết nối</span>
+                    </button>
+                    <div class="teacher-card">
+                        <div class="teacher-avatar">H</div>
+                        <div class="teacher-info">
+                            <span class="teacher-name">Cô Lê Thị Diệu Huyên</span>
+                            <span class="teacher-id"><span class="status-dot"></span>051197003685</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-glass btn-icon" id="btnThemeToggle"
+                        title="Chuyển chế độ Sáng / Tối (Phím tắt: D)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="themeIcon">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                    </button>
+                    <!-- Nút Đổi Phong Cách Giao Diện (Theme Palette Switcher) -->
+                    <button class="btn btn-glass btn-icon" id="btnStyleSwitcher" popovertarget="popoverStyleSwitcher"
+                        title="🎨 Đổi phong cách màu sắc giao diện">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle>
+                            <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle>
+                            <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle>
+                            <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle>
+                            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path>
+                        </svg>
+                    </button>
+                    <div id="popoverStyleSwitcher" popover class="style-switcher-popover">
+                        <div class="style-switcher-title">🎨 Phong Cách Giao Diện</div>
+                        <button class="style-option-btn" data-style="emerald">
+                            <span class="style-palette-preview" style="background: linear-gradient(135deg, #059669, #10B981);">🌿</span>
+                            <div class="style-meta">
+                                <span class="style-meta-name">Xanh Ngọc Sư Phạm</span>
+                                <span class="style-meta-desc">Dịu mắt, thanh nhã, chuẩn học đường</span>
+                            </div>
+                        </button>
+                        <button class="style-option-btn active" data-style="ocean">
+                            <span class="style-palette-preview" style="background: linear-gradient(135deg, #1D4ED8, #3B82F6);">🌊</span>
+                            <div class="style-meta">
+                                <span class="style-meta-name">Xanh Biển vnEdu</span>
+                                <span class="style-meta-desc">Thân thuộc, nhận diện cổng vnEdu</span>
+                            </div>
+                        </button>
+                        <button class="style-option-btn" data-style="warm">
+                            <span class="style-palette-preview" style="background: linear-gradient(135deg, #B45309, #F59E0B);">📖</span>
+                            <div class="style-meta">
+                                <span class="style-meta-name">Sổ Tay Giáo Viên</span>
+                                <span class="style-meta-desc">Tối giản, màu be ấm nhẹ nhàng</span>
+                            </div>
+                        </button>
+                        <button class="style-option-btn" data-style="indigo">
+                            <span class="style-palette-preview" style="background: linear-gradient(135deg, #4F46E5, #818CF8);">🔮</span>
+                            <div class="style-meta">
+                                <span class="style-meta-name">Tím Hiện Đại</span>
+                                <span class="style-meta-desc">Phong cách công nghệ nguyên bản</span>
+                            </div>
+                        </button>
+                    </div>
+                    <button class="btn btn-glass btn-icon" id="btnAttendanceCheckHeader"
+                        title="🔍 Đối chiếu học sinh vắng từ Sổ điểm danh vnEdu">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <polyline points="16 11 18 13 22 9"></polyline>
+                        </svg>
+                    </button>
+                    <button class="btn btn-glass btn-icon" id="btnPpctConfig"
+                        title="⚙️ Thiết lập Cấu hình Số tiết (PPCT) môn HĐTN & các môn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                    </button>
+                    <a href="https://uaevcmanmsgdbinhduong.vnedu.vn/v5/" target="_blank" class="btn btn-glass"
+                        id="btnOpenVnEdu" title="Mở trang vnEdu trên tab mới">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                        </svg>
+                        Mở vnEdu
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- App Body Layout (Sidebar phân cấp + Main Workspace) -->
+        <div class="app-body-container" id="appBodyContainer">
+            <!-- Sidebar Drawer Backdrop (cho Mobile & Tablet) -->
+            <div class="sidebar-backdrop" id="sidebarBackdrop" title="Bấm để đóng menu"></div>
+
+            <!-- Hierarchical Navigation Sidebar -->
+            <aside class="app-sidebar" id="appSidebar" aria-label="Menu Phân Cấp Quản Trị">
+                <!-- Nút Thu gọn / Mở rộng ở mép Sidebar -->
+                <button class="sidebar-edge-toggle" id="btnSidebarEdgeToggle" title="Thu gọn menu thanh bên (Phím tắt: B)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="edge-icon">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+
+                <!-- Sidebar Top Info (Siêu Tinh Gọn) -->
+                <div class="sidebar-header-compact">
+                    <div class="sidebar-brand-compact">
+                        <span class="sidebar-brand-icon">📂</span>
+                        <div class="sidebar-brand-text">
+                            <span class="sidebar-brand-title">QUẢN TRỊ NIÊN KHÓA</span>
+                            <span class="sidebar-brand-class"><span class="badge-dot-live"></span>Lớp 9A2AL &bull; GVCN</span>
+                        </div>
+                    </div>
+                    <button class="sidebar-close-btn" id="btnCloseSidebar" title="Đóng menu thanh bên" aria-label="Đóng menu">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Sidebar Scrollable Body -->
+                <div class="sidebar-scrollable">
+                    <!-- SECTION 1: CÂY THỜI KHÓA BIỂU 35 TUẦN -->
+                    <div class="sidebar-section">
+                        <div class="sidebar-section-header-row">
+                            <div class="sidebar-section-title">
+                                <span class="section-title-icon">📅</span>
+                                <span>LỊCH DẠY CẢ NĂM (35 TUẦN)</span>
+                            </div>
+                            <div class="tree-quick-controls">
+                                <button class="tree-ctrl-btn" id="btnSidebarExpandAll" title="Mở rộng tất cả các tháng">
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="7 13 12 18 17 13"></polyline><polyline points="7 6 12 11 17 6"></polyline></svg>
+                                    Mở rộng
+                                </button>
+                                <button class="tree-ctrl-btn" id="btnSidebarCollapseAll" title="Thu gọn tất cả các tháng">
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 11 12 6 7 11"></polyline><polyline points="17 18 12 13 7 18"></polyline></svg>
+                                    Thu gọn
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- CÂY PHÂN CẤP HỌC KỲ I -->
+                        <div class="sidebar-tree-node tree-semester expanded" id="treeSem1">
+                            <div class="tree-node-header" data-toggle="semester" data-target="treeSem1">
+                                <span class="tree-toggle-arrow">▼</span>
+                                <span class="tree-node-icon">📘</span>
+                                <span class="tree-node-label">Học kỳ I (Tuần 1 - 19)</span>
+                                <span class="tree-badge badge-active">Hiện tại</span>
+                            </div>
+                            <div class="tree-node-children">
+                                <!-- Tháng 09/2026 (Mutually Exclusive <details> Accordion) -->
+                                <details class="month-group" name="hk1-month">
+                                    <summary class="month-title">
+                                        <span class="month-icon">📁</span>
+                                        <span>Tháng 09 / 2026</span>
+                                        <span class="month-count-badge">4 tuần</span>
+                                    </summary>
+                                    <div class="month-weeks">
+                                        <button class="sidebar-week-item" data-week="1">
+                                            <span class="week-name">Tuần 1</span>
+                                            <span class="week-dates">07/09 - 13/09</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="2">
+                                            <span class="week-name">Tuần 2</span>
+                                            <span class="week-dates">14/09 - 20/09</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="3">
+                                            <span class="week-name">Tuần 3</span>
+                                            <span class="week-dates">21/09 - 27/09</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="4">
+                                            <span class="week-name">Tuần 4</span>
+                                            <span class="week-dates">28/09 - 04/10</span>
+                                        </button>
+                                    </div>
+                                </details>
+
+                                <!-- Tháng 10/2026 (Mở sẵn vì chứa Tuần 8 hiện tại) -->
+                                <details class="month-group" name="hk1-month" open>
+                                    <summary class="month-title">
+                                        <span class="month-icon">📁</span>
+                                        <span>Tháng 10 / 2026</span>
+                                        <span class="month-count-badge">4 tuần</span>
+                                    </summary>
+                                    <div class="month-weeks">
+                                        <button class="sidebar-week-item" data-week="5">
+                                            <span class="week-name">Tuần 5</span>
+                                            <span class="week-dates">05/10 - 11/10</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="6">
+                                            <span class="week-name">Tuần 6</span>
+                                            <span class="week-dates">12/10 - 18/10</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="7">
+                                            <span class="week-name">Tuần 7</span>
+                                            <span class="week-dates">19/10 - 25/10</span>
+                                        </button>
+                                        <button class="sidebar-week-item active" data-week="8">
+                                            <span class="week-name">Tuần 8 <span class="sidebar-tag tag-now">Đang học</span></span>
+                                            <span class="week-dates">26/10 - 01/11</span>
+                                        </button>
+                                    </div>
+                                </details>
+
+                                <!-- Tháng 11/2026 -->
+                                <details class="month-group" name="hk1-month">
+                                    <summary class="month-title">
+                                        <span class="month-icon">📁</span>
+                                        <span>Tháng 11 / 2026</span>
+                                        <span class="month-count-badge">4 tuần</span>
+                                    </summary>
+                                    <div class="month-weeks">
+                                        <button class="sidebar-week-item" data-week="9">
+                                            <span class="week-name">Tuần 9 <span class="sidebar-tag tag-next">Kế tiếp</span></span>
+                                            <span class="week-dates">02/11 - 08/11</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="10">
+                                            <span class="week-name">Tuần 10</span>
+                                            <span class="week-dates">09/11 - 15/11</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="11">
+                                            <span class="week-name">Tuần 11</span>
+                                            <span class="week-dates">16/11 - 22/11</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="12">
+                                            <span class="week-name">Tuần 12</span>
+                                            <span class="week-dates">23/11 - 29/11</span>
+                                        </button>
+                                    </div>
+                                </details>
+
+                                <!-- Tháng 12/2026 -->
+                                <details class="month-group" name="hk1-month">
+                                    <summary class="month-title">
+                                        <span class="month-icon">📁</span>
+                                        <span>Tháng 12 / 2026</span>
+                                        <span class="month-count-badge">5 tuần</span>
+                                    </summary>
+                                    <div class="month-weeks">
+                                        <button class="sidebar-week-item" data-week="13">
+                                            <span class="week-name">Tuần 13</span>
+                                            <span class="week-dates">30/11 - 06/12</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="14">
+                                            <span class="week-name">Tuần 14</span>
+                                            <span class="week-dates">07/12 - 13/12</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="15">
+                                            <span class="week-name">Tuần 15</span>
+                                            <span class="week-dates">14/12 - 20/12</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="16">
+                                            <span class="week-name">Tuần 16</span>
+                                            <span class="week-dates">21/12 - 27/12</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="17">
+                                            <span class="week-name">Tuần 17</span>
+                                            <span class="week-dates">28/12 - 03/01</span>
+                                        </button>
+                                    </div>
+                                </details>
+
+                                <!-- Tháng 01/2027 -->
+                                <details class="month-group" name="hk1-month">
+                                    <summary class="month-title">
+                                        <span class="month-icon">📁</span>
+                                        <span>Tháng 01 / 2027</span>
+                                        <span class="month-count-badge">2 tuần</span>
+                                    </summary>
+                                    <div class="month-weeks">
+                                        <button class="sidebar-week-item" data-week="18">
+                                            <span class="week-name">Tuần 18</span>
+                                            <span class="week-dates">04/01 - 10/01</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="19">
+                                            <span class="week-name">Tuần 19 <span class="sidebar-tag tag-exam">Thi HK1</span></span>
+                                            <span class="week-dates">11/01 - 17/01</span>
+                                        </button>
+                                    </div>
+                                </details>
+                            </div>
+                        </div>
+
+                        <!-- CÂY PHÂN CẤP HỌC KỲ II -->
+                        <div class="sidebar-tree-node tree-semester collapsed" id="treeSem2">
+                            <div class="tree-node-header" data-toggle="semester" data-target="treeSem2">
+                                <span class="tree-toggle-arrow">▶</span>
+                                <span class="tree-node-icon">📗</span>
+                                <span class="tree-node-label">Học kỳ II (Tuần 20 - 35)</span>
+                                <span class="tree-badge badge-pending">Dự kiến</span>
+                            </div>
+                            <div class="tree-node-children">
+                                <!-- Tháng 01 - 02/2027 (Mutually Exclusive <details> Accordion) -->
+                                <details class="month-group" name="hk2-month">
+                                    <summary class="month-title">
+                                        <span class="month-icon">📁</span>
+                                        <span>Tháng 01 - 02 / 2027</span>
+                                        <span class="month-count-badge">4 tuần</span>
+                                    </summary>
+                                    <div class="month-weeks">
+                                        <button class="sidebar-week-item" data-week="20">
+                                            <span class="week-name">Tuần 20</span>
+                                            <span class="week-dates">18/01 - 24/01</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="21">
+                                            <span class="week-name">Tuần 21</span>
+                                            <span class="week-dates">25/01 - 31/01</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="22">
+                                            <span class="week-name">Tuần 22</span>
+                                            <span class="week-dates">01/02 - 07/02</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="23">
+                                            <span class="week-name">Tuần 23</span>
+                                            <span class="week-dates">08/02 - 14/02</span>
+                                        </button>
+                                    </div>
+                                </details>
+
+                                <!-- Tháng 03/2027 -->
+                                <details class="month-group" name="hk2-month">
+                                    <summary class="month-title">
+                                        <span class="month-icon">📁</span>
+                                        <span>Tháng 03 / 2027</span>
+                                        <span class="month-count-badge">5 tuần</span>
+                                    </summary>
+                                    <div class="month-weeks">
+                                        <button class="sidebar-week-item" data-week="24">
+                                            <span class="week-name">Tuần 24</span>
+                                            <span class="week-dates">15/02 - 21/02</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="25">
+                                            <span class="week-name">Tuần 25</span>
+                                            <span class="week-dates">22/02 - 28/02</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="26">
+                                            <span class="week-name">Tuần 26</span>
+                                            <span class="week-dates">01/03 - 07/03</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="27">
+                                            <span class="week-name">Tuần 27</span>
+                                            <span class="week-dates">08/03 - 14/03</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="28">
+                                            <span class="week-name">Tuần 28</span>
+                                            <span class="week-dates">15/03 - 21/03</span>
+                                        </button>
+                                    </div>
+                                </details>
+
+                                <!-- Tháng 04/2027 -->
+                                <details class="month-group" name="hk2-month">
+                                    <summary class="month-title">
+                                        <span class="month-icon">📁</span>
+                                        <span>Tháng 04 / 2027</span>
+                                        <span class="month-count-badge">4 tuần</span>
+                                    </summary>
+                                    <div class="month-weeks">
+                                        <button class="sidebar-week-item" data-week="29">
+                                            <span class="week-name">Tuần 29</span>
+                                            <span class="week-dates">22/03 - 28/03</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="30">
+                                            <span class="week-name">Tuần 30</span>
+                                            <span class="week-dates">29/03 - 04/04</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="31">
+                                            <span class="week-name">Tuần 31</span>
+                                            <span class="week-dates">05/04 - 11/04</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="32">
+                                            <span class="week-name">Tuần 32</span>
+                                            <span class="week-dates">12/04 - 18/04</span>
+                                        </button>
+                                    </div>
+                                </details>
+
+                                <!-- Tháng 05/2027 -->
+                                <details class="month-group" name="hk2-month">
+                                    <summary class="month-title">
+                                        <span class="month-icon">📁</span>
+                                        <span>Tháng 05 / 2027</span>
+                                        <span class="month-count-badge">3 tuần</span>
+                                    </summary>
+                                    <div class="month-weeks">
+                                        <button class="sidebar-week-item" data-week="33">
+                                            <span class="week-name">Tuần 33</span>
+                                            <span class="week-dates">19/04 - 25/04</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="34">
+                                            <span class="week-name">Tuần 34</span>
+                                            <span class="week-dates">26/04 - 02/05</span>
+                                        </button>
+                                        <button class="sidebar-week-item" data-week="35">
+                                            <span class="week-name">Tuần 35 <span class="sidebar-tag tag-exam">Tổng kết</span></span>
+                                            <span class="week-dates">03/05 - 09/05</span>
+                                        </button>
+                                    </div>
+                                </details>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar Footer -->
+                <div class="sidebar-footer">
+                    <span class="sidebar-footer-version">v8.1 Ultra-Compact</span>
+                    <span class="sidebar-footer-tag">9A2AL &bull; Thanh An</span>
+                </div>
+            </aside>
+
+            <!-- Main Workspace -->
+            <main class="main-content">
+            <!-- Hero Control Bar (Thanh công cụ 1 dòng siêu tinh gọn, loại bỏ hoàn toàn duplicate) -->
+            <section class="control-panel">
+                <div class="control-top-bar">
+                    <div class="control-source-group">
+                        <!-- Chuyển đổi Nguồn Dữ Liệu: vnEdu Trực tiếp ⟷ File Excel -->
+                        <div class="source-mode-switch" id="sourceModeSwitch">
+                            <button class="source-btn active" id="btnSourceVnEdu" data-source="vnedu" title="Đồng bộ trực tiếp Lịch báo giảng vnEdu ➔ Sổ đầu bài vnEdu">
+                                <span class="source-live-indicator"></span>
+                                vnEdu Trực Tiếp
+                            </button>
+                            <button class="source-btn" id="btnSourceExcel" data-source="excel" title="Dùng Lịch báo giảng từ File Excel dự phòng">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                </svg>
+                                File Excel
+                            </button>
+                        </div>
+
+                        <!-- Huy hiệu 4G/Wi-Fi Đã thông Tường lửa vnEdu -->
+                        <div class="firewall-pass-badge" id="badgeFirewallPass" title="Hệ thống gửi lệnh trực tiếp từ mạng 4G/Wi-Fi nội địa Việt Nam tới vnEdu • Đã vượt qua Tường lửa VNPT Bình Dương 100%">
+                            <span class="pulse-dot"></span>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                <path d="m9 12 2 2 4-4"></path>
+                            </svg>
+                            <span class="badge-firewall-text">Kênh 4G/Wi-Fi &bull; Thông Tường Lửa</span>
+                        </div>
+
+                        <!-- Huy hiệu nguồn/tên file (Chỉ hiện khi ở chế độ Excel) -->
+                        <div class="file-badge" id="fileStatusBadge" style="display: none;">
+                            <svg class="file-badge-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="badgeSourceIcon">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                            </svg>
+                            <span id="fileNameLabel">Cổng vnEdu Online</span>
+                            <input type="file" id="excelFileInput" accept=".xls,.xlsx" style="display: none;">
+                            <button class="btn-change-file" id="btnChangeFile" title="Chọn file Excel khác từ máy tính" style="display: none;">Đổi file</button>
+                            <button class="btn-reset-file" id="btnResetFile" title="Dùng lại file tự động trong Downloads" style="display: none;">Mặc định</button>
+                        </div>
+                    </div>
+
+                    <!-- Bộ Hiển Thị & Chuyển Tuần Nhanh (Thay thế dải tuần duplicate) -->
+                    <div class="week-quick-stepper" id="weekQuickStepper">
+                        <button class="btn-week-step" id="btnPrevWeek" title="Lùi về tuần trước">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        </button>
+                        <button class="week-badge-btn" id="btnCurrentWeekBadge" title="Bấm để mở danh mục 35 tuần ở thanh bên (Phím tắt: B)">
+                            <span class="week-live-dot"></span>
+                            <span class="week-badge-title" id="weekBadgeTitle">Tuần 8 (26/10 - 01/11/2026)</span>
+                            <span class="week-sem-pill" id="weekSemPill">HK I</span>
+                        </button>
+                        <button class="btn-week-step" id="btnNextWeek" title="Tiến tới tuần sau">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </button>
+                    </div>
+
+                    <!-- Primary Action Buttons (Gom nhóm sang trọng, thanh lịch) -->
+                    <div class="panel-right">
+                        <button class="btn btn-primary" id="btnSyncWeek" title="Đồng bộ tất cả các tiết trong tuần vào Sổ đầu bài vnEdu (Phím W)">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path>
+                                <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path>
+                            </svg>
+                            <span class="btn-text-full">Đồng bộ cả tuần</span>
+                            <span class="btn-text-short">Cả tuần</span>
+                        </button>
+                        <button class="btn btn-accent" id="btnSyncToday" title="Đồng bộ các tiết trong ngày hôm nay (Phím T)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                            </svg>
+                            <span class="btn-text-full">Đồng bộ hôm nay</span>
+                            <span class="btn-text-short">Hôm nay</span>
+                        </button>
+                        <button class="btn btn-warning" id="btnScanAttendance" title="Quét đối chiếu học sinh vắng từ Sổ điểm danh vnEdu">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            <span class="btn-text-full">Quét vắng SĐD</span>
+                            <span class="btn-text-short">Quét vắng</span>
+                        </button>
+                        <button class="btn btn-outline" id="btnAutoPlan"
+                            title="Tự động lập kế hoạch dạy học tuần mới từ TKB & PPCT lên vnEdu">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                            </svg>
+                            <span>Lập trước KHDH</span>
+                        </button>
+                        <button class="btn btn-outline btn-refresh-compact" id="btnRefresh"
+                            title="Quét lại dữ liệu và kiểm tra trạng thái trên vnEdu (Phím R)">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="spin-on-click">
+                                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                            </svg>
+                            <span>Làm mới</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dòng Thống Kê & Tiến Độ Tuần Siêu Tinh Gọn (Gọn gàng 1 dòng mỏng, tiết kiệm 160px chiều cao) -->
+            <section class="compact-metrics-bar" id="statusSummaryBanner">
+                <div class="metrics-summary-left">
+                    <span class="mini-banner-icon" id="bannerIcon">🎉</span>
+                    <div class="summary-text-group">
+                        <span class="summary-main-text" id="bannerTitle">Tuần 8: <strong id="valSyncedSlots">0</strong>/<span id="valTotalSlots">14</span> tiết</span>
+                        <span class="summary-sub-text" id="bannerDesc">&bull; Các ngày đã dạy đều đã được lưu đầy đủ lên vnEdu</span>
+                    </div>
+                </div>
+                <div class="metrics-badges-right">
+                    <div class="stat-pill stat-ready" title="Số tiết cần nhập hôm nay">
+                        <span class="stat-pill-icon">⚡</span>
+                        <span class="stat-pill-label">Cần nhập:</span>
+                        <strong class="stat-pill-val" id="valReadySlots">0</strong>
+                    </div>
+                    <div class="stat-pill stat-future" title="Số tiết chưa tới ngày dạy">
+                        <span class="stat-pill-icon">🕒</span>
+                        <span class="stat-pill-label">Chưa tới ngày:</span>
+                        <strong class="stat-pill-val" id="valFutureSlots">0</strong>
+                    </div>
+                    <div class="mini-progress-pill" title="Tiến độ hoàn thành tuần">
+                        <svg class="mini-progress-ring" width="22" height="22" viewBox="0 0 38 38">
+                            <circle class="progress-ring-bg" stroke="rgba(99, 102, 241, 0.15)" stroke-width="4" fill="transparent" r="15" cx="19" cy="19" />
+                            <circle class="progress-ring-circle" id="metricRingProgress" stroke="var(--primary-600)" stroke-width="4" stroke-dasharray="94.2" stroke-dashoffset="94.2" stroke-linecap="round" fill="transparent" r="15" cx="19" cy="19" />
+                        </svg>
+                        <span class="progress-pct-val" id="valProgressPct">0%</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Filter & Search Toolbar -->
+            <section class="filter-toolbar">
+                <div class="filter-chips-wrapper">
+                    <div class="filter-chips">
+                        <button class="filter-chip active" data-filter="all">Tất cả các lớp</button>
+                        <button class="filter-chip" data-filter="7A2AL">Lớp 7A2AL</button>
+                        <button class="filter-chip" data-filter="7A3AL">Lớp 7A3AL</button>
+                        <button class="filter-chip" data-filter="9A2AL">Lớp 9A2AL</button>
+                    </div>
+                    <div class="search-box">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="searchInput" placeholder="Tìm nhanh bài dạy, phân môn...">
+                    </div>
+                </div>
+                <div class="week-daterange" id="weekDateRangeLabel">
+                    Tuần 8 &bull; Từ ngày 26/10/2026 đến 01/11/2026
+                </div>
+            </section>
+
+            <!-- Schedule Grid Container -->
+            <section class="schedule-section">
+                <div class="schedule-grid" id="scheduleContainer">
+                    <!-- Dynamic Days and Period Cards rendered here -->
+                    <div class="loading-state">
+                        <div class="spinner"></div>
+                        <p>Đang tải dữ liệu lịch báo giảng từ file Excel...</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+        </div> <!-- End .app-body-container -->
+
+        <!-- Sync Progress Modal -->
+        <div class="modal-overlay" id="syncModal">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <div class="modal-title-group">
+                        <div class="modal-spinner" id="modalSpinner"></div>
+                        <h3 class="modal-title" id="modalTitle">Đang đồng bộ dữ liệu vào vnEdu...</h3>
+                    </div>
+                    <button class="btn-close" id="btnCloseModal" style="display: none;" title="Đóng">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-bar-fill" id="progressBarFill" style="width: 0%;"></div>
+                    </div>
+                    <div class="sync-logs" id="syncLogs">
+                        <!-- Stream logs dynamically -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" id="btnModalFinish" disabled>Đang đồng bộ...</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auto Plan Modal (Lập trước Kế hoạch dạy học lên vnEdu) -->
+        <div class="modal-overlay" id="autoPlanModal">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <div class="modal-title-group">
+                        <div class="modal-badge-icon" style="font-size: 1.4rem;">⚡</div>
+                        <h3 class="modal-title">Tự Động Lập Kế Hoạch Dạy Học Lên vnEdu</h3>
+                    </div>
+                    <button class="btn-close" id="btnCloseAutoPlanModal" title="Đóng">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p style="color: var(--slate-600); font-size: 0.88rem; line-height: 1.5; margin-bottom: 16px;">
+                        Hệ thống sẽ dựa vào <strong>Thời khóa biểu cố định (14 tiết)</strong> và <strong>Phân phối
+                            chương trình</strong> của trường để tự động sinh toàn bộ bài dạy và lưu trực tiếp vào tài
+                        khoản vnEdu của cô.
+                    </p>
+
+                    <div
+                        style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: var(--radius-md); padding: 16px; margin-bottom: 16px;">
+                        <label for="selectPlanWeek"
+                            style="display: block; font-weight: 700; font-size: 0.88rem; margin-bottom: 8px; color: var(--slate-800);">Chọn
+                            Tuần cần lập trước:</label>
+                        <select id="selectPlanWeek"
+                            style="width: 100%; padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--slate-300); background: #FFFFFF; font-size: 0.95rem; font-weight: 600; color: var(--slate-800); outline: none;">
+                            <option value="9">Tuần 9 (02/11/2026 - 08/11/2026)</option>
+                            <option value="10" selected>Tuần 10 (09/11/2026 - 15/11/2026)</option>
+                            <option value="11">Tuần 11 (16/11/2026 - 22/11/2026)</option>
+                            <option value="12">Tuần 12 (23/11/2026 - 29/11/2026)</option>
+                            <option value="13">Tuần 13 (30/11/2026 - 06/12/2026)</option>
+                            <option value="14">Tuần 14 (07/12/2026 - 13/12/2026)</option>
+                            <option value="15">Tuần 15 (14/12/2026 - 20/12/2026)</option>
+                        </select>
+                    </div>
+
+                    <div
+                        style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: var(--radius-md); padding: 12px 14px; font-size: 0.82rem; color: #92400E; margin-bottom: 16px;">
+                        💡 <strong>Khung 14 tiết phân bổ:</strong> Lớp 7A2AL (4 tiết), 7A3AL (4 tiết), 9A2AL (4 tiết),
+                        HĐTN 9A2AL (2 tiết).
+                    </div>
+
+                    <div class="sync-logs" id="planLogs" style="display: none; height: 160px;"></div>
+                </div>
+                <div class="modal-footer" style="gap: 12px;">
+                    <button class="btn btn-outline" id="btnCancelAutoPlan">Hủy</button>
+                    <button class="btn btn-warning" id="btnSubmitAutoPlan">🚀 Bắt đầu Lập & Lưu vnEdu</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal: Thiết lập Cấu hình Số tiết (PPCT) -->
+        <div class="modal-overlay" id="ppctConfigModal">
+            <div class="modal-box" style="max-width: 620px;">
+                <div class="modal-header">
+                    <div class="modal-title-group">
+                        <div class="modal-badge-icon" style="font-size: 1.3rem;">⚙️</div>
+                        <div>
+                            <h3 class="modal-title">Cấu Hình Số Tiết (PPCT)</h3>
+                            <span style="font-size: 0.78rem; color: var(--slate-500); display: block;">Tự động chuẩn hóa số tiết môn HĐTN & phân phối chương trình</span>
+                        </div>
+                    </div>
+                    <button class="btn-close" id="btnClosePpctModal" title="Đóng">&times;</button>
+                </div>
+                <div class="modal-body" style="max-height: 65vh; overflow-y: auto;">
+                    <div class="ppct-info-card">
+                        <div class="ppct-info-title" style="display: flex; align-items: center; justify-content: space-between;">
+                            <span class="badge-source-tag tag-vnedu" style="margin-left: 0; font-size: 0.76rem;">Môn HĐ trải nghiệm, hướng nghiệp (Lớp 9A2AL)</span>
+                            <span style="font-size: 0.72rem; color: var(--accent-600); font-weight: 700;">Đã kích hoạt</span>
+                        </div>
+                        <p class="ppct-info-desc">
+                            Mặc định máy vnEdu sinh số tiết cũ <strong>22, 25, 28...</strong> (bị chậm 2 tiết). 
+                            Web app sẽ <strong>tự động chuẩn hóa</strong> thành dãy số tiết chuẩn thực tế của cô: <strong>24, 27, 30, 33...</strong> mỗi khi nạp lịch hoặc lập tuần mới!
+                        </p>
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; font-weight: 700; font-size: 0.88rem; margin-bottom: 10px; color: var(--slate-800);">
+                            Quy tắc tính số tiết môn HĐTN:
+                        </label>
+                        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.86rem; font-weight: 600; cursor: pointer; color: var(--slate-700);">
+                                <input type="radio" name="ppctHdtnMode" value="auto" id="radioPpctAuto" checked>
+                                <span>Tự động theo công thức chuẩn: <strong>Tuần × 3</strong> (Tuần 8: 24, Tuần 9: 27, Tuần 10: 30, Tuần 11: 33...)</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.86rem; font-weight: 600; cursor: pointer; color: var(--slate-700);">
+                                <input type="radio" name="ppctHdtnMode" value="custom" id="radioPpctCustom">
+                                <span>Tùy chỉnh số tiết riêng cho từng tuần (bên dưới)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Bảng chi tiết từng tuần (có thể chỉnh sửa) -->
+                    <div class="ppct-weeks-table-wrap">
+                        <table class="ppct-weeks-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 25%;">Tuần học</th>
+                                    <th style="width: 37%;">Tiết 1: Sinh hoạt lớp</th>
+                                    <th style="width: 38%;">Tiết 2: HĐGD chủ đề</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ppctTableBody">
+                                <!-- Rendered dynamically by app.js -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                    <button class="btn btn-outline" id="btnResetPpctDefault" title="Khôi phục về quy tắc 24, 27, 30, 33...">🔄 Mặc định chuẩn (24, 27, 30...)</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-outline" id="btnCancelPpctModal">Hủy</button>
+                        <button class="btn btn-primary" id="btnSavePpctConfig">💾 Lưu Cấu Hình</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Chi Tiết Điểm Danh Học Sinh Vắng (Vắng Phép / Không Phép) -->
+        <div class="modal-overlay" id="attendanceModal">
+            <div class="modal-box" style="max-width: 580px;">
+                <div class="modal-header">
+                    <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.3rem;">📋</span>
+                        <div>
+                            <div style="font-weight: 700; font-size: 1.05rem;" id="attendanceModalTitle">Điểm danh tiết học</div>
+                            <div style="font-size: 0.78rem; color: var(--slate-400);" id="attendanceModalSubtitle">Thông tin học sinh vắng tiết</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close modal-close" id="btnCloseAttendanceModal" title="Đóng" aria-label="Đóng">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body" id="attendanceModalBody" style="padding: 16px 20px; max-height: 480px; overflow-y: auto;">
+                    <!-- Render dynamic student attendance list & SDD alert -->
+                </div>
+                <div class="modal-footer" style="justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <span id="attendanceFooterNote" style="font-size: 0.78rem; color: #10B981; font-weight: 600;">🛡️ An toàn: Cô kiểm tra và xác nhận trước khi lưu vào Sổ đầu bài</span>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="btn btn-secondary btn-sm" id="btnDismissAttendanceModal">Đóng</button>
+                        <button type="button" class="btn btn-primary btn-sm" id="btnSaveAttendanceModal">💾 Lưu vào Sổ đầu bài</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Đăng Nhập / Kết Nối Tài Khoản vnEdu Trực Tiếp Trên Web (PA3) -->
+        <div class="modal-overlay" id="vnEduLoginModal">
+            <div class="modal-box" style="max-width: 460px;">
+                <div class="modal-header">
+                    <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.3rem;">🔐</span>
+                        <div>
+                            <div style="font-weight: 700; font-size: 1.05rem;">Kết Nối Tài Khoản vnEdu</div>
+                            <div style="font-size: 0.78rem; color: var(--slate-400);">Đăng nhập để tự động điền Sổ đầu bài trực tiếp từ web</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close modal-close" id="btnCloseVnEduLoginModal" title="Đóng" aria-label="Đóng">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body" style="padding: 20px;">
+                    <form id="formVnEduLogin" onsubmit="return false;">
+                        <div class="form-group" style="margin-bottom: 14px;">
+                            <label style="display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 6px; color: var(--text-primary);">
+                                👤 Tên đăng nhập vnEdu:
+                            </label>
+                            <input type="text" id="inputVnEduUsername" class="form-control" value="051197003685" placeholder="Nhập tài khoản hoặc CCCD..." required style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--slate-300); font-size: 0.9rem;">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label style="display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 6px; color: var(--text-primary);">
+                                🔑 Mật khẩu:
+                            </label>
+                            <div style="position: relative;">
+                                <input type="password" id="inputVnEduPassword" class="form-control" value="Huyen0907@" placeholder="Nhập mật khẩu vnEdu..." required style="width: 100%; padding: 8px 38px 8px 12px; border-radius: 8px; border: 1px solid var(--slate-300); font-size: 0.9rem;">
+                                <button type="button" id="btnTogglePasswordVisibility" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1rem; color: var(--slate-400);">👁️</button>
+                            </div>
+                        </div>
+
+                        <div id="loginAlertBox" style="display: none; padding: 10px 12px; border-radius: 8px; font-size: 0.8rem; margin-bottom: 14px;"></div>
+
+                        <button type="submit" class="btn btn-primary" id="btnSubmitVnEduLogin" style="width: 100%; padding: 10px; font-weight: 700; font-size: 0.92rem; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <span>🚀 Đăng Nhập & Gia Hạn Phiên vnEdu</span>
+                        </button>
+                    </form>
+
+                    <div style="margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--slate-200); font-size: 0.78rem; color: var(--slate-400); line-height: 1.4;">
+                        🛡️ <strong>Bảo mật:</strong> Phiên đăng nhập được mã hóa an toàn trên thiết bị của cô, bảo vệ 100% tài khoản giáo viên.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menu Thả Xuống (Dropdown) Chọn Nhanh Nhận Xét Tiết Học Cho Cô Giáo -->
+        <div id="remarkDropdownMenu" class="remark-dropdown-menu" style="display: none;">
+            <div class="remark-dropdown-header">
+                <div class="remark-dropdown-title">
+                    <span class="icon">⚡</span>
+                    <span>Gợi ý nhận xét tiết dạy</span>
+                </div>
+                <button type="button" class="btn-close-dropdown" id="btnCloseRemarkDropdown" title="Đóng menu">✕</button>
+            </div>
+            <div class="remark-dropdown-list" id="remarkDropdownList">
+                <!-- Render động các danh mục nhận xét -->
+            </div>
+            <div class="remark-dropdown-footer">
+                <div id="remarkCustomAddRow" style="display: none; width: 100%; margin-bottom: 8px;">
+                    <div style="display: flex; gap: 6px;">
+                        <input type="text" id="inputNewCustomRemark" placeholder="Nhập nhận xét riêng của cô..." style="flex: 1; padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--slate-300);">
+                        <button type="button" class="btn btn-primary btn-sm" id="btnConfirmAddCustomRemark" style="padding: 6px 12px; font-size: 0.8rem;">Lưu</button>
+                        <button type="button" class="btn btn-outline btn-sm" id="btnCancelAddCustomRemark" style="padding: 6px 10px; font-size: 0.8rem;">Hủy</button>
+                    </div>
+                </div>
+                <button type="button" class="btn-add-custom-remark" id="btnShowAddCustomRemark">
+                    <span>➕ Thêm câu nhận xét mẫu của riêng cô...</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Toast Notification Container -->
+        <div class="toast-container" id="toastContainer"></div>
+
+        <!-- Pro Max Keyboard Shortcuts & Confetti Overlay -->
+        <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
+        <div class="pro-shortcuts-pill">
+            <span class="pro-tag">PRO</span>
+            <span>⌨️ Phím tắt:</span>
+            <kbd>B</kbd> <span>Menu</span>
+            <kbd>T</kbd> <span>Hôm nay</span>
+            <kbd>W</kbd> <span>Cả tuần</span>
+            <kbd>R</kbd> <span>Làm mới</span>
+            <kbd>D</kbd> <span>Nền tối/sáng</span>
+            <kbd>1-9</kbd> <span>Chọn tuần</span>
+        </div>
+    </div>
+
+    <!-- App Script -->
+    <script src="app.js?v=9.7"></script>
+</body>
+
+</html>

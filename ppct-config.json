@@ -1,0 +1,20 @@
+{
+  "hdtn": {
+    "mode": "auto",
+    "weeks": {
+      "8": { "tiet1": 24, "tiet2": 23 },
+      "9": { "tiet1": 27, "tiet2": 26 },
+      "10": { "tiet1": 30, "tiet2": 29 },
+      "11": { "tiet1": 33, "tiet2": 32 },
+      "12": { "tiet1": 36, "tiet2": 35 },
+      "13": { "tiet1": 39, "tiet2": 38 },
+      "14": { "tiet1": 42, "tiet2": 41 },
+      "15": { "tiet1": 45, "tiet2": 44 },
+      "16": { "tiet1": 48, "tiet2": 47 },
+      "17": { "tiet1": 51, "tiet2": 50 },
+      "18": { "tiet1": 54, "tiet2": 53 },
+      "19": { "tiet1": 57, "tiet2": 56 }
+    }
+  },
+  "autoSyncToVnEdu": true
+}
