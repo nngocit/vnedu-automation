@@ -312,6 +312,76 @@ app.get('/api/attendance', async (req, res) => {
     }
 });
 
+// API: Quét đối chiếu Sổ Điểm Danh Giám Thị cho 1 tiết học
+app.get('/api/attendance/scan-giam-thi', async (req, res) => {
+    try {
+        const { lop, date, ngay, tiet, forceRefresh } = req.query;
+        const dateStr = date || ngay || '';
+        const isForce = forceRefresh === 'true' || forceRefresh === true || forceRefresh === '1';
+
+        const result = await core.scanAbsentFromGiamThi(lop, dateStr, tiet || 1, isForce);
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+// API: Quét lại toàn bộ Sổ Điểm Danh Giám Thị cho toàn bộ tuần
+app.post('/api/attendance/scan-all-giam-thi', async (req, res) => {
+    try {
+        const week = parseInt(req.body.week) || 9;
+        const data = await core.parseWeekSchedule(week);
+        if (!data || !data.schedule || data.schedule.length === 0) {
+            return res.json({ success: false, msg: 'Không tìm thấy lịch tuần ' + week });
+        }
+
+        const uniqueClasses = [...new Set(data.schedule.map(s => s.lop).filter(Boolean))];
+        const sddMap = {};
+
+        // Quét lấy mới nhất (forceRefresh: true) từ SĐĐ vnEdu
+        await Promise.allSettled(uniqueClasses.map(async (lop) => {
+            try {
+                const item = data.schedule.find(s => s.lop === lop);
+                const [d, m, y] = (item?.ngay || '').split('/');
+                if (m && y) {
+                    const thangNam = `${m}-${y}`;
+                    const sddRes = await core.getSoDiemDanhNamHoc(lop, thangNam, '2026', true);
+                    if (sddRes && sddRes.absentByDay) {
+                        sddMap[lop] = sddRes.absentByDay;
+                    }
+                }
+            } catch (e) { }
+        }));
+
+        let totalUpdatedAbsents = 0;
+        const updatedSlots = data.schedule.map(item => {
+            const [dStr] = (item.ngay || '').split('/');
+            const dayNum = parseInt(dStr);
+            const sessionKey = item.buoi === 1 ? 'morning' : 'afternoon';
+            const sddDayData = sddMap[item.lop]?.[dayNum]?.[sessionKey] || [];
+
+            if (sddDayData.length > 0) {
+                totalUpdatedAbsents += sddDayData.length;
+                return {
+                    ...item,
+                    hsVangList: sddDayData,
+                    soLuongNghi: sddDayData.length
+                };
+            }
+            return item;
+        });
+
+        res.json({
+            success: true,
+            msg: `Đã quét và đồng bộ SĐĐ Giám thị cho tuần ${week}: phát hiện ${totalUpdatedAbsents} lượt vắng`,
+            totalUpdatedAbsents,
+            schedule: updatedSlots
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
 // API: Lưu điểm danh học sinh vắng
 app.post('/api/save-attendance', async (req, res) => {
     try {

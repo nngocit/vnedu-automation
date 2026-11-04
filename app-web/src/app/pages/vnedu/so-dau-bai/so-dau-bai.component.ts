@@ -37,6 +37,8 @@ export class SoDauBaiComponent implements OnInit {
   attendanceSearchText = '';
   isLoadingAttendance = false;
   isSavingAttendance = false;
+  isScanningGiamThi = false;
+  isScanningAllGiamThi = false;
   showAttendanceModal = false;
 
   // Đăng nhập Modal
@@ -307,6 +309,93 @@ export class SoDauBaiComponent implements OnInit {
     this.attendanceStudents.forEach(s => {
       s.coPhep = false;
       s.khongPhep = false;
+    });
+  }
+
+  // Quét đối chiếu danh sách vắng từ SĐĐ Giám thị cho tiết học hiện tại
+  scanSupervisorAttendance(): void {
+    if (!this.selectedSlotForAttendance) return;
+    const slot = this.selectedSlotForAttendance;
+    this.isScanningGiamThi = true;
+
+    this.vneduService.scanGiamThi(
+      slot.lop,
+      slot.ngay || this.todayStr,
+      slot.tiet,
+      true
+    ).subscribe({
+      next: (res) => {
+        this.isScanningGiamThi = false;
+        if (res.success && res.absentList) {
+          const giamThiList = res.absentList;
+          let matchedCount = 0;
+
+          // Cập nhật trạng thái từng học sinh theo dữ liệu Giám thị
+          this.attendanceStudents.forEach(stu => {
+            const found = giamThiList.find((g: any) =>
+              (g.id && stu.id && String(g.id) === String(stu.id)) ||
+              (g.maHs && stu.maHs && g.maHs.trim() === stu.maHs.trim()) ||
+              (g.fullName && stu.fullName && g.fullName.trim().toLowerCase() === stu.fullName.trim().toLowerCase())
+            );
+
+            if (found) {
+              stu.coPhep = !!found.coPhep;
+              stu.khongPhep = !!found.khongPhep;
+              matchedCount++;
+            } else {
+              stu.coPhep = false;
+              stu.khongPhep = false;
+            }
+          });
+
+          if (matchedCount > 0) {
+            this.showToast(`✓ Đã khớp SĐĐ Giám thị: Cập nhật ${matchedCount} học sinh vắng lớp ${slot.lop}!`, 'success');
+          } else {
+            this.showToast(`✓ SĐĐ Giám thị ghi nhận: Lớp ${slot.lop} đi học đầy đủ (0 em vắng)!`, 'info');
+          }
+        } else {
+          this.showToast(res.msg || 'Không thể lấy dữ liệu SĐĐ Giám thị', 'danger');
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.isScanningGiamThi = false;
+        this.showToast('Lỗi quét SĐĐ Giám thị: ' + (err.error?.msg || err.message), 'danger');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // Quét đối chiếu toàn bộ SĐĐ Giám thị cho cả tuần
+  scanAllSupervisorAttendance(): void {
+    this.isScanningAllGiamThi = true;
+    this.vneduService.scanAllGiamThi(this.currentWeek).subscribe({
+      next: (res) => {
+        this.isScanningAllGiamThi = false;
+        if (res.success && res.schedule) {
+          res.schedule.forEach((updatedSlot: any) => {
+            const localSlot = this.slots.find(s =>
+              s.lop === updatedSlot.lop &&
+              s.thu === updatedSlot.thu &&
+              s.tiet === updatedSlot.tiet &&
+              s.buoi === updatedSlot.buoi
+            );
+            if (localSlot) {
+              localSlot.hsVangList = updatedSlot.hsVangList || [];
+              localSlot.soLuongNghi = updatedSlot.soLuongNghi || 0;
+            }
+          });
+          this.showToast(res.msg || `Đã cập nhật lại SĐĐ Giám thị cho toàn bộ tuần ${this.currentWeek}!`, 'success');
+        } else {
+          this.showToast(res.msg || 'Không thể quét SĐĐ Giám thị tuần', 'danger');
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.isScanningAllGiamThi = false;
+        this.showToast('Lỗi quét SĐĐ Giám thị tuần: ' + (err.error?.msg || err.message), 'danger');
+        this.cdr.detectChanges();
+      }
     });
   }
 

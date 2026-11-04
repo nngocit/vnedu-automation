@@ -81,9 +81,10 @@
       Đồng bộ hôm nay
     </button>
 
-    <button class="pill-btn pill-warning shadow-xs" (click)="openAttendanceModal(slots[0])" [disabled]="slots.length === 0">
-      <app-keenicon name="profile-user" class="fs-4 me-1 text-white"></app-keenicon>
-      Quét vắng SĐB
+    <button class="pill-btn pill-warning shadow-xs" (click)="scanAllSupervisorAttendance()" [disabled]="isScanningAllGiamThi" title="Quét đối chiếu toàn bộ dữ liệu vắng từ Sổ Điểm Danh của Giám thị trên vnEdu">
+      <span *ngIf="isScanningAllGiamThi" class="spinner-border spinner-border-sm me-1" role="status"></span>
+      <app-keenicon *ngIf="!isScanningAllGiamThi" name="arrows-circle" class="fs-4 me-1 text-white"></app-keenicon>
+      Quét SĐĐ Giám Thị
     </button>
 
     <button class="pill-btn pill-outline shadow-xs" (click)="autoPlanNewWeek()" [disabled]="isLoading">
@@ -352,9 +353,18 @@
         </span>
       </div>
 
-      <button type="button" class="pill-btn pill-success" (click)="setAllPresent()" title="Đánh dấu cả lớp đủ">
-        ✓ Cả lớp đi học đủ
-      </button>
+      <div class="d-flex align-items-center gap-2">
+        <button type="button" class="pill-btn pill-giamthi shadow-xs"
+                (click)="scanSupervisorAttendance()"
+                [disabled]="isScanningGiamThi || isLoadingAttendance"
+                title="Quét đối chiếu danh sách vắng từ Sổ Điểm Danh vnEdu của Giám thị">
+          <span *ngIf="isScanningGiamThi" class="spinner-border spinner-border-sm me-1" role="status"></span>
+          <span *ngIf="!isScanningGiamThi">🔄 Quét SĐĐ Giám Thị</span>
+        </button>
+        <button type="button" class="pill-btn pill-success shadow-xs" (click)="setAllPresent()" title="Đánh dấu cả lớp đi học đầy đủ">
+          ✓ Cả lớp đi học đủ
+        </button>
+      </div>
     </div>
 
     <div class="modal-body-custom p-4">
@@ -378,33 +388,59 @@
               <th class="ps-3 w-50px">STT</th>
               <th class="min-w-160px">Họ và Tên Học Sinh</th>
               <th class="w-100px text-gray-500 font-monospace">Mã HS</th>
-              <th class="text-end pe-3 min-w-160px">Trạng Thái</th>
+              <th class="text-end pe-3 min-w-180px">Trạng Thái Điểm Danh</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let stu of filteredStudents; let i = index"
-                [ngClass]="{'row-absent': stu.coPhep || stu.khongPhep}"
+                [ngClass]="{
+                  'row-absent-phep': stu.coPhep,
+                  'row-absent-khongphep': stu.khongPhep
+                }"
                 class="border-bottom student-row">
               <td class="ps-3 fw-bold font-monospace col-stt">{{ stu.stt || (i + 1) }}</td>
               <td>
-                <span class="fw-bold student-name fs-7">{{ stu.fullName }}</span>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="fw-bold student-name fs-7">{{ stu.fullName }}</span>
+                  <span *ngIf="stu.coPhep" class="badge-absent-pill badge-phep">
+                    <span class="dot-indicator"></span> Vắng Phép
+                  </span>
+                  <span *ngIf="stu.khongPhep" class="badge-absent-pill badge-khongphep">
+                    <span class="dot-indicator"></span> Vắng K.Phép
+                  </span>
+                </div>
               </td>
               <td class="fs-8 font-monospace col-mahs">{{ stu.maHs || '---' }}</td>
               <td class="text-end pe-3">
-                <div class="btn-group btn-group-sm" role="group">
+                <div class="attendance-pill-group d-inline-flex align-items-center" role="group">
+                  <!-- Nút P (Phép) -->
                   <button type="button"
-                          class="btn btn-sm px-3 fw-bold btn-status-toggle"
-                          [ngClass]="stu.coPhep ? 'btn-success text-white' : 'btn-outline-status'"
+                          class="pill-status-btn pill-btn-phep"
+                          [class.active]="stu.coPhep"
                           (click)="setStudentStatus(stu, 'P')"
-                          title="Có phép (P)">
-                    P (Phép)
+                          title="Nghỉ có phép (P)">
+                    <span class="status-code">P</span>
+                    <span class="status-label">Phép</span>
                   </button>
+
+                  <!-- Nút K (Không phép) -->
                   <button type="button"
-                          class="btn btn-sm px-3 fw-bold btn-status-toggle"
-                          [ngClass]="stu.khongPhep ? 'btn-danger text-white' : 'btn-outline-status'"
+                          class="pill-status-btn pill-btn-khongphep"
+                          [class.active]="stu.khongPhep"
                           (click)="setStudentStatus(stu, 'K')"
-                          title="Không phép (K)">
-                    K (K.Phép)
+                          title="Nghỉ không phép (K)">
+                    <span class="status-code">K</span>
+                    <span class="status-label">K.Phép</span>
+                  </button>
+
+                  <!-- Nút Có mặt (Đủ) -->
+                  <button type="button"
+                          class="pill-status-btn pill-btn-comat"
+                          [class.active]="!stu.coPhep && !stu.khongPhep"
+                          (click)="setStudentStatus(stu, 'present')"
+                          title="Đi học có mặt đầy đủ">
+                    <span class="status-icon">✓</span>
+                    <span class="status-label">Đủ</span>
                   </button>
                 </div>
               </td>

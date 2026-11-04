@@ -76,6 +76,21 @@ export class VnEduService {
     );
   }
 
+  scanGiamThi(lop: string, date: string, tiet: number, forceRefresh = true): Observable<any> {
+    return this.http.get<any>(
+      `${this.baseUrl}/attendance/scan-giam-thi?lop=${encodeURIComponent(lop)}&date=${encodeURIComponent(date)}&tiet=${tiet}&forceRefresh=${forceRefresh}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  scanAllGiamThi(week: number): Observable<any> {
+    return this.http.post<any>(
+      `${this.baseUrl}/attendance/scan-all-giam-thi`,
+      { week },
+      { headers: this.getHeaders() }
+    );
+  }
+
   saveAttendance(
     chitietId: string,
     studentsData: AbsentStudent[],

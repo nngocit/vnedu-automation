@@ -946,10 +946,13 @@ function getAvailableWeeks(source = 'vnedu') {
     const sddCache = {};
 
     // Lấy dữ liệu Sổ Điểm Danh Năm Học theo lớp và tháng
-    async function getSoDiemDanhNamHoc(lopName, thangNam, namHoc = '2026') {
+    async function getSoDiemDanhNamHoc(lopName, thangNam, namHoc = '2026', forceRefresh = false) {
         const cacheKey = `${lopName}_${thangNam}_${namHoc}`;
-        if (sddCache[cacheKey] && Date.now() - sddCache[cacheKey].time < 60000) {
+        if (!forceRefresh && sddCache[cacheKey] && Date.now() - sddCache[cacheKey].time < 60000) {
             return sddCache[cacheKey].data;
+        }
+        if (forceRefresh) {
+            delete sddCache[cacheKey];
         }
 
         const classInfo = CLASS_MAP[lopName] || CLASS_MAP[lopName + 'AL'] || CLASS_MAP[Object.keys(CLASS_MAP).find(k => k.includes(lopName))];
@@ -1053,6 +1056,62 @@ function getAvailableWeeks(source = 'vnedu') {
         }
     }
 
+    // Quét đối chiếu danh sách vắng từ Sổ Điểm Danh của Giám thị / Nhà trường cho 1 tiết học
+    async function scanAbsentFromGiamThi(lopName, dateStr, tietNumber, forceRefresh = false) {
+        if (!lopName) return { success: false, msg: 'Thiếu tên lớp', absentList: [], count: 0 };
+
+        let dayNum = null;
+        let thangNam = null;
+        if (dateStr && dateStr.includes('/')) {
+            const parts = dateStr.split('/');
+            dayNum = parseInt(parts[0]);
+            const m = parts[1];
+            const y = parts[2] || '2026';
+            thangNam = `${m}-${y}`;
+        } else {
+            const now = new Date();
+            dayNum = now.getDate();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const y = String(now.getFullYear());
+            thangNam = `${m}-${y}`;
+        }
+
+        const tiet = parseInt(tietNumber) || 1;
+        const sessionKey = tiet <= 5 ? 'morning' : 'afternoon';
+
+        const sddRes = await getSoDiemDanhNamHoc(lopName, thangNam, '2026', forceRefresh);
+        if (!sddRes || !sddRes.success) {
+            return {
+                success: false,
+                msg: sddRes?.msg || 'Không thể lấy dữ liệu Sổ Điểm Danh từ vnEdu',
+                absentList: [],
+                count: 0
+            };
+        }
+
+        const absentByDay = sddRes.absentByDay || {};
+        const dayData = absentByDay[dayNum] || {};
+        const rawAbsent = dayData[sessionKey] || [];
+
+        const absentList = rawAbsent.map(s => ({
+            id: s.id,
+            maHs: s.maHs,
+            fullName: s.fullName,
+            coPhep: !!s.coPhep,
+            khongPhep: !!s.khongPhep,
+            symbol: s.symbol || (s.coPhep ? 'P' : 'K')
+        }));
+
+        return {
+            success: true,
+            msg: `Đã quét SĐĐ Giám thị lớp ${lopName} (${absentList.length} em vắng)`,
+            count: absentList.length,
+            absentList,
+            day: dayNum,
+            session: sessionKey
+        };
+    }
+
     function clearSession() {
         cachedToken = null;
         cachedCookies = null;
@@ -1130,5 +1189,6 @@ function getAvailableWeeks(source = 'vnedu') {
         getDaSachHocSinhVang,
         saveHocSinhVangToVnEdu,
         getSoDiemDanhNamHoc,
+        scanAbsentFromGiamThi,
         CLASS_MAP
     };
