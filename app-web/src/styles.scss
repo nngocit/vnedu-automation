@@ -12,6 +12,148 @@
 @import "./assets/plugins/keenicons/solid/style.css";
 
 /* ========================================================= */
+/* PHONG CÁCH 2: LIGHT MODE OCEAN BREEZE GLASSMORPHISM       */
+/* ========================================================= */
+[data-bs-theme="light"],
+:root:not([data-bs-theme="dark"]) {
+  body,
+  #kt_app_root,
+  #kt_app_page,
+  .app-page,
+  .app-wrapper,
+  .app-main {
+    background: radial-gradient(circle at 90% 10%, rgba(56, 189, 248, 0.22) 0%, transparent 40%),
+                radial-gradient(circle at 10% 90%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 45%, #e2e8f0 100%) !important;
+  }
+
+  #kt_app_header {
+    background: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-bottom: 1px solid rgba(56, 189, 248, 0.25) !important;
+    box-shadow: 0 4px 20px rgba(2, 132, 199, 0.05) !important;
+  }
+
+  .vnedu-app-container {
+    background: transparent !important;
+  }
+
+  .top-nav-bar {
+    background: rgba(255, 255, 255, 0.88) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(56, 189, 248, 0.3) !important;
+    box-shadow: 0 8px 24px rgba(2, 132, 199, 0.08) !important;
+    border-radius: 16px !important;
+  }
+
+  .day-card {
+    background: rgba(255, 255, 255, 0.88) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(56, 189, 248, 0.28) !important;
+    box-shadow: 0 10px 30px rgba(2, 132, 199, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+    border-radius: 16px !important;
+
+    .day-card-header {
+      background: linear-gradient(90deg, rgba(224, 242, 254, 0.9) 0%, rgba(240, 249, 255, 0.7) 100%) !important;
+      border-bottom: 1px solid rgba(56, 189, 248, 0.25) !important;
+
+      .day-title {
+        color: #0369a1 !important;
+        font-weight: 800 !important;
+      }
+    }
+
+    .day-table {
+      thead th {
+        background: rgba(240, 249, 255, 0.95) !important;
+        color: #0284c7 !important;
+        border-bottom: 2px solid rgba(56, 189, 248, 0.35) !important;
+        font-weight: 700 !important;
+      }
+
+      tbody td {
+        border-bottom: 1px solid rgba(56, 189, 248, 0.15) !important;
+        color: #0f172a !important;
+      }
+
+      tbody tr:hover {
+        background-color: rgba(56, 189, 248, 0.07) !important;
+      }
+
+      .form-control.form-control-solid,
+      .form-select.form-select-solid {
+        background-color: rgba(240, 249, 255, 0.8) !important;
+        color: #0f172a !important;
+        border: 1px solid rgba(56, 189, 248, 0.3) !important;
+        border-radius: 10px !important;
+
+        &:focus {
+          background-color: #ffffff !important;
+          border-color: #0284c7 !important;
+          box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2) !important;
+        }
+      }
+    }
+  }
+
+  .modal-dialog-custom {
+    background: linear-gradient(145deg, #ffffff 0%, #f0f9ff 100%) !important;
+    border: 1px solid rgba(56, 189, 248, 0.4) !important;
+    box-shadow: 0 25px 60px rgba(2, 132, 199, 0.18), 0 0 30px rgba(56, 189, 248, 0.1) !important;
+    border-radius: 18px !important;
+
+    .modal-header-custom {
+      background: linear-gradient(90deg, #e0f2fe 0%, #f0f9ff 100%) !important;
+      border-bottom: 1px solid rgba(56, 189, 248, 0.25) !important;
+
+      .modal-title-text {
+        color: #0369a1 !important;
+        font-weight: 800 !important;
+      }
+    }
+
+    .modal-stats-bar {
+      background: rgba(224, 242, 254, 0.65) !important;
+      border-bottom: 1px solid rgba(56, 189, 248, 0.25) !important;
+    }
+
+    .attendance-scroll-wrap {
+      background: rgba(240, 249, 255, 0.6) !important;
+      border: 1px solid rgba(56, 189, 248, 0.2) !important;
+
+      table {
+        thead th {
+          background-color: rgba(224, 242, 254, 0.95) !important;
+          color: #0369a1 !important;
+          border-bottom: 2px solid rgba(56, 189, 248, 0.25) !important;
+        }
+
+        tbody tr.student-row {
+          background-color: rgba(255, 255, 255, 0.8) !important;
+          border-color: rgba(56, 189, 248, 0.12) !important;
+
+          td {
+            border-color: rgba(56, 189, 248, 0.12) !important;
+          }
+
+          .student-name {
+            color: #0f172a !important;
+          }
+        }
+      }
+    }
+
+    .modal-footer-custom {
+      background: rgba(240, 249, 255, 0.95) !important;
+      border-top: 1px solid rgba(56, 189, 248, 0.25) !important;
+    }
+  }
+}
+
+/* ========================================================= */
 /* FIX TOÀN DIỆN DARK MODE VNEDU THEME                       */
 /* ========================================================= */
 [data-bs-theme="dark"] {
