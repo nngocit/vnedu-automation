@@ -7,7 +7,73 @@ const app = express();
 const PORT = 3000;
 
 app.use(express.json({ limit: '20mb' }));
+
+// CORS và Middleware xử lý Session Header
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-vnedu-token, x-vnedu-cookie');
+    if (req.method === 'OPTIONS') return res.sendStatus(200);
+
+    const clientToken = req.headers['x-vnedu-token'];
+    const clientCookie = req.headers['x-vnedu-cookie'];
+    if (clientToken) {
+        core.setSessionToken(clientToken, clientCookie || '');
+    }
+    next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
+
+// API: Đăng nhập vnEdu siêu tốc bằng HTTP thuần (Loại bỏ Playwright)
+app.post('/api/vnedu/login', async (req, res) => {
+    try {
+        const username = req.body.username || '051197003685';
+        const password = req.body.password || '';
+        if (!password) {
+            return res.status(400).json({ success: false, msg: 'Vui lòng nhập mật khẩu vnEdu.' });
+        }
+
+        const loginRes = await core.loginVnEduHttp(username, password);
+        res.json(loginRes);
+    } catch (e) {
+        res.status(500).json({ success: false, msg: 'Lỗi đăng nhập: ' + e.message });
+    }
+});
+
+// API: Đăng xuất vnEdu và xóa toàn bộ phiên làm việc
+app.post('/api/vnedu/logout', (req, res) => {
+    try {
+        if (core.clearSession) {
+            core.clearSession();
+        }
+        res.json({ success: true, msg: 'Đã đăng xuất tài khoản vnEdu thành công.' });
+    } catch (e) {
+        res.status(500).json({ success: false, msg: 'Lỗi khi đăng xuất: ' + e.message });
+    }
+});
+
+// API: Kiểm tra trạng thái phiên kết nối vnEdu
+app.get('/api/vnedu/status', async (req, res) => {
+    try {
+        const session = core.getSessionStatus();
+        res.json({
+            success: true,
+            connected: session.connected,
+            account: '051197003685',
+            teacherName: 'Lê Thị Diệu Huyên',
+            tokenPreview: session.connected && session.token ? session.token.substring(0, 8) + '...' : null
+        });
+    } catch (e) {
+        res.json({
+            success: true,
+            connected: false,
+            account: '051197003685',
+            teacherName: 'Lê Thị Diệu Huyên',
+            tokenPreview: null
+        });
+    }
+});
 
 // API: Tải lên file Excel tùy chọn
 app.post('/api/upload-excel', (req, res) => {

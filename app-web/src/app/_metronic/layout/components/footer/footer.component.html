@@ -1,0 +1,37 @@
+<ng-container *ngIf="appFooterContainerCSSClass">
+  <!--begin::Footer container-->
+  <div class="app-container" [ngClass]="appFooterContainerCSSClass">
+    <ng-container *ngTemplateOutlet="footerView"></ng-container>
+  </div>
+  <!--end::Footer container-->
+</ng-container>
+
+<ng-container *ngIf="!appFooterContainerCSSClass">
+  <ng-container *ngTemplateOutlet="footerView"></ng-container>
+</ng-container>
+
+<ng-template #footerView>
+  <!--begin::Copyright-->
+  <div class="text-gray-600 order-2 order-md-1 fs-7">
+    <span class="text-gray-500 fw-semibold me-1">2025 - 2026 &copy;</span>
+    <span class="text-gray-800 fw-bold">Sổ Đầu Bài & Lịch Báo Giảng vnEdu</span>
+    <span class="mx-2 text-gray-400">•</span>
+    <span class="text-primary fw-semibold">Cô Lê Thị Diệu Huyên - Trường THCS Phú Hòa</span>
+  </div>
+  <!--end::Copyright-->
+
+  <!--begin::Menu-->
+  <ul class="menu menu-gray-600 menu-hover-primary fw-semibold order-1 fs-7">
+    <li class="menu-item">
+      <a href="https://uaevcmanmsgdbinhduong.vnedu.vn" target="_blank" class="menu-link px-3 text-hover-primary">
+        Cổng vnEdu Sở GD&ĐT
+      </a>
+    </li>
+    <li class="menu-item">
+      <a routerLink="/vnedu/ppct" class="menu-link px-3 text-hover-primary">
+        Cấu Hình PPCT
+      </a>
+    </li>
+  </ul>
+  <!--end::Menu-->
+</ng-template>

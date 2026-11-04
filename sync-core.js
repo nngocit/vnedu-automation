@@ -1,9 +1,10 @@
-const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
 const xlsx = require('xlsx');
 
-const USER_DATA = path.join(__dirname, 'user_data');
+const SESSION_CACHE_FILE = path.join(__dirname, 'public', 'session_cache.json');
+
+// USER_DATA no longer required (Playwright removed)
 const DOWNLOADS_DIR = 'C:\\Users\\DIEU HUYEN\\Downloads';
 
 const CLASS_MAP = {
@@ -218,50 +219,176 @@ function getAvailableWeeks(source = 'vnedu') {
         };
     }
 
-    // Phiên đăng nhập Playwright quản lý tập trung (Tự động phục hồi khi bị đóng)
-    let globalContext = null;
+    // Quản lý phiên đăng nhập và Cookie xác thực siêu tốc (HTTP Fetch thuần - Không dùng Playwright)
     let cachedToken = null;
+    let cachedCookies = null;
     let cachedUserId = '7365493419';
-
-    async function getOrInitContext() {
-        let needsNew = false;
-        if (!globalContext) {
-            needsNew = true;
-        } else {
-            try {
-                if (globalContext.browser && !globalContext.browser().isConnected()) {
-                    needsNew = true;
-                } else {
-                    globalContext.pages(); // Thử gọi để xác nhận context còn sống
-                }
-            } catch (e) {
-                needsNew = true;
-            }
-        }
-
-        if (needsNew) {
-            globalContext = null;
-            cachedToken = null;
-            globalContext = await chromium.launchPersistentContext(USER_DATA, {
-                headless: true,
-                args: ['--disable-blink-features=AutomationControlled']
-            });
-            globalContext.on('close', () => {
-                globalContext = null;
-                cachedToken = null;
-            });
-        }
-        return globalContext;
-    }
-
     let tokenRefreshPromise = null;
 
-    // Lấy Token xác thực vnEdu (Có bộ nhớ đệm cực nhanh & chống race condition)
-    async function ensureVnEduToken(forceRefresh = false) {
-        const context = await getOrInitContext();
+    function mergeCookies(oldCookies, newCookiesHeaders) {
+        const map = new Map();
+        if (oldCookies) {
+            oldCookies.split(';').forEach(part => {
+                const trimmed = part.trim();
+                if (!trimmed) return;
+                const eqIdx = trimmed.indexOf('=');
+                if (eqIdx !== -1) map.set(trimmed.substring(0, eqIdx).trim(), trimmed.substring(eqIdx + 1));
+            });
+        }
+        const headersList = Array.isArray(newCookiesHeaders) ? newCookiesHeaders : [newCookiesHeaders];
+        headersList.filter(Boolean).forEach(raw => {
+            const first = raw.split(';')[0].trim();
+            const eqIdx = first.indexOf('=');
+            if (eqIdx !== -1) map.set(first.substring(0, eqIdx).trim(), first.substring(eqIdx + 1));
+        });
+        return Array.from(map.entries()).map(([k, v]) => `${k}=${v}`).join('; ');
+    }
 
-        if (!forceRefresh && cachedToken) {
-            return { token: cachedToken, context };
+    function loadSessionCache() {
+        try {
+            if (fs.existsSync(SESSION_CACHE_FILE)) {
+                const data = JSON.parse(fs.readFileSync(SESSION_CACHE_FILE, 'utf-8'));
+                if (data && data.token) return data;
+            }
+        } catch (e) { }
+        return null;
+    }
+
+    function saveSessionCache(session) {
+        try {
+            fs.writeFileSync(SESSION_CACHE_FILE, JSON.stringify(session, null, 2), 'utf-8');
+        } catch (e) {
+            console.warn('Không thể lưu session_cache.json:', e.message);
+        }
+    }
+
+    function setSessionToken(token, cookies = '', userId = '7365493419') {
+        if (!token) return;
+        cachedToken = token;
+        if (cookies) cachedCookies = cookies;
+        if (userId) cachedUserId = userId;
+        saveSessionCache({
+            token: cachedToken,
+            cookies: cachedCookies || '',
+            userId: cachedUserId,
+            updatedAt: new Date().toISOString()
+        });
+    }
+
+    function getSessionStatus() {
+        const session = loadSessionCache();
+        const token = cachedToken || (session || {}).token;
+        return {
+            connected: !!token,
+            token: token || null,
+            userId: cachedUserId
+        };
+    }
+
+    // Đăng nhập vnEdu siêu tốc bằng HTTP thuần (Khoảng 1 giây, loại bỏ hoàn toàn Playwright)
+    async function loginVnEduHttp(username = '051197003685', password = 'Huyen0907@') {
+        try {
+            const ssoPageUrl = 'https://user.vnedu.vn/sso/?app_id=3&continue=http%3A%2F%2Fuaevcmanmsgdbinhduong.vnedu.vn%3A80%2Fv5%2F%3Fcall%3Dauth.loginSSO';
+            const initResp = await fetch(ssoPageUrl, {
+                headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+            });
+            let cookies = mergeCookies('', initResp.headers.getSetCookie ? initResp.headers.getSetCookie() : [initResp.headers.get('set-cookie')]);
+
+            const callUrl = 'https://user.vnedu.vn/sso/?call=auth.login';
+            const bodyParams = new URLSearchParams({
+                continue: 'aHR0cDovL3VhZXZjbWFubXNnZGJpbmhkdW9uZy52bmVkdS52bjo4MC92NS8/Y2FsbD1hdXRoLmxvZ2luU1NP',
+                app_id: '3',
+                loginQrToken: 'web_' + Date.now(),
+                txtUsername: username,
+                txtPassword: password
+            });
+
+            const res = await fetch(callUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                    'Cookie': cookies,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Referer': ssoPageUrl,
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                },
+                body: bodyParams.toString()
+            });
+            cookies = mergeCookies(cookies, res.headers.getSetCookie ? res.headers.getSetCookie() : [res.headers.get('set-cookie')]);
+
+            const respText = await res.text();
+            let json = null;
+            try {
+                json = JSON.parse(respText);
+            } catch (pe) {
+                return { success: false, msg: 'Cổng vnEdu phản hồi không hợp lệ: ' + respText.substring(0, 100) };
+            }
+            if (!json.success || !json.data) {
+                return {
+                    success: false,
+                    msg: json.msg || 'Đăng nhập vnEdu không thành công. Cô vui lòng kiểm tra lại tài khoản hoặc mật khẩu.'
+                };
+            }
+
+            const finalResp = await fetch(json.data, {
+                redirect: 'manual',
+                headers: { 'Cookie': cookies, 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+            });
+            cookies = mergeCookies(cookies, finalResp.headers.getSetCookie ? finalResp.headers.getSetCookie() : [finalResp.headers.get('set-cookie')]);
+
+            const homeResp = await fetch('https://uaevcmanmsgdbinhduong.vnedu.vn/v5/', {
+                headers: {
+                    'Cookie': cookies,
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                }
+            });
+            cookies = mergeCookies(cookies, homeResp.headers.getSetCookie ? homeResp.headers.getSetCookie() : [homeResp.headers.get('set-cookie')]);
+
+            const html = await homeResp.text();
+            const tokenMatch = html.match(/login\|([a-f0-9]{32})/);
+            const token = tokenMatch ? tokenMatch[1] : null;
+
+            if (!token) {
+                return { success: false, msg: 'Đăng nhập thành công nhưng không lấy được mã Token bảo mật của trường.' };
+            }
+
+            cachedToken = token;
+            cachedCookies = cookies;
+            cachedUserId = '7365493419';
+
+            saveSessionCache({
+                token: cachedToken,
+                cookies: cachedCookies,
+                userId: cachedUserId,
+                updatedAt: new Date().toISOString()
+            });
+
+            return {
+                success: true,
+                token: cachedToken,
+                cookies: cachedCookies,
+                userId: cachedUserId,
+                msg: 'Đăng nhập vnEdu thành công! Chào cô Lê Thị Diệu Huyên.'
+            };
+        } catch (err) {
+            return { success: false, msg: 'Lỗi kết nối cổng đăng nhập vnEdu: ' + err.message };
+        }
+    }
+
+    // Lấy Token xác thực vnEdu (Có bộ nhớ đệm cực nhanh & tự động làm mới qua HTTP)
+    async function ensureVnEduToken(forceRefresh = false) {
+        if (!forceRefresh && cachedToken && cachedCookies) {
+            return { token: cachedToken, cookies: cachedCookies, userId: cachedUserId };
+        }
+
+        if (!forceRefresh) {
+            const loaded = loadSessionCache();
+            if (loaded && loaded.token && loaded.cookies) {
+                cachedToken = loaded.token;
+                cachedCookies = loaded.cookies;
+                cachedUserId = loaded.userId || '7365493419';
+                return { token: cachedToken, cookies: cachedCookies, userId: cachedUserId };
+            }
         }
 
         if (tokenRefreshPromise) {
@@ -269,54 +396,45 @@ function getAvailableWeeks(source = 'vnedu') {
         }
 
         tokenRefreshPromise = (async () => {
-            const page = context.pages().length > 0 ? context.pages()[0] : await context.newPage();
-
-            let token = null;
-            const requestHandler = req => {
-                const m = req.url().match(/my_token=([a-f0-9]{20,40})/i);
-                if (m) {
-                    token = m[1];
-                    cachedToken = m[1];
-                }
-            };
-            page.on('request', requestHandler);
-
             try {
-                await page.goto('https://uaevcmanmsgdbinhduong.vnedu.vn/v5/', {
-                    waitUntil: 'domcontentloaded',
-                    timeout: 25000
-                });
-
-                if (page.url().includes('sso')) {
-                    await page.waitForSelector('#txtUsername', { timeout: 10000 });
-                    await page.fill('#txtUsername', '051197003685');
-                    await page.fill('#txtPassword', 'Huyen0907@');
-                    await Promise.all([
-                        page.waitForNavigation({ waitUntil: 'networkidle', timeout: 25000 }).catch(() => { }),
-                        page.click('#btnLogin, input[type="submit"], button[type="submit"], .btn-login, #btnSubmit')
-                    ]);
+                const res = await loginVnEduHttp('051197003685', 'Huyen0907@');
+                if (!res.success || !res.token) {
+                    throw new Error(res.msg || 'Không thể lấy mã Token xác thực từ vnEdu.');
                 }
-
-                await page.waitForLoadState('networkidle').catch(() => { });
-                await page.waitForTimeout(1000);
-
-                for (let i = 0; i < 15; i++) {
-                    if (token) break;
-                    await page.waitForTimeout(400);
-                }
-
-                if (!token) {
-                    throw new Error('Không thể lấy mã Token xác thực từ vnEdu. Vui lòng kiểm tra tài khoản.');
-                }
-
-                return { token, context };
+                return { token: res.token, cookies: res.cookies, userId: res.userId };
             } finally {
-                page.off('request', requestHandler);
                 tokenRefreshPromise = null;
             }
         })();
 
         return tokenRefreshPromise;
+    }
+
+    // Helper: Thực hiện POST API tới vnEdu bằng HTTP fetch thuần với Cookie và Token
+    async function vnEduPost(url, params, customHeaders = {}) {
+        let { token, cookies } = await ensureVnEduToken();
+        const bodyParams = params instanceof URLSearchParams ? new URLSearchParams(params) : new URLSearchParams();
+        if (!(params instanceof URLSearchParams)) {
+            for (const key in params) {
+                bodyParams.set(key, params[key]);
+            }
+        }
+        if (!bodyParams.has('my_token') && token) {
+            bodyParams.set('my_token', token);
+        }
+
+        const headers = {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'Cookie': cookies || '',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            ...customHeaders
+        };
+
+        return await fetch(url, {
+            method: 'POST',
+            headers,
+            body: bodyParams.toString()
+        });
     }
 
     function parseTableRows(html, className, liveEntries) {
@@ -380,12 +498,8 @@ function getAvailableWeeks(source = 'vnedu') {
             });
 
             try {
-                const resp = await context.request.post(url, {
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-                    form: Object.fromEntries(params),
-                    timeout: 8000
-                });
-                const html = await resp.text();
+                let resp = await vnEduPost(url, params);
+                let html = await resp.text();
 
                 if (!html.includes('<table') && (html.includes('cas.vnedu.vn') || html.includes('Phiên làm việc hết hạn') || html.includes('top.location'))) {
                     console.warn('vnEdu token expired, refreshing token...');
@@ -393,14 +507,8 @@ function getAvailableWeeks(source = 'vnedu') {
                     token = refreshed.token;
                     params.set('my_token', token);
                     const retryUrl = `https://uaevcmanmsgdbinhduong.vnedu.vn/v5/?load=app.sodaubai.serv.so_dau_bai&app_nam_hoc=2026&my_token=${token}`;
-                    const retryResp = await context.request.post(retryUrl, {
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-                        form: Object.fromEntries(params),
-                        timeout: 8000
-                    });
-                    const retryHtml = await retryResp.text();
-                    parseTableRows(retryHtml, cls.name, liveEntries);
-                    continue;
+                    resp = await vnEduPost(retryUrl, params);
+                    html = await resp.text();
                 }
 
                 parseTableRows(html, cls.name, liveEntries);
@@ -449,14 +557,7 @@ function getAvailableWeeks(source = 'vnedu') {
         let saveUrl = `https://uaevcmanmsgdbinhduong.vnedu.vn/v5/?call=app.sodaubai.serv.so_dau_bai.save&app_nam_hoc=${payload.app_nam_hoc}&my_token=${payload.my_token}`;
 
         try {
-            let resp = await context.request.post(saveUrl, {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                form: payload,
-                timeout: 12000
-            });
+            let resp = await vnEduPost(saveUrl, payload, { 'X-Requested-With': 'XMLHttpRequest' });
             let json = await resp.json();
 
             // Tự động gia hạn token nếu báo lỗi token hoặc hết hạn phiên
@@ -466,14 +567,7 @@ function getAvailableWeeks(source = 'vnedu') {
                 token = refreshed.token;
                 payload = buildPayload(token);
                 saveUrl = `https://uaevcmanmsgdbinhduong.vnedu.vn/v5/?call=app.sodaubai.serv.so_dau_bai.save&app_nam_hoc=${payload.app_nam_hoc}&my_token=${payload.my_token}`;
-                resp = await context.request.post(saveUrl, {
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    form: payload,
-                    timeout: 12000
-                });
+                resp = await vnEduPost(saveUrl, payload, { 'X-Requested-With': 'XMLHttpRequest' });
                 json = await resp.json();
             }
 
@@ -512,31 +606,18 @@ function getAvailableWeeks(source = 'vnedu') {
 
         let html = '';
         try {
-            const resp = await context.request.post(url, {
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-                form: Object.fromEntries(params),
-                timeout: 10000
-            });
+            let resp = await vnEduPost(url, params);
             html = await resp.text();
-        } catch (err) {
-            if (err.message.includes('closed') || err.message.includes('Target')) {
-                console.warn('Playwright context bị đóng, tự động khởi tạo lại và thử lại...');
-                globalContext = null;
-                cachedToken = null;
+            if (html.includes('cas.vnedu.vn') || html.includes('Phiên làm việc hết hạn') || html.includes('top.location')) {
                 const ref = await ensureVnEduToken(true);
                 token = ref.token;
-                context = ref.context;
                 params.set('my_token', token);
                 const retryUrl = `https://uaevcmanmsgdbinhduong.vnedu.vn/v5/?load=edu.lich_bao_giang.lich_bao_giang&app_nam_hoc=2026&my_token=${token}`;
-                const retryResp = await context.request.post(retryUrl, {
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-                    form: Object.fromEntries(params),
-                    timeout: 10000
-                });
-                html = await retryResp.text();
-            } else {
-                throw err;
+                resp = await vnEduPost(retryUrl, params);
+                html = await resp.text();
             }
+        } catch (err) {
+            throw err;
         }
         const classIdToName = {
             '5004582066': '7A2AL',
@@ -648,11 +729,7 @@ function getAvailableWeeks(source = 'vnedu') {
             den_ngay: dateRange.denNgay
         };
 
-        const resp = await context.request.post(url, {
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-            form: params,
-            timeout: 15000
-        });
+        const resp = await vnEduPost(url, params);
 
         const json = await resp.json();
         if (json && (json.status === 'success' || json.code === 0 || json.success)) {
@@ -731,11 +808,7 @@ function getAvailableWeeks(source = 'vnedu') {
         });
 
         try {
-            const resp = await context.request.post(url, {
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-                form: Object.fromEntries(params),
-                timeout: 10000
-            });
+            let resp = await vnEduPost(url, params);
             let json = await resp.json();
 
             // Nếu vnEdu báo token hết hạn hoặc mất quyền truy cập phiên
@@ -745,12 +818,8 @@ function getAvailableWeeks(source = 'vnedu') {
                 token = refreshed.token;
                 params.set('my_token', token);
                 const retryUrl = `https://uaevcmanmsgdbinhduong.vnedu.vn/v5/?call=app.sodaubai.serv.so_dau_bai.getDaSachHocSinhVangByLop&app_nam_hoc=2026&my_token=${token}`;
-                const retryResp = await context.request.post(retryUrl, {
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-                    form: Object.fromEntries(params),
-                    timeout: 10000
-                });
-                json = await retryResp.json();
+                resp = await vnEduPost(retryUrl, params);
+                json = await resp.json();
             }
 
             if (json && json.success === false) {
@@ -764,11 +833,7 @@ function getAvailableWeeks(source = 'vnedu') {
             if (list.length === 0 && chitietId) {
                 params.set('chitiet_id', '');
                 try {
-                    const fallbackResp = await context.request.post(url, {
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-                        form: Object.fromEntries(params),
-                        timeout: 8000
-                    });
+                    const fallbackResp = await vnEduPost(url, params);
                     const fallbackJson = await fallbackResp.json();
                     if (fallbackJson && Array.isArray(fallbackJson.aRoot) && fallbackJson.aRoot.length > 0) {
                         list = fallbackJson.aRoot;
@@ -822,11 +887,7 @@ function getAvailableWeeks(source = 'vnedu') {
         });
 
         try {
-            const resp = await context.request.post(url, {
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-                form: formObj,
-                timeout: 10000
-            });
+            const resp = await vnEduPost(url, formObj);
             const json = await resp.json();
             return json;
         } catch (err) {
@@ -862,11 +923,7 @@ function getAvailableWeeks(source = 'vnedu') {
         });
 
         try {
-            const res = await context.request.post(url, {
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-                form: Object.fromEntries(params),
-                timeout: 10000
-            });
+            const res = await vnEduPost(url, params);
             const html = await res.text();
             const rows = html.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || [];
             const absentByDay = {}; // day (int) -> { morning: [], afternoon: [] }
@@ -949,11 +1006,27 @@ function getAvailableWeeks(source = 'vnedu') {
         }
     }
 
+    function clearSession() {
+        cachedToken = null;
+        cachedCookies = null;
+        try {
+            if (fs.existsSync(SESSION_CACHE_FILE)) {
+                fs.unlinkSync(SESSION_CACHE_FILE);
+            }
+        } catch (e) {
+            saveSessionCache({});
+        }
+    }
+
     module.exports = {
         getLatestExcelFile,
         getAvailableWeeks,
         parseWeekSchedule,
         ensureVnEduToken,
+        loginVnEduHttp,
+        getSessionStatus,
+        setSessionToken,
+        clearSession,
         checkLiveStatus,
         saveSlotToVnEdu,
         setExcelFileBuffer,

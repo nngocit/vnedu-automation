@@ -1,0 +1,98 @@
+<!-- Toast thông báo -->
+<div *ngIf="toastMessage" class="position-fixed top-0 end-0 p-5 z-index-100" style="z-index: 9999;">
+  <div class="toast show align-items-center border-0 shadow-lg text-white"
+       [ngClass]="toastMessage.type === 'success' ? 'bg-success' : (toastMessage.type === 'danger' ? 'bg-danger' : 'bg-primary')"
+       role="alert">
+    <div class="d-flex align-items-center px-4 py-3">
+      <app-keenicon *ngIf="toastMessage.type === 'success'" name="check-circle" class="fs-2 me-3 text-white"></app-keenicon>
+      <app-keenicon *ngIf="toastMessage.type === 'danger'" name="cross-circle" class="fs-2 me-3 text-white"></app-keenicon>
+      <app-keenicon *ngIf="toastMessage.type === 'info'" name="information-5" class="fs-2 me-3 text-white"></app-keenicon>
+      <div class="toast-body fw-semibold fs-6">
+        {{ toastMessage.text }}
+      </div>
+      <button type="button" class="btn-close btn-close-white ms-auto me-2" (click)="toastMessage = null"></button>
+    </div>
+  </div>
+</div>
+
+<div class="card card-flush shadow-sm">
+  <div class="card-header pt-6 border-0">
+    <div class="card-title d-flex flex-column">
+      <h3 class="fw-bold fs-3 text-gray-900 mb-1">Cấu Hình Phân Phối Chương Trình (PPCT)</h3>
+      <span class="text-gray-500 fs-7">
+        Quy định số tiết PPCT tự động cho môn Hoạt Động Trải Nghiệm (HĐTN) và các môn chuyên biệt theo từng tuần học
+      </span>
+    </div>
+
+    <div class="card-toolbar d-flex gap-3">
+      <button class="btn btn-sm btn-light-warning fw-bold d-flex align-items-center" (click)="resetFormula()">
+        <app-keenicon name="arrows-circle" class="fs-3 me-1"></app-keenicon>
+        Tính Lại Theo Chuẩn
+      </button>
+
+      <button class="btn btn-sm btn-primary fw-bold d-flex align-items-center"
+              (click)="saveConfig()" [disabled]="isSaving">
+        <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2" role="status"></span>
+        <app-keenicon *ngIf="!isSaving" name="disk" class="fs-3 me-1"></app-keenicon>
+        Lưu Cấu Hình
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="card-body p-10 text-center">
+    <div class="spinner-border text-primary my-5" role="status"></div>
+    <div class="text-gray-600 fw-semibold fs-6">Đang tải bảng phân phối chương trình...</div>
+  </div>
+
+  <div *ngIf="!isLoading" class="card-body pt-0">
+    <!-- Cài đặt chung -->
+    <div class="d-flex flex-wrap align-items-center gap-6 p-4 mb-6 bg-light-primary rounded">
+      <div class="form-check form-check-custom form-check-solid">
+        <input class="form-check-input" type="checkbox" id="autoSyncCheck" [(ngModel)]="autoSync">
+        <label class="form-check-label fw-bold text-gray-800 fs-7" for="autoSyncCheck">
+          Tự động đồng bộ số tiết PPCT này vào vnEdu khi ghi Sổ đầu bài
+        </label>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <label class="fw-bold text-gray-700 fs-7">Chế độ phân bổ:</label>
+        <select class="form-select form-select-sm form-select-solid w-150px fw-bold" [(ngModel)]="mode">
+          <option value="auto">Tự động (Auto)</option>
+          <option value="manual">Thủ công (Manual)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Bảng cấu hình theo tuần -->
+    <div class="table-responsive">
+      <table class="table align-middle table-row-dashed fs-7 gy-3">
+        <thead>
+          <tr class="text-start text-gray-500 fw-bold fs-7 text-uppercase gs-0 bg-lighten">
+            <th class="ps-4 w-100px rounded-start">Tuần Học</th>
+            <th class="w-200px">Tiết PPCT Thứ Nhất (Tiết 1)</th>
+            <th class="w-200px">Tiết PPCT Thứ Hai (Tiết 2)</th>
+            <th class="pe-4 rounded-end">Ghi Chú</th>
+          </tr>
+        </thead>
+        <tbody class="fw-semibold text-gray-600">
+          <tr *ngFor="let r of weekRows">
+            <td class="ps-4">
+              <span class="badge badge-light-primary fw-bold fs-7 px-3 py-2">Tuần {{ r.week }}</span>
+            </td>
+            <td>
+              <input type="number" class="form-control form-control-sm form-control-solid w-120px fw-bold"
+                     [(ngModel)]="r.tiet1" min="1" max="150">
+            </td>
+            <td>
+              <input type="number" class="form-control form-control-sm form-control-solid w-120px fw-bold"
+                     [(ngModel)]="r.tiet2" min="1" max="150">
+            </td>
+            <td class="text-gray-500 fs-8 pe-4">
+              Tiết 1: PPCT {{ r.tiet1 }} | Tiết 2: PPCT {{ r.tiet2 }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

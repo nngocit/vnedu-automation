@@ -1,0 +1,418 @@
+:host {
+  display: block;
+}
+
+// Layout wrapper tươi sáng, tương phản chuẩn, dịu mắt (không bị chói lóa hay mờ lợt)
+.vnedu-app-container {
+  background-color: #f1f5f9;
+  padding: 1.25rem;
+  border-radius: 1rem;
+  color: #1e293b;
+}
+
+// Thanh công cụ trên cùng
+.top-nav-bar {
+  background: #ffffff;
+  padding: 0.85rem 1.25rem;
+  border-radius: 0.85rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+// Nút bấm kiểu Pill rực rỡ, đậm nét như hình mẫu
+.pill-btn {
+  border-radius: 9999px !important;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  padding: 0.45rem 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+
+  &.pill-success {
+    background-color: #059669;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(5, 150, 105, 0.25);
+
+    &:hover {
+      background-color: #047857;
+      color: #ffffff;
+    }
+  }
+
+  &.pill-primary {
+    background-color: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25);
+
+    &:hover {
+      background-color: #1d4ed8;
+      color: #ffffff;
+    }
+  }
+
+  &.pill-warning {
+    background-color: #d97706;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(217, 119, 6, 0.25);
+
+    &:hover {
+      background-color: #b45309;
+      color: #ffffff;
+    }
+  }
+
+  &.pill-outline {
+    background-color: #ffffff;
+    color: #334155;
+    border-color: #cbd5e1;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+    &:hover {
+      background-color: #f8fafc;
+      color: #0f172a;
+      border-color: #94a3b8;
+    }
+  }
+
+  &.pill-channel {
+    background-color: #ecfdf5;
+    color: #065f46;
+    border-color: #6ee7b7;
+    font-weight: 700;
+  }
+}
+
+// Bộ chuyển tuần tròn (Pill control)
+.week-pill-control {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 9999px;
+  padding: 2px 8px;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  .nav-btn {
+    border: none;
+    background: transparent;
+    color: #334155;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    border-radius: 9999px;
+    transition: all 0.15s ease;
+
+    &:hover:not(:disabled) {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+
+    &:disabled {
+      color: #cbd5e1;
+      cursor: not-allowed;
+    }
+  }
+
+  .week-select-pill {
+    border: none;
+    background: transparent;
+    font-weight: 800;
+    font-size: 0.875rem;
+    color: #0f172a;
+    cursor: pointer;
+    outline: none;
+    padding: 3px 6px;
+    min-width: 145px;
+    text-align: center;
+    text-align-last: center;
+
+    option {
+      font-weight: 600;
+      color: #0f172a;
+      background: #ffffff;
+      padding: 6px 10px;
+    }
+  }
+}
+
+// Banner nhắc nhở màu cam vàng nổi bật
+.notice-banner {
+  background-color: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 0.85rem;
+  padding: 0.85rem 1.25rem;
+  color: #92400e;
+  box-shadow: 0 1px 2px rgba(245, 158, 11, 0.06);
+}
+
+// Bộ lọc lớp học
+.class-filter-pill {
+  border-radius: 9999px;
+  padding: 0.4rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  &:hover {
+    background: #f8fafc;
+    color: #0f172a;
+    border-color: #94a3b8;
+  }
+
+  &.active {
+    background-color: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.2);
+  }
+}
+
+// ----------------------------------------------------
+// THẺ CARD CHO TỪNG NGÀY (THỨ HAI, THỨ BA...)
+// ----------------------------------------------------
+.day-card {
+  background: #ffffff;
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+
+  .day-card-header {
+    padding: 1rem 1.5rem;
+    background: #fafbfc;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .day-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .date-badge {
+      background: #e2e8f0;
+      color: #334155;
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-left: 0.65rem;
+    }
+
+    .slot-count {
+      color: #475569;
+      font-size: 0.8125rem;
+      font-weight: 700;
+    }
+  }
+}
+
+// Bảng chi tiết từng tiết học trong ngày
+.day-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  thead th {
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 12px 16px;
+    border-bottom: 2px solid #e2e8f0;
+  }
+
+  tbody td {
+    padding: 14px 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  tbody tr {
+    transition: background-color 0.1s ease;
+
+    &:hover {
+      background-color: #f8fafc;
+    }
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+// Badge Buổi (Sáng / Chiều)
+.badge-session {
+  padding: 0.25rem 0.55rem;
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  display: inline-block;
+
+  &.morning {
+    background-color: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+  }
+
+  &.afternoon {
+    background-color: #ede9fe;
+    color: #6d28d9;
+    border: 1px solid #ddd6fe;
+  }
+}
+
+// Badge Tên Lớp màu xanh đậm dạng Pill bo tròn như hình mẫu (9A2AL, 7A3AL...)
+.badge-class-bold {
+  background-color: #2563eb;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.8125rem;
+  padding: 0.35rem 0.95rem;
+  border-radius: 9999px;
+  display: inline-block;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25);
+  letter-spacing: 0.5px;
+}
+
+// Chip điểm danh đối chiếu dạng Pill
+.attendance-compare-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-top: 5px;
+  border: 1px solid transparent;
+
+  &.has-absent {
+    background-color: #fffbeb;
+    color: #b45309;
+    border: 1px dashed #f59e0b;
+
+    &:hover {
+      background-color: #fef3c7;
+    }
+  }
+
+  &.all-present {
+    background-color: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+
+    &:hover {
+      background-color: #d1fae5;
+    }
+  }
+}
+
+// Trạng thái vnEdu dạng Pill
+.status-badge-vnedu {
+  padding: 0.35rem 0.95rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+
+  &.synced {
+    background-color: #ecfdf5;
+    color: #047857;
+    border: 1px solid #6ee7b7;
+  }
+
+  &.pending {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #93c5fd;
+  }
+}
+
+// Nút thao tác Lưu Bù / Sửa dạng Pill
+.btn-save-action {
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 0.4rem 1.05rem;
+  border-radius: 9999px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+
+  &.btn-pending {
+    background-color: #d97706;
+    color: #ffffff;
+    border: none;
+    box-shadow: 0 2px 4px rgba(217, 119, 6, 0.25);
+
+    &:hover {
+      background-color: #b45309;
+      color: #ffffff;
+    }
+  }
+
+  &.btn-synced {
+    background-color: #ffffff;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+    &:hover {
+      background-color: #f8fafc;
+      color: #0f172a;
+      border-color: #94a3b8;
+    }
+  }
+}
+
+// Modal System
+.modal-backdrop-custom {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 1050;
+  padding: 1.5rem;
+}
+
+.modal-dialog-custom {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  &.modal-lg {
+    max-width: 840px;
+  }
+
+  &.modal-md {
+    max-width: 480px;
+  }
+}
+
+.attendance-scroll-wrap {
+  max-height: 420px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}

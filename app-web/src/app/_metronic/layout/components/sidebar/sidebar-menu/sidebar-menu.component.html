@@ -1,0 +1,58 @@
+<!--begin::Menu wrapper-->
+<div id="kt_app_sidebar_menu_wrapper" class="app-sidebar-wrapper hover-scroll-overlay-y my-5" data-kt-scroll="true"
+     data-kt-scroll-activate="true" data-kt-scroll-height="auto"
+     data-kt-scroll-dependencies="#kt_app_sidebar_logo, #kt_app_sidebar_footer"
+     data-kt-scroll-wrappers="#kt_app_sidebar_menu" data-kt-scroll-offset="5px" data-kt-scroll-save-state="true">
+  <!--begin::Menu-->
+  <div class="menu menu-column menu-rounded menu-sub-indention px-3" id="#kt_app_sidebar_menu" data-kt-menu="true"
+       data-kt-menu-expand="false">
+
+    <!-- vnEdu Automation Section -->
+    <div class="menu-item">
+      <div class="menu-content pt-4 pb-2">
+        <span class="menu-section text-primary text-uppercase fs-8 ls-1 fw-bolder">vnEdu Smart Sync</span>
+      </div>
+    </div>
+
+    <!-- Sổ Đầu Bài & Lịch Tuần -->
+    <div class="menu-item">
+      <a class="menu-link without-sub" routerLink="/vnedu/so-dau-bai" routerLinkActive="active">
+        <span class="menu-icon">
+          <app-keenicon name="book-open" class="fs-2 text-primary"></app-keenicon>
+        </span>
+        <span class="menu-title fw-bold">Sổ Đầu Bài & Lịch Dạy</span>
+      </a>
+    </div>
+
+    <!-- Cấu hình PPCT -->
+    <div class="menu-item">
+      <a class="menu-link without-sub" routerLink="/vnedu/ppct" routerLinkActive="active">
+        <span class="menu-icon">
+          <app-keenicon name="setting-2" class="fs-2 text-primary"></app-keenicon>
+        </span>
+        <span class="menu-title fw-bold">Cấu Hình PPCT</span>
+      </a>
+    </div>
+
+    <!-- Separator -->
+    <div class="menu-item">
+      <div class="menu-content pt-6 pb-2">
+        <span class="menu-section text-muted text-uppercase fs-8 ls-1">Tiện Ích Trực Tuyến</span>
+      </div>
+    </div>
+
+    <!-- Cổng vnEdu Bình Dương -->
+    <div class="menu-item">
+      <a class="menu-link without-sub" href="https://uaevcmanmsgdbinhduong.vnedu.vn" target="_blank">
+        <span class="menu-icon">
+          <app-keenicon name="external-drive" class="fs-2 text-success"></app-keenicon>
+        </span>
+        <span class="menu-title fw-semibold">Cổng vnEdu Sở GD&ĐT</span>
+        <span class="badge badge-light-success fs-9 ms-auto">Mở web</span>
+      </a>
+    </div>
+
+  </div>
+  <!--end::Menu-->
+</div>
+<!--end::Menu wrapper-->

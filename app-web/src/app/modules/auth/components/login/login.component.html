@@ -1,0 +1,123 @@
+<form class="form w-100" [formGroup]="loginForm" novalidate="novalidate" id="vnedu_login_form" (ngSubmit)="submit()">
+  <!-- Header Form Đăng nhập vnEdu -->
+  <div class="text-center mb-8">
+    <div class="d-inline-flex align-items-center justify-content-center bg-light-primary text-primary rounded-circle mb-3 p-4 shadow-xs" style="width: 68px; height: 68px;">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+        <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+      </svg>
+    </div>
+    <h1 class="text-dark fw-bolder mb-2 fs-2x">
+      Đăng Nhập vnEdu
+    </h1>
+    <div class="text-gray-500 fw-semibold fs-6">
+      Cổng Tự Động Hóa Sổ Đầu Bài & Lịch Báo Giảng
+    </div>
+  </div>
+
+  <!-- Thẻ nạp nhanh tài khoản Giáo viên -->
+  <div class="card bg-light-primary border-primary border-dashed p-4 mb-7 rounded-3">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <div class="d-flex align-items-center">
+        <div class="symbol symbol-40px symbol-circle me-3">
+          <span class="symbol-label bg-primary text-white fw-bolder fs-5">H</span>
+        </div>
+        <div>
+          <div class="fw-bolder text-gray-900 fs-6">Cô Lê Thị Diệu Huyên</div>
+          <div class="text-gray-600 fs-7">Trường THCS Phú Hòa • 051197003685</div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 py-2 fs-8 fw-bold" (click)="fillQuickCredentials()">
+        ⚡ Nạp nhanh
+      </button>
+    </div>
+  </div>
+
+  <!-- Alert hiển thị lỗi đăng nhập -->
+  <div *ngIf="hasError" class="alert alert-danger d-flex align-items-center p-4 mb-6 rounded-3">
+    <span class="fs-2 me-3">⚠️</span>
+    <div class="d-flex flex-column text-danger">
+      <span class="fw-bolder fs-6">Đăng nhập không thành công</span>
+      <span class="fs-7">{{ errorMessage }}</span>
+    </div>
+  </div>
+
+  <!-- Trường: TÀI KHOẢN VNEDU -->
+  <div class="fv-row mb-6">
+    <label class="form-label fs-6 fw-bold text-gray-800 required">Tài khoản vnEdu / SĐT</label>
+    <div class="position-relative">
+      <input class="form-control form-control-solid bg-light border border-gray-300 fs-6 py-3 px-4 rounded-2"
+             type="text"
+             name="username"
+             formControlName="username"
+             placeholder="Nhập SĐT hoặc tài khoản vnEdu..."
+             autocomplete="username"
+             [ngClass]="{
+               'is-invalid': f.username.touched && f.username.invalid,
+               'is-valid': f.username.touched && f.username.valid
+             }" />
+      <span class="position-absolute top-50 end-0 translate-middle-y me-4 text-gray-400">
+        👤
+      </span>
+    </div>
+    <div *ngIf="f.username.touched && f.username.invalid" class="text-danger fs-8 mt-1">
+      <span *ngIf="f.username.errors?.['required']">Vui lòng nhập tài khoản vnEdu</span>
+      <span *ngIf="f.username.errors?.['minlength']">Tài khoản phải có ít nhất 6 ký tự</span>
+    </div>
+  </div>
+
+  <!-- Trường: MẬT KHẨU VNEDU -->
+  <div class="fv-row mb-6">
+    <div class="d-flex justify-content-between align-items-center mb-1">
+      <label class="form-label fs-6 fw-bold text-gray-800 required mb-0">Mật khẩu vnEdu</label>
+      <a href="https://vnedu.vn" target="_blank" class="text-primary fs-8 fw-semibold text-hover-primary">
+        Quên mật khẩu?
+      </a>
+    </div>
+    <div class="position-relative">
+      <input class="form-control form-control-solid bg-light border border-gray-300 fs-6 py-3 px-4 rounded-2"
+             [type]="showPassword ? 'text' : 'password'"
+             name="password"
+             formControlName="password"
+             placeholder="Nhập mật khẩu vnEdu..."
+             autocomplete="current-password"
+             [ngClass]="{
+               'is-invalid': f.password.touched && f.password.invalid,
+               'is-valid': f.password.touched && f.password.valid
+             }" />
+      <button type="button"
+              class="btn btn-icon btn-sm position-absolute top-50 end-0 translate-middle-y me-2 text-gray-500 text-hover-primary"
+              (click)="togglePassword()"
+              tabindex="-1"
+              title="Ẩn / Hiện mật khẩu">
+        <span class="fs-5">{{ showPassword ? '🙈' : '👁️' }}</span>
+      </button>
+    </div>
+    <div *ngIf="f.password.touched && f.password.invalid" class="text-danger fs-8 mt-1">
+      <span *ngIf="f.password.errors?.['required']">Vui lòng nhập mật khẩu</span>
+      <span *ngIf="f.password.errors?.['minlength']">Mật khẩu phải có ít nhất 4 ký tự</span>
+    </div>
+  </div>
+
+  <!-- Nút Đăng nhập -->
+  <div class="d-grid mb-6">
+    <button type="submit"
+            id="kt_sign_in_submit"
+            class="btn btn-primary py-3 fs-6 fw-bolder rounded-pill shadow-sm"
+            [disabled]="(isLoading$ | async)">
+      <ng-container *ngIf="(isLoading$ | async)">
+        <span class="spinner-border spinner-border-sm align-middle me-2"></span>
+        Đang xác thực vnEdu...
+      </ng-container>
+      <ng-container *ngIf="!(isLoading$ | async)">
+        ⚡ ĐĂNG NHẬP & KẾT NỐI VNEDU
+      </ng-container>
+    </button>
+  </div>
+
+  <!-- Cam kết bảo mật an toàn -->
+  <div class="text-center text-gray-500 fs-8">
+    <span class="me-1">🔒</span>
+    Mật khẩu chỉ dùng để lấy phiên làm việc (Session) trực tiếp từ máy chủ vnEdu Sở GD&ĐT.
+  </div>
+</form>

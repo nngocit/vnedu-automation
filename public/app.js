@@ -1539,34 +1539,45 @@
         return { success: true, chitietId: savedId, msg: 'Đã lưu trực tiếp thành công vào Sổ đầu bài vnEdu!' };
     }
 
-    // ĐIỀU PHỐI ĐỒNG BỘ LAI THÔNG MINH (KẾT HỢP 2 & 3: CLIENT DIRECT -> LOCAL TUNNEL / RELAY)
+    // ĐIỀU PHỐI ĐỒNG BỘ LAI THÔNG MINH (ƯU TIÊN MÁY CHỦ CỤC BỘ / API RELAY CÓ ĐẦY ĐỦ COOKIES)
     async function dispatchSaveSlot(slotToSave, week) {
-        // Tầng 1: Thử Client-Side Direct (trình duyệt gửi thẳng đến vnEdu qua IP Việt Nam)
-        try {
-            const directResult = await saveSlotDirectClient(slotToSave, week);
-            if (directResult && directResult.success) {
-                return directResult;
-            }
-        } catch (clientErr) {
-            if (clientErr.expired) {
-                return { success: false, expired: true, msg: clientErr.message };
-            }
-            console.warn('Client direct save failed, falling back to Tunnel/Relay:', clientErr.message);
-        }
-
-        // Tầng 2: Dự phòng qua Local Tunnel / Cloudflare Relay
         const clientToken = localStorage.getItem('vnedu_token') || '';
         const clientCookies = localStorage.getItem('vnedu_cookies') || '';
-        const res = await fetch('/api/sync-slot', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-vnedu-token': clientToken,
-                'x-vnedu-cookie': clientCookies
-            },
-            body: JSON.stringify({ slot: slotToSave, week: week })
-        });
-        return await res.json();
+
+        // Tầng 1: Ưu tiên gọi qua máy chủ cục bộ (Đầy đủ Cookies phiên & IP Việt Nam)
+        try {
+            const res = await fetch('/api/sync-slot', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-vnedu-token': clientToken,
+                    'x-vnedu-cookie': clientCookies
+                },
+                body: JSON.stringify({ slot: slotToSave, week: week })
+            });
+            const data = await res.json();
+            if (data && data.success) {
+                return data;
+            }
+            if (data && data.expired) {
+                return data;
+            }
+            if (data && !data.success && data.msg && (data.msg.includes('hết hạn') || data.msg.includes('đăng nhập') || data.msg.includes('quyền'))) {
+                return { success: false, expired: true, msg: data.msg };
+            }
+            if (data && typeof data.success !== 'undefined') {
+                return data;
+            }
+        } catch (serverErr) {
+            console.warn('API /api/sync-slot lỗi kết nối, chuyển sang thử Client Direct:', serverErr.message);
+        }
+
+        // Tầng 2: Dự phòng thử Client Direct
+        try {
+            return await saveSlotDirectClient(slotToSave, week);
+        } catch (clientErr) {
+            return { success: false, expired: !!clientErr.expired, msg: clientErr.message };
+        }
     }
 
     // Đồng bộ 1 tiết đơn lẻ
@@ -2735,9 +2746,33 @@
                                 } catch (e) { }
                             }
 
-                            // TẦNG 1: Thử lưu điểm danh trực tiếp từ Trình duyệt (Client Direct)
+                            // TẦNG 1: Ưu tiên lưu qua máy chủ cục bộ / API Relay (Đầy đủ Cookies và IP Việt Nam)
                             let saveJson = null;
-                            if (directChitietId) {
+                            try {
+                                const clientToken = localStorage.getItem('vnedu_token') || '';
+                                const clientCookies = localStorage.getItem('vnedu_cookies') || '';
+                                const saveRes = await fetch('/api/save-attendance', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'x-vnedu-token': clientToken,
+                                        'x-vnedu-cookie': clientCookies
+                                    },
+                                    body: JSON.stringify({
+                                        chitietId: directChitietId || slot.chitietId || slot.liveId || '',
+                                        studentsData: selected,
+                                        soLuongNghi: selected.length,
+                                        slot: slot,
+                                        week: state.currentWeek || 9
+                                    })
+                                });
+                                saveJson = await saveRes.json();
+                            } catch (e) {
+                                console.warn('Lỗi lưu điểm danh qua máy chủ, thử Client Direct:', e.message);
+                            }
+
+                            // TẦNG 2: Dự phòng Client Direct nếu máy chủ không phản hồi
+                            if ((!saveJson || !saveJson.success) && directChitietId) {
                                 try {
                                     const { token } = await getClientVnEduToken();
                                     if (token) {
@@ -2769,30 +2804,8 @@
                                         }
                                     }
                                 } catch (directErr) {
-                                    console.warn('Direct attendance save failed, falling back to relay:', directErr.message);
+                                    console.warn('Direct attendance save failed:', directErr.message);
                                 }
-                            }
-
-                            // TẦNG 2: Dự phòng qua Local Relay / Cloudflare
-                            if (!saveJson || !saveJson.success) {
-                                const clientToken = localStorage.getItem('vnedu_token') || '';
-                                const clientCookies = localStorage.getItem('vnedu_cookies') || '';
-                                const saveRes = await fetch('/api/save-attendance', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'x-vnedu-token': clientToken,
-                                        'x-vnedu-cookie': clientCookies
-                                    },
-                                    body: JSON.stringify({
-                                        chitietId: directChitietId || slot.chitietId || slot.liveId || '',
-                                        studentsData: selected,
-                                        soLuongNghi: selected.length,
-                                        slot: slot,
-                                        week: state.currentWeek || 9
-                                    })
-                                });
-                                saveJson = await saveRes.json();
                             }
                             if (saveJson.expired) {
                                 showToast('Phiên làm việc hết hạn', saveJson.msg, 'warning');

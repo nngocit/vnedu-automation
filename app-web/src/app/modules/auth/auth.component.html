@@ -1,0 +1,99 @@
+<div class="d-flex flex-column flex-lg-row flex-column-fluid min-vh-100">
+
+  <!-- Cột bên trái: FORM ĐĂNG NHẬP VNEDU -->
+  <div class="d-flex flex-column flex-lg-row-fluid w-lg-50 p-6 p-lg-12 order-2 order-lg-1 bg-white justify-content-between">
+    <!-- Header nhỏ trên góc form -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+      <div class="d-flex align-items-center gap-2">
+        <span class="bullet bullet-dot bg-success"></span>
+        <span class="fs-8 fw-bold text-gray-700">Cổng Dịch Vụ Số vnEdu</span>
+      </div>
+      <span class="badge badge-light-primary fw-bold fs-8 px-3 py-1">THCS Phú Hòa</span>
+    </div>
+
+    <!-- Khối Form chính -->
+    <div class="d-flex flex-center flex-column flex-lg-row-fluid py-4">
+      <div class="w-100 mw-450px">
+        <router-outlet></router-outlet>
+      </div>
+    </div>
+
+    <!-- Footer bên trái -->
+    <div class="d-flex flex-center flex-wrap pt-4">
+      <div class="text-gray-500 fs-8 fw-semibold text-center">
+        © 2025 - 2026 Cô Lê Thị Diệu Huyên • Trường THCS Phú Hòa • Hỗ trợ kỹ thuật tự động hóa vnEdu
+      </div>
+    </div>
+  </div>
+
+  <!-- Cột bên phải: HERO BANNER GIÁO DỤC CAO CẤP -->
+  <div class="d-flex flex-lg-row-fluid w-lg-50 auth-hero-aside order-1 order-lg-2">
+    <div class="d-flex flex-column justify-content-between p-8 p-lg-15 w-100 min-vh-100">
+      <!-- Logo trường THCS Phú Hòa trên Hero -->
+      <div class="d-flex align-items-center gap-3">
+        <div class="hero-logo-box">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            <path d="M12 6v6"></path>
+            <path d="m9 9 3-3 3 3"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="text-white fw-bolder fs-5">vnEdu Smart Sync</div>
+          <div class="text-white-50 fs-8">Trường THCS Phú Hòa</div>
+        </div>
+      </div>
+
+      <!-- Nội dung trung tâm Hero -->
+      <div class="py-10">
+        <div class="badge hero-badge mb-4">
+          ✨ Dành riêng cho Cô Lê Thị Diệu Huyên
+        </div>
+        <h1 class="text-white fs-2qx fw-bolder mb-4 lh-base">
+          Trợ Lý Tự Động Hóa<br>
+          <span class="text-accent-gradient">Sổ Đầu Bài & Lịch Tuần</span>
+        </h1>
+        <p class="text-white-50 fs-6 mb-8 max-w-500px">
+          Giải pháp đồng bộ thông minh giúp cô giáo tiết kiệm thời gian, tự động điền bài dạy, cập nhật PPCT và kiểm soát vắng học sinh chuẩn xác 100%.
+        </p>
+
+        <!-- 3 Thẻ tính năng Glassmorphism -->
+        <div class="d-flex flex-column gap-3">
+          <div class="hero-feature-card">
+            <div class="feature-icon">⚡</div>
+            <div>
+              <div class="text-white fw-bold fs-7">Tự Động Điền Sổ Đầu Bài 1 Cú Nhấp</div>
+              <div class="text-white-50 fs-8">Tra cứu chính xác PPCT môn Toán, HĐTN theo từng tuần học</div>
+            </div>
+          </div>
+
+          <div class="hero-feature-card">
+            <div class="feature-icon">📊</div>
+            <div>
+              <div class="text-white fw-bold fs-7">Đối Chiếu Điểm Danh Thông Minh</div>
+              <div class="text-white-50 fs-8">Tự động nhận diện sĩ số vắng từ sổ điểm danh điện tử</div>
+            </div>
+          </div>
+
+          <div class="hero-feature-card">
+            <div class="feature-icon">🛡️</div>
+            <div>
+              <div class="text-white fw-bold fs-7">Kênh 4G/Wi-Fi Thông Tường Lửa</div>
+              <div class="text-white-50 fs-8">Không bao giờ bị nghẽn mạng hay lỗi kết nối máy chủ trường học</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer trạng thái Hero -->
+      <div class="d-flex align-items-center justify-content-between pt-4 border-top border-white border-opacity-10">
+        <span class="text-white-50 fs-8">Hệ thống sẵn sàng cho Năm học 2025 - 2026</span>
+        <span class="badge bg-success bg-opacity-25 text-white fw-bold fs-8 px-3 py-1 rounded-pill">
+          ● Sẵn Sàng Kết Nối
+        </span>
+      </div>
+    </div>
+  </div>
+
+</div>

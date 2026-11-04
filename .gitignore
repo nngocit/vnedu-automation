@@ -2,6 +2,15 @@
 node_modules/
 package-lock.json
 
+# Angular Web App dependencies & build
+app-web/node_modules/
+app-web/.angular/
+app-web/dist/
+app-web/package-lock.json
+**/node_modules/
+**/.angular/
+**/dist/
+
 # Cloudflare & Build
 .wrangler/
 dist/
