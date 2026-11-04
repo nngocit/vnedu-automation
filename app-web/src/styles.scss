@@ -12,7 +12,7 @@
 @import "./assets/plugins/keenicons/solid/style.css";
 
 /* ========================================================= */
-/* LIGHT MODE: HIGH-END MINIMALIST SLATE & CRISP WHITE       */
+/* LIGHT MODE: ZALO OFFICIAL MODERN UI THEME                 */
 /* ========================================================= */
 [data-bs-theme="light"],
 :root:not([data-bs-theme="dark"]) {
@@ -22,13 +22,13 @@
   .app-page,
   .app-wrapper,
   .app-main {
-    background: #f8fafc !important;
+    background: #eef0f3 !important;
   }
 
   #kt_app_header {
     background: #ffffff !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03) !important;
+    border-bottom: 1px solid #e4e6eb !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04) !important;
   }
 
   .vnedu-app-container {
@@ -37,57 +37,58 @@
 
   .top-nav-bar {
     background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04) !important;
-    border-radius: 12px !important;
+    border: 1px solid #e4e6eb !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
+    border-radius: 10px !important;
   }
 
   .day-card {
     background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.02) !important;
-    border-radius: 14px !important;
+    border: 1px solid #e4e6eb !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
+    border-radius: 10px !important;
 
     .day-card-header {
       background: #ffffff !important;
-      border-bottom: 1px solid #f1f5f9 !important;
+      border-bottom: 1px solid #f0f2f5 !important;
+      border-left: 4px solid #0068ff !important;
 
       .day-title {
-        color: #0f172a !important;
+        color: #1c1e21 !important;
         font-weight: 700 !important;
       }
     }
 
     .day-table {
       thead th {
-        background: #f8fafc !important;
-        color: #475569 !important;
-        border-bottom: 1px solid #e2e8f0 !important;
+        background: #f4f5f7 !important;
+        color: #4b5563 !important;
+        border-bottom: 1px solid #e4e6eb !important;
         font-weight: 700 !important;
-        font-size: 0.725rem !important;
-        letter-spacing: 0.04em !important;
+        font-size: 0.75rem !important;
+        letter-spacing: 0.03em !important;
       }
 
       tbody td {
-        border-bottom: 1px solid #f1f5f9 !important;
-        color: #0f172a !important;
+        border-bottom: 1px solid #f0f2f5 !important;
+        color: #1c1e21 !important;
       }
 
       tbody tr:hover {
-        background-color: #f8fafc !important;
+        background-color: #f7f8fa !important;
       }
 
       .form-control.form-control-solid,
       .form-select.form-select-solid {
-        background-color: #f8fafc !important;
-        color: #0f172a !important;
-        border: 1px solid #e2e8f0 !important;
+        background-color: #f4f5f7 !important;
+        color: #1c1e21 !important;
+        border: 1px solid #e4e6eb !important;
         border-radius: 8px !important;
 
         &:focus {
           background-color: #ffffff !important;
-          border-color: #2563eb !important;
-          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+          border-color: #0068ff !important;
+          box-shadow: 0 0 0 3px rgba(0, 104, 255, 0.15) !important;
         }
       }
     }
@@ -95,46 +96,46 @@
 
   .modal-dialog-custom {
     background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.16) !important;
-    border-radius: 18px !important;
+    border: 1px solid #e4e6eb !important;
+    box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.18) !important;
+    border-radius: 14px !important;
 
     .modal-header-custom {
       background: #ffffff !important;
-      border-bottom: 1px solid #f1f5f9 !important;
+      border-bottom: 1px solid #f0f2f5 !important;
 
       .modal-title-text {
-        color: #0f172a !important;
+        color: #1c1e21 !important;
         font-weight: 700 !important;
       }
     }
 
     .modal-stats-bar {
-      background: #f8fafc !important;
-      border-bottom: 1px solid #e2e8f0 !important;
+      background: #f4f5f7 !important;
+      border-bottom: 1px solid #e4e6eb !important;
     }
 
     .attendance-scroll-wrap {
       background: #ffffff !important;
-      border: 1px solid #e2e8f0 !important;
+      border: 1px solid #e4e6eb !important;
 
       table {
         thead th {
-          background-color: #f8fafc !important;
-          color: #475569 !important;
-          border-bottom: 1px solid #e2e8f0 !important;
+          background-color: #f4f5f7 !important;
+          color: #4b5563 !important;
+          border-bottom: 1px solid #e4e6eb !important;
         }
 
         tbody tr.student-row {
           background-color: #ffffff !important;
-          border-color: #f1f5f9 !important;
+          border-color: #f0f2f5 !important;
 
           td {
-            border-color: #f1f5f9 !important;
+            border-color: #f0f2f5 !important;
           }
 
           .student-name {
-            color: #0f172a !important;
+            color: #1c1e21 !important;
           }
         }
       }
@@ -142,7 +143,7 @@
 
     .modal-footer-custom {
       background: #ffffff !important;
-      border-top: 1px solid #f1f5f9 !important;
+      border-top: 1px solid #f0f2f5 !important;
     }
   }
 }
