@@ -1635,18 +1635,41 @@
     }
   }
 
-  // Trạng thái vnEdu
+  // Trạng thái vnEdu trong Dark Mode - Đậm đà, sắc nét, rực rỡ, không bị chìm
   .status-badge-vnedu {
     &.synced {
-      background-color: rgba(16, 185, 129, 0.18) !important;
-      color: #34d399 !important;
-      border-color: rgba(16, 185, 129, 0.4) !important;
+      background: #10b981 !important;
+      color: #ffffff !important;
+      border: none !important;
+      font-weight: 700 !important;
+      box-shadow: 0 1px 4px rgba(16, 185, 129, 0.4) !important;
     }
 
     &.pending {
-      background-color: rgba(59, 130, 246, 0.18) !important;
-      color: #60a5fa !important;
-      border-color: rgba(59, 130, 246, 0.4) !important;
+      background: #f59e0b !important;
+      color: #ffffff !important;
+      border: none !important;
+      font-weight: 700 !important;
+      box-shadow: 0 1px 4px rgba(245, 158, 11, 0.4) !important;
+    }
+  }
+
+  // Row pending trong Dark Mode: xóa bỏ nền xám mờ mờ khó chịu, dùng viền cam hổ phách sắc nét
+  .day-table tbody tr.row-slot-pending {
+    background-color: rgba(245, 158, 11, 0.04) !important;
+    &:hover {
+      background-color: rgba(245, 158, 11, 0.1) !important;
+    }
+    td:first-child {
+      border-left: 3px solid #f59e0b !important;
+    }
+  }
+
+  // Link Thao tác Sửa / Lưu lại trong Dark Mode
+  .btn-action-link {
+    color: #60a5fa !important;
+    &:hover {
+      color: #93c5fd !important;
     }
   }
 
@@ -3800,35 +3823,331 @@
   }
 }
 
-// 11. FLOATING SCROLL TO TOP FAB BUTTON
-.btn-scroll-top-fab {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: #4f46e5;
-  color: #ffffff;
+// 11. LINK THAO TÁC SỬA / LƯU LẠI CHUẨN ZALO LINK
+.btn-action-link {
+  background: transparent;
   border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.3rem;
-  font-weight: 800;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.45);
+  color: #0068ff;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  padding: 4px 8px;
   cursor: pointer;
-  z-index: 999;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.15s ease;
 
   &:hover {
-    transform: translateY(-3px) scale(1.05);
-    background: #4338ca;
-    box-shadow: 0 6px 18px rgba(79, 70, 229, 0.55);
+    color: #0054cc;
+    text-decoration: underline;
   }
 }
 
-// 12. ATTENDANCE MODAL ALERTS
+// 12. WEATHER ANIMATION & WIDGET IN NOTICE BANNER
+.weather-anim-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+
+  .weather-icon-anim {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sun-svg {
+    position: relative;
+    z-index: 1;
+
+    .sun-rays {
+      transform-origin: 24px 24px;
+      animation: spinSunRays 14s linear infinite;
+    }
+
+    .sun-core {
+      transform-origin: 24px 24px;
+      animation: pulseSunCore 3s ease-in-out infinite;
+      filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.7));
+    }
+  }
+
+  .cloud-svg {
+    position: absolute;
+    bottom: -2px;
+    right: -4px;
+    z-index: 2;
+    animation: driftCloud 3.5s ease-in-out infinite alternate;
+  }
+
+  .rain-drop {
+    stroke-dasharray: 6;
+    animation: rainFall 1.2s linear infinite;
+
+    &.drop-1 { animation-delay: 0s; }
+    &.drop-2 { animation-delay: 0.4s; }
+    &.drop-3 { animation-delay: 0.8s; }
+  }
+}
+
+@keyframes spinSunRays {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulseSunCore {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 5px rgba(245, 158, 11, 0.6));
+  }
+  50% {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.95));
+  }
+}
+
+@keyframes driftCloud {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(4px); }
+}
+
+@keyframes rainFall {
+  0% { stroke-dashoffset: 12; opacity: 0; }
+  50% { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+
+.weather-temp-badge {
+  background: #fef3c7;
+  color: #b45309;
+  font-weight: 800;
+  font-size: 0.8125rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  display: inline-flex;
+  align-items: center;
+}
+
+.weather-condition-text {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.weather-location-pill {
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+  border: 1px solid #e2e8f0;
+}
+
+.weather-warning-pill {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.775rem;
+  color: #92400e;
+  line-height: 1.4;
+
+  .weather-warning-icon {
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  strong {
+    color: #b45309;
+  }
+}
+
+// 13. RICH FLOATING TOOLTIPS (HOVER DETAILS & EXPLANATIONS)
+.lieflat-dashboard-card,
+.lieflat-body,
+.lieflat-metric-card,
+.class-stat-list,
+.spark-chart-container {
+  overflow: visible !important;
+}
+
+.custom-rich-tooltip-card {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  background: #ffffff;
+  border: 1.5px solid rgba(0, 104, 255, 0.18);
+  border-radius: 12px;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14), 0 2px 6px rgba(0, 104, 255, 0.08);
+  padding: 0.85rem 1rem;
+  width: 320px;
+  max-width: 90vw;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 1060;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+  line-height: 1.45;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: #ffffff transparent transparent transparent;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 7px;
+    border-style: solid;
+    border-color: rgba(0, 104, 255, 0.18) transparent transparent transparent;
+  }
+
+  .rich-tooltip-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid #f1f5f9;
+
+    .rich-tooltip-badge {
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      line-height: 1;
+
+      &.badge-pending-glow {
+        background: #fef2f2;
+        color: #ef4444;
+        border: 1px solid #fca5a5;
+      }
+
+      &.badge-mismatch-glow {
+        background: #fffbeb;
+        color: #b45309;
+        border: 1px solid #fde68a;
+      }
+
+      &.badge-matched-glow {
+        background: #ecfdf5;
+        color: #059669;
+        border: 1px solid #a7f3d0;
+      }
+
+      &.badge-day-glow {
+        background: #eff6ff;
+        color: #0068ff;
+        border: 1px solid #bfdbfe;
+      }
+    }
+
+    .rich-tooltip-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #1e293b;
+      flex-grow: 1;
+    }
+
+    .rich-tooltip-pct {
+      font-size: 0.8125rem;
+    }
+  }
+
+  .rich-tooltip-body {
+    font-size: 0.75rem;
+    color: #475569;
+
+    .rich-stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      margin-bottom: 0.45rem;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .rich-stat-label {
+        font-weight: 700;
+        color: #334155;
+        font-size: 0.73rem;
+      }
+
+      .rich-stat-value {
+        font-size: 0.74rem;
+        line-height: 1.4;
+      }
+    }
+
+    .rich-names-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 0.35rem 0.5rem;
+      font-size: 0.72rem;
+      color: #334155;
+    }
+  }
+
+  .rich-tooltip-footer {
+    padding-top: 0.45rem;
+    margin-top: 0.45rem;
+    border-top: 1px dashed #e2e8f0;
+    font-size: 0.71rem;
+    color: #64748b;
+  }
+
+  &.tooltip-metric-card {
+    width: 290px;
+  }
+
+  &.tooltip-spark-card {
+    width: 250px;
+    bottom: calc(100% + 8px);
+  }
+
+  &.tooltip-class-card {
+    width: 340px;
+  }
+}
+
+// Active on hover
+.class-stat-row:hover .custom-rich-tooltip-card,
+.spark-column-item:hover .custom-rich-tooltip-card,
+.pill-legend-pending:hover .custom-rich-tooltip-card,
+.pill-legend-doi-chieu:hover .custom-rich-tooltip-card {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+// 14. ATTENDANCE MODAL ALERTS
 .alert-suggested-absent {
   background: #fffbeb !important;
   border: 1px solid #fef08a !important;
@@ -3839,4 +4158,72 @@
   background: #fef2f2 !important;
   border: 1px solid #fecaca !important;
   color: #991b1b !important;
+}
+
+// 15. DARK MODE OVERRIDES FOR NEW COMPONENTS
+[data-bs-theme="dark"] {
+  .custom-rich-tooltip-card {
+    background: #0f172a !important;
+    border-color: rgba(56, 189, 248, 0.35) !important;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65), 0 0 20px rgba(56, 189, 248, 0.15) !important;
+
+    &::after {
+      border-color: #0f172a transparent transparent transparent !important;
+    }
+    &::before {
+      border-color: rgba(56, 189, 248, 0.35) transparent transparent transparent !important;
+    }
+
+    .rich-tooltip-header {
+      border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+
+      .rich-tooltip-title {
+        color: #f1f5f9 !important;
+      }
+    }
+
+    .rich-tooltip-body {
+      color: #cbd5e1 !important;
+
+      .rich-stat-item .rich-stat-label {
+        color: #e2e8f0 !important;
+      }
+
+      .rich-names-box {
+        background: rgba(30, 41, 59, 0.8) !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+        color: #e2e8f0 !important;
+      }
+    }
+
+    .rich-tooltip-footer {
+      border-top-color: rgba(255, 255, 255, 0.1) !important;
+      color: #94a3b8 !important;
+    }
+  }
+
+  .weather-temp-badge {
+    background: rgba(245, 158, 11, 0.2) !important;
+    color: #fbbf24 !important;
+    border-color: rgba(245, 158, 11, 0.4) !important;
+  }
+
+  .weather-condition-text {
+    color: #cbd5e1 !important;
+  }
+
+  .weather-location-pill {
+    background: rgba(56, 189, 248, 0.15) !important;
+    color: #38bdf8 !important;
+    border-color: rgba(56, 189, 248, 0.3) !important;
+  }
+
+  .weather-warning-pill {
+    background: rgba(245, 158, 11, 0.12) !important;
+    border-color: rgba(245, 158, 11, 0.35) !important;
+    color: #fde68a !important;
+    strong {
+      color: #fbbf24 !important;
+    }
+  }
 }

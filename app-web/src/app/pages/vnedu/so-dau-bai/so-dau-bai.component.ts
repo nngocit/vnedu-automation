@@ -134,6 +134,70 @@ export class SoDauBaiComponent implements OnInit {
     } catch (_) {}
 
     this.loadInitialData();
+    this.fetchWeather();
+  }
+
+  weatherInfo: {
+    temp: number;
+    tempMin: number;
+    tempMax: number;
+    condition: string;
+    humidity: number;
+    windSpeed: number;
+    location: string;
+    iconType: 'sunny' | 'sun-cloud' | 'rainy';
+    warning: string;
+  } = {
+    temp: 31,
+    tempMin: 25,
+    tempMax: 33,
+    condition: 'Nắng ấm, mây rải rác',
+    humidity: 72,
+    windSpeed: 8,
+    location: 'THCS An Lập, Dầu Tiếng, Bình Dương',
+    iconType: 'sun-cloud',
+    warning: 'Chiều tối dự báo có khả năng xuất hiện mưa rào rải rác tại khu vực Dầu Tiếng. Cô giáo chú ý mang theo áo mưa khi tan trường.'
+  };
+
+  fetchWeather(): void {
+    if (typeof window === 'undefined' || !window.fetch) return;
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=11.23&longitude=106.51&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FHo_Chi_Minh')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.current) {
+          const c = data.current;
+          this.weatherInfo.temp = Math.round(c.temperature_2m);
+          this.weatherInfo.humidity = c.relative_humidity_2m;
+          this.weatherInfo.windSpeed = Math.round(c.wind_speed_10m);
+          if (data.daily && data.daily.temperature_2m_max) {
+            this.weatherInfo.tempMax = Math.round(data.daily.temperature_2m_max[0]);
+            this.weatherInfo.tempMin = Math.round(data.daily.temperature_2m_min[0]);
+          }
+
+          const code = c.weather_code;
+          if (code === 0) {
+            this.weatherInfo.condition = 'Trời nắng quang đãng';
+            this.weatherInfo.iconType = 'sunny';
+            this.weatherInfo.warning = this.weatherInfo.temp >= 33
+              ? 'Trời nắng nóng nhiệt độ cao, cô giáo lưu ý uống nhiều nước và nghỉ ngơi hợp lý.'
+              : 'Thời tiết nắng đẹp thuận lợi cho việc dạy học và các hoạt động của học sinh.';
+          } else if (code <= 3) {
+            this.weatherInfo.condition = 'Nắng ấm, mây rải rác';
+            this.weatherInfo.iconType = 'sun-cloud';
+            this.weatherInfo.warning = 'Chiều tối dự báo có khả năng xuất hiện mưa rào rải rác tại Dầu Tiếng. Cô giáo chú ý mang theo áo mưa khi tan trường.';
+          } else if (code >= 51 && code <= 67) {
+            this.weatherInfo.condition = 'Có mưa nhỏ rải rác';
+            this.weatherInfo.iconType = 'rainy';
+            this.weatherInfo.warning = 'Khu vực đang có mưa rào nhẹ, cô giáo chú ý di chuyển an toàn trên đường đến trường.';
+          } else if (code >= 80) {
+            this.weatherInfo.condition = 'Mưa rào & dông';
+            this.weatherInfo.iconType = 'rainy';
+            this.weatherInfo.warning = 'Cảnh báo mưa dông, đường trơn trượt. Cô giáo chú ý an toàn khi di chuyển!';
+          }
+          this.cdr.markForCheck();
+        }
+      })
+      .catch(() => {});
   }
 
   redirectToLogin(): void {
