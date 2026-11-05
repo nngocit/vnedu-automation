@@ -2984,16 +2984,56 @@
     .badge-absent-mini {
       background: #fee2e2;
       color: #b91c1c;
-      font-size: 0.65rem;
+      font-size: 0.68rem;
       font-weight: 700;
-      padding: 0.1rem 0.4rem;
-      border-radius: 4px;
+      padding: 0.12rem 0.45rem;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      border: 1px solid #fca5a5;
+
+      .badge-turns-sub {
+        color: #991b1b;
+        font-size: 0.62rem;
+        font-weight: 500;
+      }
+    }
+
+    .badge-mismatch-mini {
+      background: #fff1f2;
+      color: #e11d48;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.12rem 0.5rem;
+      border-radius: 9999px;
+      border: 1.2px dashed #f43f5e;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .badge-matched-mini {
+      background: #ecfdf5;
+      color: #059669;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.12rem 0.5rem;
+      border-radius: 9999px;
+      border: 1px solid #a7f3d0;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .badge-zero-mini {
+      color: #94a3b8;
+      font-size: 0.72rem;
+      font-weight: 600;
     }
   }
 
   // Spark columns
   .spark-chart-container {
-    height: 75px;
+    height: 90px;
   }
 
   .spark-column-item {
@@ -3004,14 +3044,14 @@
 
     &:hover .spark-bar {
       opacity: 0.9;
-      transform: scaleY(1.05);
+      transform: scaleY(1.04);
     }
 
     .spark-bar-slot {
-      height: 38px;
-      width: 14px;
+      height: 52px;
+      width: 16px;
       background: #f1f5f9;
-      border-radius: 3px 3px 0 0;
+      border-radius: 4px 4px 0 0;
       display: flex;
       align-items: flex-end;
       overflow: hidden;
@@ -3020,7 +3060,7 @@
     .spark-bar {
       width: 100%;
       background: #94a3b8;
-      border-radius: 3px 3px 0 0;
+      border-radius: 4px 4px 0 0;
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       transform-origin: bottom;
 
@@ -3028,16 +3068,25 @@
         background: #0068ff;
         box-shadow: 0 2px 6px rgba(0, 104, 255, 0.35);
       }
+
+      &.bar-empty {
+        height: 3px !important;
+        background: #e2e8f0;
+      }
     }
 
     .spark-day-label {
-      font-size: 0.68rem;
+      font-size: 0.7rem;
       font-weight: 600;
       color: #64748b;
 
       &.label-today {
         color: #0068ff;
         font-weight: 800;
+      }
+
+      &.label-empty {
+        color: #94a3b8;
       }
     }
 
@@ -3046,19 +3095,25 @@
         color: #0068ff;
       }
     }
+
+    &.is-empty-day {
+      span.fs-10 {
+        color: #94a3b8;
+      }
+    }
   }
 
   // ==========================================
-  // DARK MODE STYLING FOR LIEFLAT DASHBOARD
+  // DARK MODE STYLING FOR LIEFLAT DASHBOARD (SCOPED INSIDE CARD)
   // ==========================================
   :host-context([data-bs-theme="dark"]) &,
   :host-context([data-theme="dark"]) &,
   :host-context(.theme-dark) &,
   [data-bs-theme="dark"] & {
-    background: rgba(13, 32, 64, 0.75) !important;
+    background: rgba(13, 32, 64, 0.88) !important;
     backdrop-filter: blur(16px);
-    border-color: rgba(56, 189, 248, 0.2) !important;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+    border-color: rgba(56, 189, 248, 0.22) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45) !important;
 
     .lieflat-header {
       background: rgba(8, 22, 48, 0.95) !important;
@@ -3096,11 +3151,11 @@
     }
 
     .lieflat-metric-card {
-      background: rgba(8, 22, 48, 0.65) !important;
-      border-color: rgba(56, 189, 248, 0.15) !important;
+      background: rgba(15, 23, 42, 0.72) !important;
+      border-color: rgba(56, 189, 248, 0.16) !important;
 
       &:hover {
-        background: rgba(13, 32, 64, 0.85) !important;
+        background: rgba(15, 23, 42, 0.88) !important;
         border-color: rgba(56, 189, 248, 0.35) !important;
       }
     }
@@ -3143,7 +3198,7 @@
 
     .class-stat-row {
       background: rgba(15, 23, 42, 0.6) !important;
-      border-color: rgba(255, 255, 255, 0.06) !important;
+      border-color: rgba(255, 255, 255, 0.08) !important;
 
       &:hover {
         background: rgba(56, 189, 248, 0.12) !important;
@@ -3169,7 +3224,27 @@
 
       .badge-absent-mini {
         background: rgba(239, 68, 68, 0.2) !important;
-        color: #f87171 !important;
+        color: #fca5a5 !important;
+        border-color: rgba(239, 68, 68, 0.4) !important;
+        .badge-turns-sub {
+          color: #f87171 !important;
+        }
+      }
+
+      .badge-mismatch-mini {
+        background: rgba(239, 68, 68, 0.2) !important;
+        color: #fca5a5 !important;
+        border: 1.2px dashed #ef4444 !important;
+      }
+
+      .badge-matched-mini {
+        background: rgba(16, 185, 129, 0.2) !important;
+        color: #34d399 !important;
+        border: 1px solid rgba(16, 185, 129, 0.4) !important;
+      }
+
+      .badge-zero-mini {
+        color: #64748b !important;
       }
 
       .fw-semibold {
@@ -3188,6 +3263,10 @@
         background: #38bdf8 !important;
         box-shadow: 0 0 10px rgba(56, 189, 248, 0.5) !important;
       }
+
+      &.bar-empty {
+        background: #334155 !important;
+      }
     }
 
     .spark-day-label {
@@ -3196,10 +3275,18 @@
       &.label-today {
         color: #38bdf8 !important;
       }
+
+      &.label-empty {
+        color: #64748b !important;
+      }
     }
 
     .spark-column-item.is-today-col span.fs-10 {
       color: #38bdf8 !important;
+    }
+
+    .spark-column-item.is-empty-day span.fs-10 {
+      color: #64748b !important;
     }
 
     .pill-legend-pending {
@@ -3208,10 +3295,44 @@
       border-color: rgba(239, 68, 68, 0.45) !important;
     }
 
+    .pill-legend-doi-chieu {
+      &.is-mismatched {
+        background: rgba(239, 68, 68, 0.15) !important;
+        color: #f87171 !important;
+        border-color: rgba(239, 68, 68, 0.45) !important;
+      }
+      &.is-matched {
+        background: rgba(16, 185, 129, 0.15) !important;
+        color: #34d399 !important;
+        border-color: rgba(16, 185, 129, 0.45) !important;
+      }
+    }
+
     .text-gray-600, .text-gray-500 {
       color: #94a3b8 !important;
     }
   }
+}
+
+// Global deep fallback to guarantee Dark Mode NEVER displays white card
+::ng-deep [data-bs-theme="dark"] .lieflat-dashboard-card {
+  background: rgba(13, 32, 64, 0.92) !important;
+  border-color: rgba(56, 189, 248, 0.22) !important;
+}
+
+::ng-deep [data-bs-theme="dark"] .lieflat-dashboard-card .lieflat-header {
+  background: rgba(8, 22, 48, 0.95) !important;
+  border-bottom-color: rgba(56, 189, 248, 0.2) !important;
+}
+
+::ng-deep [data-bs-theme="dark"] .lieflat-dashboard-card .lieflat-metric-card {
+  background: rgba(15, 23, 42, 0.72) !important;
+  border-color: rgba(56, 189, 248, 0.16) !important;
+}
+
+::ng-deep [data-bs-theme="dark"] .lieflat-dashboard-card .class-stat-row {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 

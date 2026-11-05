@@ -898,8 +898,11 @@ export class SoDauBaiComponent implements OnInit {
     synced: number;
     pending: number;
     percent: number;
-    absentCount: number;
-    mismatchCount: number;
+    absentCount: number; // Số học sinh vắng duy nhất (distinct)
+    periodAbsentCount: number; // Tổng số lượt vắng tích lũy các tiết
+    mismatchCount: number; // Số tiết cần đối chiếu
+    absentNames: string[];
+    absentTooltip: string;
   }> = [];
 
   chartDayStats: Array<{
@@ -915,12 +918,30 @@ export class SoDauBaiComponent implements OnInit {
 
   updateChartMetrics(): void {
     // 1. Phân bổ theo từng lớp (Luôn tính theo toàn bộ slots của tuần để cô giáo xem tổng quan và click lọc lớp)
-    const classMap: { [lop: string]: { total: number; synced: number; pending: number; absentCount: number; mismatchCount: number } } = {};
-    
+    const classMap: {
+      [lop: string]: {
+        total: number;
+        synced: number;
+        pending: number;
+        periodAbsentCount: number;
+        mismatchCount: number;
+        absentNameSet: Set<string>;
+        maxSingleSlotAbsent: number;
+      }
+    } = {};
+
     this.slots.forEach(s => {
       const lop = s.lop || 'Khác';
       if (!classMap[lop]) {
-        classMap[lop] = { total: 0, synced: 0, pending: 0, absentCount: 0, mismatchCount: 0 };
+        classMap[lop] = {
+          total: 0,
+          synced: 0,
+          pending: 0,
+          periodAbsentCount: 0,
+          mismatchCount: 0,
+          absentNameSet: new Set<string>(),
+          maxSingleSlotAbsent: 0
+        };
       }
       classMap[lop].total++;
       if (s.isSynced) {
@@ -928,10 +949,45 @@ export class SoDauBaiComponent implements OnInit {
       } else {
         classMap[lop].pending++;
       }
-      const absent = this.getDisplayAbsentCount(s);
-      if (absent) {
-        classMap[lop].absentCount += Number(absent) || 0;
+
+      // Thu thập danh sách tên học sinh vắng duy nhất từ sdbDsVang, giamThiDsVang, hsVangList
+      const slotAbsents: string[] = [];
+      if (Array.isArray(s.sdbDsVang)) {
+        s.sdbDsVang.forEach((item: any) => {
+          const name = typeof item === 'string'
+            ? item.replace(/\s*\([PKpkCókhôngphép\s]+\)/gi, '').trim()
+            : (item?.fullName || item?.name || '').trim();
+          if (name) slotAbsents.push(name);
+        });
       }
+      if (Array.isArray(s.giamThiDsVang)) {
+        s.giamThiDsVang.forEach((item: any) => {
+          const name = typeof item === 'string'
+            ? item.replace(/\s*\([PKpkCókhôngphép\s]+\)/gi, '').trim()
+            : (item?.fullName || item?.name || '').trim();
+          if (name) slotAbsents.push(name);
+        });
+      }
+      if (Array.isArray(s.hsVangList)) {
+        s.hsVangList.forEach((item: any) => {
+          const name = typeof item === 'string'
+            ? item.replace(/\s*\([PKpkCókhôngphép\s]+\)/gi, '').trim()
+            : (item?.fullName || item?.name || '').trim();
+          if (name) slotAbsents.push(name);
+        });
+      }
+
+      slotAbsents.forEach(name => classMap[lop].absentNameSet.add(name));
+
+      const slotAbsentNum = this.getDisplayAbsentCount(s);
+      if (slotAbsentNum) {
+        const num = Number(slotAbsentNum) || 0;
+        classMap[lop].periodAbsentCount += num;
+        if (num > classMap[lop].maxSingleSlotAbsent) {
+          classMap[lop].maxSingleSlotAbsent = num;
+        }
+      }
+
       if (this.isCanDoiChieu(s)) {
         classMap[lop].mismatchCount++;
       }
@@ -939,14 +995,29 @@ export class SoDauBaiComponent implements OnInit {
 
     this.chartClassStats = Object.keys(classMap).sort().map(lop => {
       const item = classMap[lop];
+      const distinctNames = Array.from(item.absentNameSet);
+      // Nếu có tên học sinh vắng, lấy số tên duy nhất; nếu không có mảng tên thì lấy số lượng vắng cao nhất của 1 tiết
+      const distinctCount = distinctNames.length > 0 ? distinctNames.length : item.maxSingleSlotAbsent;
+
+      let tooltip = '';
+      if (distinctCount === 0) {
+        tooltip = `Lớp ${lop}: Đi học đầy đủ 100% trong tuần`;
+      } else {
+        const namesText = distinctNames.length > 0 ? distinctNames.join(', ') : `${distinctCount} học sinh`;
+        tooltip = `Lớp ${lop}: ${distinctCount} HS vắng (${namesText}). Tổng cộng ${item.periodAbsentCount} lượt tiết.`;
+      }
+
       return {
         lop,
         total: item.total,
         synced: item.synced,
         pending: item.pending,
         percent: item.total > 0 ? Math.round((item.synced / item.total) * 100) : 0,
-        absentCount: item.absentCount,
-        mismatchCount: item.mismatchCount
+        absentCount: distinctCount,
+        periodAbsentCount: item.periodAbsentCount,
+        mismatchCount: item.mismatchCount,
+        absentNames: distinctNames,
+        absentTooltip: tooltip
       };
     });
 
@@ -979,10 +1050,10 @@ export class SoDauBaiComponent implements OnInit {
     });
 
     const dayList = Object.values(dayMap).sort((a, b) => a.thu - b.thu);
-    const maxDaySlots = Math.max(...dayList.map(d => d.total), 1);
+    const maxDaySlots = Math.max(...dayList.map(d => d.total), 4);
     this.chartDayStats = dayList.map(d => ({
       ...d,
-      heightPercent: d.total === 0 ? 6 : Math.max(18, Math.round((d.total / maxDaySlots) * 100))
+      heightPercent: d.total === 0 ? 0 : Math.max(14, Math.round((d.total / maxDaySlots) * 100))
     }));
   }
 
