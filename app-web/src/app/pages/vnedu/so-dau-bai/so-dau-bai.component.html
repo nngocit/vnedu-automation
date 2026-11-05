@@ -251,7 +251,7 @@
                    [class.is-today-col]="d.isToday"
                    [class.is-empty-day]="d.total === 0"
                    [title]="d.thuText + ': ' + (d.total > 0 ? (d.total + ' tiết (' + d.synced + ' đã lưu, ' + d.pending + ' cần nhập)') : '0 tiết (Nghỉ dạy)')">
-                <span class="fs-10 mb-1 fw-bold" [ngClass]="d.total > 0 ? (d.isToday ? 'text-primary' : 'text-gray-700') : 'text-gray-400'">{{ d.total }}</span>
+                <span class="fs-9 mb-1 fw-bolder" [ngClass]="d.total > 0 ? (d.isToday ? 'text-primary' : 'text-gray-900') : 'text-gray-400'">{{ d.total }}</span>
                 <div class="spark-bar-slot">
                   <div class="spark-bar" [style.height.%]="d.heightPercent" [class.bar-today]="d.isToday" [class.bar-empty]="d.total === 0"></div>
                 </div>

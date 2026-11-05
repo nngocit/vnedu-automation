@@ -141,13 +141,18 @@ export class LayoutService {
       const layoutType = localStorage.getItem(
         BASE_LAYOUT_TYPE_LOCAL_STORAGE_KEY
       );
+      // Tự động nâng cấp cache cũ từ dark-sidebar sang light-sidebar để giao diện sáng đồng bộ 100%
+      if (layoutType === 'dark-sidebar') {
+        localStorage.setItem(BASE_LAYOUT_TYPE_LOCAL_STORAGE_KEY, 'light-sidebar');
+        return 'light-sidebar';
+      }
       if (layoutType) {
         return layoutType as LayoutType;
       }
 
-      this.setBaseLayoutType(defaultBaseLayoutType);
+      this.setBaseLayoutType('light-sidebar');
     }
-    return defaultBaseLayoutType;
+    return 'light-sidebar';
   }
 
   getLayoutByType(layoutType: LayoutType | undefined): ILayout {

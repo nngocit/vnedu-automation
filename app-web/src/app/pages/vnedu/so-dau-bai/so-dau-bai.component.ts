@@ -105,6 +105,22 @@ export class SoDauBaiComponent implements OnInit {
     const now = new Date();
     this.todayStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
 
+    // Khử triệt để tình trạng sidebar bị đen trên máy đã lưu cache dark-sidebar
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const theme = localStorage.getItem('kt_theme_mode_value');
+        if (theme !== 'dark') {
+          Object.keys(localStorage).forEach(k => {
+            if (k.includes('baseLayoutType') && localStorage.getItem(k) === 'dark-sidebar') {
+              localStorage.setItem(k, 'light-sidebar');
+            }
+          });
+          document.body.setAttribute('data-kt-app-layout', 'light-sidebar');
+          document.body.setAttribute('data-kt-app-sidebar-minimize', 'off');
+        }
+      }
+    } catch (_) {}
+
     // Hỗ trợ tham số ?date=DD/MM/YYYY để xem trước ngày bất kỳ trong tuần
     try {
       if (typeof window !== 'undefined' && window.location && window.location.search) {
