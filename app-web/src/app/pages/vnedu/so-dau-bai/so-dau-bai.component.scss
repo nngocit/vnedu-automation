@@ -23,7 +23,7 @@
   transition: all 0.2s ease;
 }
 
-// Nút bấm kiểu Pill rực rỡ, đậm nét
+// Nút bấm kiểu Pill phong cách Zalo Modern Clean (Chuẩn 1 Primary duy nhất + Soft Secondary)
 .pill-btn {
   border-radius: 9999px !important;
   font-weight: 700;
@@ -34,20 +34,11 @@
   transition: all 0.15s ease;
   border: 1px solid transparent;
 
-  &.pill-success {
-    background-color: #00b96b;
-    color: #ffffff;
-    box-shadow: 0 2px 5px rgba(0, 185, 107, 0.25);
-
-    &:hover {
-      background-color: #009a58;
-      color: #ffffff;
-    }
-  }
-
+  // Primary Action duy nhất: Solid Zalo Blue
   &.pill-primary {
     background-color: #0068ff;
     color: #ffffff;
+    border: 1px solid #0054cc;
     box-shadow: 0 2px 6px rgba(0, 104, 255, 0.28);
 
     &:hover {
@@ -56,27 +47,82 @@
     }
   }
 
-  &.pill-warning {
-    background-color: #ff9800;
-    color: #ffffff;
-    box-shadow: 0 2px 5px rgba(255, 152, 0, 0.25);
+  // Soft Blue Pill (Đồng bộ hôm nay)
+  &.pill-soft-blue {
+    background-color: #e5f0ff;
+    color: #0068ff;
+    border: 1px solid #b8d7ff;
+    box-shadow: 0 1px 2px rgba(0, 104, 255, 0.08);
 
     &:hover {
-      background-color: #e65100;
-      color: #ffffff;
+      background-color: #d0e4ff;
+      color: #0054cc;
+      border-color: #99c4ff;
+    }
+  }
+
+  // Soft Indigo/Lavender Pill (Quét SĐĐ Giám Thị)
+  &.pill-soft-indigo {
+    background-color: #eef2ff;
+    color: #4f46e5;
+    border: 1px solid #c7d2fe;
+    box-shadow: 0 1px 2px rgba(79, 70, 229, 0.08);
+
+    &:hover {
+      background-color: #e0e7ff;
+      color: #4338ca;
+      border-color: #a5b4fc;
+    }
+  }
+
+  // Soft Success Pill (Cả lớp đi học đủ)
+  &.pill-soft-success {
+    background-color: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+    box-shadow: 0 1px 2px rgba(16, 185, 129, 0.08);
+
+    &:hover {
+      background-color: #d1fae5;
+      color: #065f46;
+      border-color: #6ee7b7;
+    }
+  }
+
+  &.pill-success {
+    background-color: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+    box-shadow: 0 1px 2px rgba(16, 185, 129, 0.08);
+
+    &:hover {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+  }
+
+  &.pill-warning {
+    background-color: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+    box-shadow: 0 1px 2px rgba(245, 158, 11, 0.08);
+
+    &:hover {
+      background-color: #fef3c7;
+      color: #92400e;
     }
   }
 
   &.pill-outline {
     background-color: #ffffff;
-    color: #334155;
-    border-color: #cbd5e1;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 
     &:hover {
       background-color: #f8fafc;
       color: #0f172a;
-      border-color: #94a3b8;
+      border-color: #cbd5e1;
     }
   }
 
@@ -143,41 +189,70 @@
   }
 }
 
-// Banner nhắc nhở màu cam vàng nổi bật
+// Banner nhắc nhở chuẩn Zalo Information Card (Mát mắt, tinh tế, không chói gắt)
 .notice-banner {
-  background-color: #fffbeb;
-  border: 1px solid #fde68a;
+  background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
+  border: 1px solid #dbeafe;
   border-radius: 0.85rem;
   padding: 0.85rem 1.25rem;
-  color: #92400e;
-  box-shadow: 0 1px 2px rgba(245, 158, 11, 0.06);
+  color: #1e293b;
+  box-shadow: 0 1px 3px rgba(0, 104, 255, 0.04);
   transition: all 0.2s ease;
 }
 
-// Bộ lọc lớp học
+// Huy hiệu thống kê góc phải banner
+.banner-stat-pill {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  line-height: 1;
+
+  &.stat-amber {
+    background-color: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+  }
+
+  &.stat-neutral {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+  }
+
+  &.stat-blue {
+    background-color: #e5f0ff;
+    color: #0068ff;
+    border: 1px solid #b8d7ff;
+  }
+}
+
+// Bộ lọc lớp học - Zalo Blue active
 .class-filter-pill {
   border-radius: 9999px;
   padding: 0.4rem 1rem;
   font-size: 0.8125rem;
   font-weight: 700;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #e2e8f0;
   background: #ffffff;
-  color: #334155;
+  color: #64748b;
   cursor: pointer;
   transition: all 0.15s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 
   &:hover {
     background: #f8fafc;
-    color: #0f172a;
-    border-color: #94a3b8;
+    color: #1e293b;
+    border-color: #cbd5e1;
   }
 
   &.active {
-    background-color: #0f172a;
+    background-color: #0068ff;
     color: #ffffff;
-    border-color: #0f172a;
-    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.2);
+    border-color: #0068ff;
+    box-shadow: 0 2px 6px rgba(0, 104, 255, 0.28);
   }
 }
 
@@ -567,7 +642,7 @@
   }
 }
 
-// Badge Buổi (Sáng / Chiều)
+// Badge Buổi (Sáng / Chiều) - Phong cách Zalo Clean (Không dùng màu vàng cảnh báo)
 .badge-session {
   padding: 0.25rem 0.55rem;
   border-radius: 4px;
@@ -576,15 +651,15 @@
   display: inline-block;
 
   &.morning {
-    background-color: #fef3c7;
-    color: #b45309;
-    border: 1px solid #fde68a;
+    background-color: #f0f7ff;
+    color: #0068ff;
+    border: 1px solid #dbeafe;
   }
 
   &.afternoon {
-    background-color: #ede9fe;
-    color: #6d28d9;
-    border: 1px solid #ddd6fe;
+    background-color: #faf5ff;
+    color: #7c3aed;
+    border: 1px solid #ede9fe;
   }
 }
 
@@ -602,7 +677,7 @@
   letter-spacing: 0.3px;
 }
 
-// Chip điểm danh đối chiếu dạng Pill
+// Chip điểm danh đối chiếu dạng Pill - Đường viền hairline thanh mảnh, bỏ dashed
 .attendance-compare-chip {
   display: inline-flex;
   align-items: center;
@@ -616,22 +691,24 @@
   border: 1px solid transparent;
 
   &.has-absent {
-    background-color: #fff8e1;
-    color: #e65100;
-    border: 1px dashed #ff9800;
+    background-color: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
 
     &:hover {
-      background-color: #ffecb3;
+      background-color: #fef3c7;
+      border-color: #fcd34d;
     }
   }
 
   &.all-present {
-    background-color: #eafbf1;
-    color: #008744;
-    border: 1px solid #b7f0cd;
+    background-color: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
 
     &:hover {
       background-color: #d1fae5;
+      border-color: #6ee7b7;
     }
   }
 }
@@ -646,19 +723,19 @@
   align-items: center;
 
   &.synced {
-    background-color: #eafbf1;
-    color: #008744;
-    border: 1px solid #b7f0cd;
+    background-color: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
   }
 
   &.pending {
-    background-color: #e5f0ff;
-    color: #0068ff;
-    border: 1px solid #b8d7ff;
+    background-color: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
   }
 }
 
-// Nút thao tác Lưu Bù / Sửa dạng Pill
+// Nút thao tác Lưu Bù / Sửa dạng Pill - Chuẩn Zalo Blue (Loại bỏ màu cam chói)
 .btn-save-action {
   font-weight: 700;
   font-size: 0.75rem;
@@ -668,27 +745,27 @@
   cursor: pointer;
 
   &.btn-pending {
-    background-color: #ff9800;
+    background-color: #0068ff;
     color: #ffffff;
-    border: none;
-    box-shadow: 0 2px 4px rgba(255, 152, 0, 0.25);
+    border: 1px solid #0054cc;
+    box-shadow: 0 2px 4px rgba(0, 104, 255, 0.28);
 
     &:hover {
-      background-color: #e65100;
+      background-color: #0054cc;
       color: #ffffff;
     }
   }
 
   &.btn-synced {
     background-color: #ffffff;
-    color: #334155;
-    border: 1px solid #cbd5e1;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 
     &:hover {
       background-color: #f8fafc;
-      color: #0f172a;
-      border-color: #94a3b8;
+      color: #0068ff;
+      border-color: #b8d7ff;
     }
   }
 }
@@ -885,9 +962,9 @@
   }
 
   &.stat-absent {
-    background: #fff1f2;
-    border-color: #fecdd3;
-    color: #be123c;
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #b45309;
   }
 
   &.stat-all-present {
@@ -898,38 +975,36 @@
 }
 
 .pill-sapphire {
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-  color: #ffffff !important;
-  border: none;
+  background: #eef2ff !important;
+  color: #4f46e5 !important;
+  border: 1px solid #c7d2fe !important;
   border-radius: 9999px;
-  font-weight: 600;
+  font-weight: 700;
   padding: 6px 14px;
   font-size: 0.775rem;
-  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.28);
+  box-shadow: 0 1px 2px rgba(79, 70, 229, 0.08);
   transition: all 0.15s ease;
 
   &:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(2, 132, 199, 0.38);
-    background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+    background: #e0e7ff !important;
+    color: #4338ca !important;
   }
 }
 
 .pill-emerald {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: #ffffff !important;
-  border: none;
+  background: #ecfdf5 !important;
+  color: #047857 !important;
+  border: 1px solid #a7f3d0 !important;
   border-radius: 9999px;
-  font-weight: 600;
+  font-weight: 700;
   padding: 6px 14px;
   font-size: 0.775rem;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.28);
+  box-shadow: 0 1px 2px rgba(16, 185, 129, 0.08);
   transition: all 0.15s ease;
 
   &:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.38);
-    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    background: #d1fae5 !important;
+    color: #065f46 !important;
   }
 }
 
@@ -1041,10 +1116,10 @@
 }
 
 .pill-status-btn {
-  border: none;
+  border: 1px solid transparent;
   background: transparent;
   border-radius: 9999px;
-  padding: 4px 11px;
+  padding: 4px 10px;
   font-size: 0.725rem;
   font-weight: 600;
   display: inline-flex;
@@ -1052,7 +1127,7 @@
   gap: 4px;
   cursor: pointer;
   color: #64748b;
-  transition: all 0.16s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.15s ease;
   line-height: 1.25;
   white-space: nowrap;
 
@@ -1065,34 +1140,35 @@
   }
 
   &:hover:not(.active) {
-    background: #e2e8f0;
-    color: #0f172a;
+    background: #ffffff;
+    color: #1e293b;
+    border-color: #cbd5e1;
   }
 
   &.pill-btn-phep {
     &.active {
-      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+      background: #f59e0b !important;
       color: #ffffff !important;
-      box-shadow: 0 2px 6px rgba(245, 158, 11, 0.42);
-      transform: scale(1.02);
+      border-color: #d97706 !important;
+      box-shadow: 0 1px 4px rgba(245, 158, 11, 0.35);
     }
   }
 
   &.pill-btn-khongphep {
     &.active {
-      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+      background: #ef4444 !important;
       color: #ffffff !important;
-      box-shadow: 0 2px 6px rgba(239, 68, 68, 0.42);
-      transform: scale(1.02);
+      border-color: #dc2626 !important;
+      box-shadow: 0 1px 4px rgba(239, 68, 68, 0.35);
     }
   }
 
   &.pill-btn-comat {
     &.active {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+      background: #10b981 !important;
       color: #ffffff !important;
-      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.35);
-      transform: scale(1.02);
+      border-color: #059669 !important;
+      box-shadow: 0 1px 4px rgba(16, 185, 129, 0.35);
     }
   }
 }
@@ -1156,9 +1232,9 @@
   }
 
   &.status-has-absent {
-    background: #fff1f2;
-    border: 1px solid #fecdd3;
-    color: #be123c;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #b45309;
   }
 }
 
@@ -1177,20 +1253,19 @@
 }
 
 .pill-primary-save {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: #0068ff !important;
   color: #ffffff !important;
-  border: none;
+  border: 1px solid #0054cc !important;
   border-radius: 9999px;
   font-weight: 700;
   padding: 7px 22px;
   font-size: 0.825rem;
-  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 2px 6px rgba(0, 104, 255, 0.28);
   transition: all 0.15s ease;
 
   &:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 5px 14px rgba(37, 99, 235, 0.45);
-    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    background: #0054cc !important;
+    color: #ffffff !important;
   }
 }
 
@@ -2086,9 +2161,9 @@
   border: 1px solid transparent;
 
   &.tag-phep {
-    background: rgba(14, 165, 233, 0.12);
-    color: #0284c7;
-    border-color: rgba(14, 165, 233, 0.3);
+    background: #e5f0ff;
+    color: #0068ff;
+    border-color: #b8d7ff;
 
     [data-bs-theme="dark"] & {
       background: rgba(56, 189, 248, 0.2);
@@ -2098,9 +2173,9 @@
   }
 
   &.tag-khongphep {
-    background: rgba(239, 68, 68, 0.12);
+    background: #fee2e2;
     color: #dc2626;
-    border-color: rgba(239, 68, 68, 0.3);
+    border-color: #fca5a5;
 
     [data-bs-theme="dark"] & {
       background: rgba(239, 68, 68, 0.2);
@@ -2110,9 +2185,9 @@
   }
 
   &.tag-sdb {
-    background: rgba(99, 102, 241, 0.12);
-    color: #4f46e5;
-    border-color: rgba(99, 102, 241, 0.3);
+    background: #f1f5f9;
+    color: #334155;
+    border-color: #e2e8f0;
 
     [data-bs-theme="dark"] & {
       background: rgba(99, 102, 241, 0.25);
@@ -2135,11 +2210,23 @@
 }
 
 .card-matched {
-  border-left: 4px solid #10b981 !important;
+  border-left: 3.5px solid #10b981 !important;
 }
 
 .card-mismatched {
-  border-left: 4px solid #f59e0b !important;
+  border-left: 3.5px solid #f59e0b !important;
+}
+
+.btn-soft-primary {
+  background-color: #e5f0ff !important;
+  color: #0068ff !important;
+  border: 1px solid #b8d7ff !important;
+
+  &:hover {
+    background-color: #d0e4ff !important;
+    color: #0054cc !important;
+    border-color: #99c4ff !important;
+  }
 }
 
 // Cụm Tabs lọc kết quả đối chiếu SĐĐ Giám Thị & SĐB (Phong cách Zalo)

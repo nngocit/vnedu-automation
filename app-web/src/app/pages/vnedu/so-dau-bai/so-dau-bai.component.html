@@ -18,21 +18,21 @@
 <div class="vnedu-app-container">
   <!-- THANH CÔNG CỤ TRÊN CÙNG GỌN GÀNG, ĐẲNG CẤP (TẤT CẢ TRÊN 1 DÒNG) -->
   <div class="top-nav-bar d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-    <!-- Cụm nút hành động nghiệp vụ -->
+    <!-- Cụm nút hành động nghiệp vụ (Chuẩn Zalo 1 Primary duy nhất, các nút phụ Soft Tone) -->
     <div class="d-flex flex-wrap align-items-center gap-2">
       <button class="pill-btn pill-primary shadow-xs" (click)="syncBatch('all')" [disabled]="isSavingBatch" title="Đồng bộ toàn bộ tiết trong tuần vào Sổ Đầu Bài vnEdu">
         <app-keenicon name="double-check" class="fs-4 me-1 text-white"></app-keenicon>
         Đồng bộ cả tuần
       </button>
 
-      <button class="pill-btn pill-success shadow-xs" (click)="syncBatch('today')" [disabled]="isSavingBatch" title="Đồng bộ các tiết dạy hôm nay">
-        <app-keenicon name="check-circle" class="fs-4 me-1 text-white"></app-keenicon>
+      <button class="pill-btn pill-soft-blue shadow-xs" (click)="syncBatch('today')" [disabled]="isSavingBatch" title="Đồng bộ các tiết dạy hôm nay">
+        <app-keenicon name="check-circle" class="fs-4 me-1 text-primary"></app-keenicon>
         Đồng bộ hôm nay
       </button>
 
-      <button class="pill-btn pill-warning shadow-xs" (click)="scanAllSupervisorAttendance()" [disabled]="isScanningAllGiamThi" title="Quét đối chiếu toàn bộ dữ liệu vắng từ Sổ Điểm Danh của Giám thị trên vnEdu">
+      <button class="pill-btn pill-soft-indigo shadow-xs" (click)="scanAllSupervisorAttendance()" [disabled]="isScanningAllGiamThi" title="Quét đối chiếu toàn bộ dữ liệu vắng từ Sổ Điểm Danh của Giám thị trên vnEdu">
         <span *ngIf="isScanningAllGiamThi" class="spinner-border spinner-border-sm me-1" role="status"></span>
-        <app-keenicon *ngIf="!isScanningAllGiamThi" name="arrows-circle" class="fs-4 me-1 text-white"></app-keenicon>
+        <app-keenicon *ngIf="!isScanningAllGiamThi" name="shield-tick" class="fs-4 me-1 text-indigo"></app-keenicon>
         🛡️ Quét SĐĐ Giám Thị
       </button>
 
@@ -97,13 +97,13 @@
         📍 Cuộn tới Hôm nay
       </button>
 
-      <span class="badge bg-warning bg-opacity-25 text-warning-emphasis fw-bold px-3 py-2 rounded-pill fs-8">
+      <span class="banner-stat-pill stat-amber">
         ⚡ Cần nhập: {{ readySlotsCount }}
       </span>
-      <span class="badge bg-secondary bg-opacity-25 text-secondary-emphasis fw-bold px-3 py-2 rounded-pill fs-8">
+      <span class="banner-stat-pill stat-neutral">
         🕒 Chưa tới ngày: {{ syncedSlotsCount }}
       </span>
-      <span class="badge bg-primary bg-opacity-25 text-primary fw-bold px-3 py-2 rounded-pill fs-8">
+      <span class="banner-stat-pill stat-blue">
         ◐ {{ completionRate }}%
       </span>
     </div>
@@ -397,14 +397,14 @@
       </div>
 
       <div class="d-flex align-items-center gap-2">
-        <button type="button" class="pill-btn pill-sapphire shadow-xs"
+        <button type="button" class="pill-btn pill-soft-indigo shadow-xs"
                 (click)="scanSupervisorAttendance()"
                 [disabled]="isScanningGiamThi || isLoadingAttendance"
                 title="Quét đối chiếu danh sách vắng từ Sổ Điểm Danh vnEdu của Giám thị">
           <span *ngIf="isScanningGiamThi" class="spinner-border spinner-border-sm me-1" role="status"></span>
           <span *ngIf="!isScanningGiamThi">🛡️ Quét SĐĐ Giám Thị</span>
         </button>
-        <button type="button" class="pill-btn pill-emerald shadow-xs" (click)="setAllPresent()" title="Đánh dấu cả lớp đi học đầy đủ">
+        <button type="button" class="pill-btn pill-soft-success shadow-xs" (click)="setAllPresent()" title="Đánh dấu cả lớp đi học đầy đủ">
           ✓ Cả lớp đi học đủ
         </button>
       </div>
@@ -788,12 +788,13 @@
                     ⚡ Đồng Bộ Khớp Ngay
                   </button>
 
-                  <!-- Nút Mở Điểm Danh xem/sửa -->
+                  <!-- Nút Mở Điểm Danh xem/sửa (Phong cách Zalo Button) -->
                   <button type="button"
-                          class="btn btn-sm fw-bold px-3 py-1 rounded-pill fs-8 shadow-xs"
-                          [ngClass]="slot.isMatched ? 'btn-light-primary text-primary' : 'btn-primary text-white'"
+                          class="btn btn-sm fw-bold px-3 py-1 rounded-pill fs-8 shadow-xs d-inline-flex align-items-center"
+                          [ngClass]="slot.isMatched ? 'btn-soft-primary' : 'pill-btn pill-primary text-white'"
                           (click)="openAttendanceFromScanResult(slot)">
-                    {{ slot.isMatched ? '👁️ Xem Điểm Danh' : '📝 Sửa Điểm Danh' }}
+                    <app-keenicon [name]="slot.isMatched ? 'eye' : 'pencil'" class="fs-7 me-1"></app-keenicon>
+                    {{ slot.isMatched ? 'Xem Điểm Danh' : 'Sửa Điểm Danh' }}
                   </button>
                 </div>
               </div>
@@ -823,11 +824,11 @@
       <div class="d-flex gap-2">
         <button *ngIf="scanModalStatus === 'completed'"
                 type="button"
-                class="btn btn-sm btn-outline btn-outline-dashed btn-outline-primary fw-bold rounded-2 px-3"
+                class="pill-btn pill-outline fs-8 px-3 rounded-pill shadow-xs"
                 (click)="scanAllSupervisorAttendance()">
           🔄 Quét Lại
         </button>
-        <button type="button" class="btn btn-sm btn-modal-close fw-bold rounded-2 px-4" (click)="closeScanModal()">
+        <button type="button" class="btn btn-sm btn-footer-close fw-bold rounded-pill px-4" (click)="closeScanModal()">
           Đóng
         </button>
       </div>
