@@ -98,6 +98,18 @@ export class SoDauBaiComponent implements OnInit {
   ngOnInit(): void {
     const now = new Date();
     this.todayStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+
+    // Hỗ trợ tham số ?date=DD/MM/YYYY để xem trước ngày bất kỳ trong tuần
+    try {
+      if (typeof window !== 'undefined' && window.location && window.location.search) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const queryDate = urlParams.get('date');
+        if (queryDate && queryDate.includes('/')) {
+          this.todayStr = queryDate;
+        }
+      }
+    } catch (_) {}
+
     this.loadInitialData();
   }
 
