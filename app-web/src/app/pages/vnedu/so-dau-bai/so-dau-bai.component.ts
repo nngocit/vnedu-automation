@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { VnEduService } from '../services/vnedu.service';
 import {
@@ -16,7 +16,7 @@ import {
   styleUrls: ['./so-dau-bai.component.scss'],
   standalone: false
 })
-export class SoDauBaiComponent implements OnInit {
+export class SoDauBaiComponent implements OnInit, OnDestroy {
   isLoading = false;
   isSavingBatch = false;
   isLoggingIn = false;
@@ -135,6 +135,23 @@ export class SoDauBaiComponent implements OnInit {
 
     this.loadInitialData();
     this.fetchWeather();
+
+    // Tự động làm mới thời tiết và giờ VN mỗi 60 giây (100% Real-time Auto)
+    try {
+      if (typeof window !== 'undefined') {
+        this.weatherTimer = setInterval(() => {
+          this.fetchWeather();
+        }, 60000);
+      }
+    } catch (_) {}
+  }
+
+  private weatherTimer: any;
+
+  ngOnDestroy(): void {
+    if (this.weatherTimer) {
+      clearInterval(this.weatherTimer);
+    }
   }
 
   weatherInfo: {

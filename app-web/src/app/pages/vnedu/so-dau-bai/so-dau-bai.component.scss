@@ -657,6 +657,208 @@
   }
 }
 
+// ==========================================
+// UNIVERSAL INTERACTIVE RICH TOOLTIPS
+// ==========================================
+.interactive-tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+
+  &:hover > .rich-floating-tooltip {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0) scale(1) !important;
+    pointer-events: auto !important;
+  }
+}
+
+// Attendance compare chip as tooltip hover trigger
+.attendance-compare-chip {
+  position: relative;
+
+  &:hover > .rich-floating-tooltip {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0) scale(1) !important;
+    pointer-events: auto !important;
+  }
+}
+
+// Khi focus chọn option hoặc gõ text thì ẩn tooltip
+.interactive-tooltip-wrapper select:focus ~ .rich-floating-tooltip,
+.interactive-tooltip-wrapper input:focus ~ .rich-floating-tooltip {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+// Base styles for Rich Floating Tooltips
+.rich-floating-tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  z-index: 1070;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px) scale(0.98);
+  transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              visibility 0.18s;
+  transition-delay: 0.08s;
+  pointer-events: none;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.16), 0 6px 12px -2px rgba(15, 23, 42, 0.08);
+  text-align: left;
+  line-height: 1.4;
+
+  .tooltip-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-bottom: 5px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid #f1f5f9;
+
+    .tooltip-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #2563eb;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .tooltip-meta {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: #64748b;
+    }
+  }
+
+  .tooltip-body {
+    font-size: 0.8rem;
+    color: #1e293b;
+
+    .tooltip-detail-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.775rem;
+      margin-top: 3px;
+      color: #475569;
+    }
+
+    .tooltip-quote {
+      font-style: italic;
+      color: #0f172a;
+      font-weight: 600;
+      background: #f8fafc;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border-left: 3px solid #3b82f6;
+    }
+
+    .tooltip-detail-note {
+      font-size: 0.725rem;
+      color: #64748b;
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+  }
+
+  .tooltip-footer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+    padding-top: 5px;
+    border-top: 1px dashed #e2e8f0;
+    font-size: 0.6875rem;
+    color: #64748b;
+    font-style: italic;
+  }
+
+  .tooltip-arrow {
+    position: absolute;
+    top: 100%;
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 7px solid #ffffff;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: -8px;
+      left: -8px;
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-top: 8px solid #cbd5e1;
+      z-index: -1;
+    }
+  }
+
+  // Positioning variants
+  &.tooltip-pos-left {
+    left: 0;
+    transform-origin: bottom left;
+    .tooltip-arrow { left: 24px; }
+  }
+
+  &.tooltip-pos-center {
+    left: 50%;
+    transform: translateX(-50%) translateY(6px) scale(0.98);
+    transform-origin: bottom center;
+    .tooltip-arrow { left: 50%; transform: translateX(-50%); }
+
+    &:hover,
+    .interactive-tooltip-wrapper:hover > & {
+      transform: translateX(-50%) translateY(0) scale(1) !important;
+    }
+  }
+
+  &.tooltip-pos-right {
+    right: 0;
+    left: auto;
+    transform-origin: bottom right;
+    .tooltip-arrow { right: 24px; }
+  }
+
+  // Width variants
+  &.w-attendance { min-width: 270px; max-width: 350px; }
+  &.w-remark { min-width: 260px; max-width: 330px; }
+  &.w-status { min-width: 260px; max-width: 330px; }
+  &.w-action { min-width: 260px; max-width: 340px; }
+}
+
+// Mini red pulse dot for mismatch warning
+.pulse-dot-mini {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  animation: pulseDotMiniAnim 1.5s infinite;
+}
+@keyframes pulseDotMiniAnim {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 5px rgba(239, 68, 68, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
 // Badge Buổi (Sáng / Chiều) - Phong cách Zalo Clean (Không dùng màu vàng cảnh báo)
 .badge-session {
   padding: 0.25rem 0.55rem;
@@ -1615,6 +1817,60 @@
 
     .tooltip-arrow {
       border-top-color: rgba(8, 24, 52, 0.97) !important;
+
+      &::before {
+        border-top-color: rgba(56, 189, 248, 0.4) !important;
+      }
+    }
+  }
+
+  // Dark Mode cho Universal Rich Floating Tooltips
+  .rich-floating-tooltip {
+    background: rgba(8, 24, 52, 0.98) !important;
+    border-color: rgba(56, 189, 248, 0.4) !important;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7), 0 0 20px rgba(56, 189, 248, 0.25) !important;
+    backdrop-filter: blur(14px) !important;
+
+    .tooltip-header {
+      border-bottom-color: rgba(56, 189, 248, 0.2) !important;
+
+      .tooltip-badge {
+        color: #38bdf8 !important;
+      }
+
+      .tooltip-meta {
+        color: #93c5fd !important;
+      }
+    }
+
+    .tooltip-body {
+      color: #e2e8f0 !important;
+
+      .tooltip-detail-row {
+        color: #94a3b8 !important;
+        strong {
+          color: #ffffff !important;
+        }
+      }
+
+      .tooltip-quote {
+        background: rgba(15, 23, 42, 0.6) !important;
+        color: #f8fafc !important;
+        border-left-color: #38bdf8 !important;
+      }
+
+      .tooltip-detail-note {
+        color: #94a3b8 !important;
+      }
+    }
+
+    .tooltip-footer {
+      border-top-color: rgba(56, 189, 248, 0.2) !important;
+      color: #7dd3fc !important;
+    }
+
+    .tooltip-arrow {
+      border-top-color: rgba(8, 24, 52, 0.98) !important;
 
       &::before {
         border-top-color: rgba(56, 189, 248, 0.4) !important;
