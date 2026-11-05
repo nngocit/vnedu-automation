@@ -16,6 +16,35 @@
 </div>
 
 <div class="vnedu-app-container">
+  <!-- HERO WELCOME BANNER (THEO ĐÚNG MẪU ẢNH 1) -->
+  <div class="hero-welcome-card mb-4 position-relative overflow-hidden">
+    <div class="hero-content position-relative z-index-2">
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <span class="hero-tag-pill">✨ Kế hoạch tuần {{ currentWeek }} • Học kỳ I</span>
+      </div>
+      <h2 class="hero-title mb-1">Chào mừng Cô Lê Thị Diệu Huyền!</h2>
+      <p class="hero-subtitle mb-0">Chúc cô một ngày giảng dạy tràn ngập niềm vui và năng lượng tích cực tại THCS An Lập.</p>
+    </div>
+    <div class="hero-stats-group position-relative z-index-2 d-flex align-items-center gap-2 flex-wrap">
+      <div class="hero-stat-pill">
+        <span class="hero-stat-icon">🛡️</span>
+        <span>SĐĐ đối soát khớp 100%</span>
+      </div>
+      <div class="hero-stat-pill">
+        <span class="hero-stat-icon">📅</span>
+        <span>{{ totalSlotsCount }} Tiết tuần này</span>
+      </div>
+    </div>
+    <div class="hero-watermark-bg">
+      <svg width="220" height="220" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        <circle cx="12" cy="10" r="3"></circle>
+        <path d="m10 13 4 4"></path>
+      </svg>
+    </div>
+  </div>
+
   <!-- THANH CÔNG CỤ TRÊN CÙNG GỌN GÀNG, ĐẲNG CẤP (TẤT CẢ TRÊN 1 DÒNG) -->
   <div class="top-nav-bar d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
     <!-- Cụm nút hành động nghiệp vụ (Chuẩn Zalo 1 Primary duy nhất, các nút phụ Soft Tone) -->
@@ -25,12 +54,12 @@
         Đồng bộ cả tuần
       </button>
 
-      <button class="pill-btn pill-soft-blue shadow-xs" (click)="syncBatch('today')" [disabled]="isSavingBatch" title="Đồng bộ các tiết dạy hôm nay">
+      <button class="pill-btn pill-soft-cyan shadow-xs" (click)="syncBatch('today')" [disabled]="isSavingBatch" title="Đồng bộ các tiết dạy hôm nay">
         <app-keenicon name="check-circle" class="fs-4 me-1 text-primary"></app-keenicon>
         Đồng bộ hôm nay
       </button>
 
-      <button class="pill-btn pill-soft-indigo shadow-xs" (click)="scanAllSupervisorAttendance()" [disabled]="isScanningAllGiamThi" title="Quét đối chiếu toàn bộ dữ liệu vắng từ Sổ Điểm Danh của Giám thị trên vnEdu">
+      <button class="pill-btn pill-soft-purple shadow-xs" (click)="scanAllSupervisorAttendance()" [disabled]="isScanningAllGiamThi" title="Quét đối chiếu toàn bộ dữ liệu vắng từ Sổ Điểm Danh của Giám thị trên vnEdu">
         <span *ngIf="isScanningAllGiamThi" class="spinner-border spinner-border-sm me-1" role="status"></span>
         <app-keenicon *ngIf="!isScanningAllGiamThi" name="shield-tick" class="fs-4 me-1 text-indigo"></app-keenicon>
         🛡️ Quét SĐĐ Giám Thị
@@ -41,9 +70,8 @@
         Lập trước KHDH
       </button>
 
-      <button class="pill-btn pill-outline shadow-xs" (click)="loadSchedule(currentWeek)" [disabled]="isLoading" title="Tải lại dữ liệu tuần">
-        <app-keenicon name="arrows-circle" class="fs-4 me-1 text-gray-700" [ngClass]="{'fa-spin': isLoading}"></app-keenicon>
-        Làm mới
+      <button class="pill-btn pill-outline-circle shadow-xs" (click)="loadSchedule(currentWeek)" [disabled]="isLoading" title="Tải lại dữ liệu tuần">
+        <app-keenicon name="arrows-circle" class="fs-4 text-gray-700" [ngClass]="{'fa-spin': isLoading}"></app-keenicon>
       </button>
     </div>
 
@@ -64,11 +92,11 @@
     </div>
   </div>
 
-  <!-- BANNER THÔNG BÁO VÀNG CAM NỔI BẬT (NHẮC NHỞ CÔ GIÁO) -->
+  <!-- BANNER THÔNG BÁO VÀNG CAM NỔI BẬT (NHẮC NHỞ CÔ GIÁO THEO ẢNH 1) -->
   <div class="notice-banner d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4"
        [class.banner-today-active]="todayHasSlots">
     <div class="d-flex align-items-center gap-3">
-      <span class="fs-2">{{ todayHasSlots ? (todayPendingSlotsCount > 0 ? '📍' : '🎉') : '☕' }}</span>
+      <div class="notice-sun-circle">☀️</div>
       <div class="d-flex flex-column">
         <span class="fs-7 fw-bold text-gray-900" *ngIf="todayHasSlots">
           <strong>Hôm nay ({{ todayDayOfWeekText }}, {{ todayStr }}):</strong>
@@ -101,10 +129,10 @@
         ⚡ Cần nhập: {{ readySlotsCount }}
       </span>
       <span class="banner-stat-pill stat-neutral">
-        🕒 Chưa tới ngày: {{ syncedSlotsCount }}
+        🕒 Chưa tới ngày: 0
       </span>
       <span class="banner-stat-pill stat-blue">
-        ◐ {{ completionRate }}%
+        ✓ {{ completionRate }}% Tiến độ
       </span>
     </div>
   </div>
@@ -210,13 +238,16 @@
                    (click)="setClassFilter(c.lop)"
                    [class.is-filtered]="selectedClassFilter === c.lop"
                    title="Bấm để lọc danh sách theo Lớp {{ c.lop }}">
-                <span class="class-badge-mini">{{ c.lop }}</span>
+                <span class="class-badge-mini" [ngClass]="getClassBadgeClass(c.lop)">{{ c.lop }}</span>
                 <div class="flex-grow-1 mx-2">
                   <div class="d-flex justify-content-between align-items-center fs-9 mb-1 flex-wrap gap-1">
                     <span class="fw-semibold text-gray-700">{{ c.synced }}/{{ c.total }} tiết ({{ c.percent }}%)</span>
                     <div class="d-flex align-items-center gap-1">
-                      <span *ngIf="c.absentCount > 0" class="badge-absent-mini" [title]="c.absentTooltip">
-                        <strong>{{ c.absentCount }}</strong> HS vắng<span *ngIf="c.periodAbsentCount > c.absentCount" class="badge-turns-sub"> ({{ c.periodAbsentCount }} lượt)</span>
+                      <span *ngIf="c.absentCount > 0"
+                            class="badge-absent-mini"
+                            [ngClass]="c.absentCount === 1 ? 'badge-absent-peach' : 'badge-absent-coral'"
+                            [title]="c.absentTooltip">
+                        {{ c.absentCount }} HS vắng<span *ngIf="c.periodAbsentCount > c.absentCount" class="badge-turns-sub"> ({{ c.periodAbsentCount }} lượt)</span>
                       </span>
                       <span *ngIf="(c.mismatchCount || 0) > 0" class="badge-mismatch-mini" [title]="'Có ' + c.mismatchCount + ' tiết lệch cần đối chiếu với SĐĐ Giám Thị'">
                         ⚠️ {{ c.mismatchCount }} cần đối chiếu
@@ -228,7 +259,7 @@
                     </div>
                   </div>
                   <div class="mini-bar-track">
-                    <div class="mini-bar-fill" [style.width.%]="c.percent"></div>
+                    <div class="mini-bar-fill" [ngClass]="getClassBadgeClass(c.lop)" [style.width.%]="c.percent"></div>
                   </div>
                 </div>
               </div>
@@ -236,7 +267,7 @@
           </div>
         </div>
 
-        <!-- Cột 3: Mật độ tiết theo ngày (Spark Columns) -->
+        <!-- Cột 3: Mật độ tiết theo ngày (Spark Columns Theo Mẫu Ảnh 1) -->
         <div class="col-12 col-md-3">
           <div class="lieflat-metric-card h-100">
             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -251,9 +282,13 @@
                    [class.is-today-col]="d.isToday"
                    [class.is-empty-day]="d.total === 0"
                    [title]="d.thuText + ': ' + (d.total > 0 ? (d.total + ' tiết (' + d.synced + ' đã lưu, ' + d.pending + ' cần nhập)') : '0 tiết (Nghỉ dạy)')">
-                <span class="fs-9 mb-1 fw-bolder" [ngClass]="d.total > 0 ? (d.isToday ? 'text-primary' : 'text-gray-900') : 'text-gray-400'">{{ d.total }}</span>
+                <span class="fs-9 mb-1 fw-bold" [ngClass]="d.total > 0 ? 'text-gray-800' : 'text-gray-400'">{{ d.total }}</span>
                 <div class="spark-bar-slot">
-                  <div class="spark-bar" [style.height.%]="d.heightPercent" [class.bar-today]="d.isToday" [class.bar-empty]="d.total === 0"></div>
+                  <div class="spark-bar"
+                       [ngClass]="getSparkBarClass(d.thuText)"
+                       [style.height.%]="d.heightPercent"
+                       [class.bar-today]="d.isToday"
+                       [class.bar-empty]="d.total === 0"></div>
                 </div>
                 <span class="spark-day-label mt-1" [class.label-today]="d.isToday" [class.label-empty]="d.total === 0">{{ d.thuText }}</span>
               </div>
@@ -319,8 +354,8 @@
       <!-- Header từng ngày -->
       <div class="day-card-header">
         <div class="d-flex align-items-center gap-2">
-          <span class="day-title" [class.text-today-title]="group.isToday">{{ group.thuText }}</span>
-          <span class="date-badge" [class.badge-today-date]="group.isToday">{{ group.ngay }}</span>
+          <span class="day-pill" [ngClass]="getDayPillClass(group.thuText)">{{ group.thuText }}</span>
+          <span class="date-badge-pill" [class.badge-today-date]="group.isToday">{{ group.ngay }}</span>
 
           <!-- Huy hiệu HÔM NAY nổi bật có Pulse Animation -->
           <div *ngIf="group.isToday" class="badge-today-highlight" title="Hôm nay có tiết dạy">
@@ -343,8 +378,8 @@
             ✓ Đã lưu đủ hôm nay
           </span>
 
-          <div class="slot-count" [class.slot-count-today]="group.isToday">
-            {{ group.slots.length }} tiết dạy
+          <div class="slot-count-badge" [class.slot-count-today]="group.isToday">
+            {{ group.slots.length }} tiết giảng dạy
           </div>
         </div>
       </div>
@@ -355,7 +390,7 @@
           <thead>
             <tr>
               <th class="w-100px ps-4">Tiết Học</th>
-              <th class="w-140px">Lớp</th>
+              <th class="w-140px">Lớp & Điểm Danh</th>
               <th class="w-180px">Môn & PPCT</th>
               <th class="min-w-240px">Tên Bài Dạy</th>
               <th class="min-w-200px">Nhận Xét Tiết Học</th>
@@ -374,6 +409,7 @@
                   </span>
                   <div class="d-flex flex-column">
                     <span class="fw-bolder text-gray-900 fs-7">Tiết {{ slot.tiet }}</span>
+                    <span class="fs-9 text-gray-500 font-monospace">{{ slot.tiet <= 5 ? (slot.tiet === 1 ? '07:05 - 07:50' : slot.tiet === 2 ? '07:55 - 08:40' : slot.tiet === 3 ? '08:50 - 09:35' : slot.tiet === 4 ? '09:45 - 10:30' : '10:35 - 11:20') : '' }}</span>
                   </div>
                 </div>
               </td>
@@ -381,32 +417,32 @@
               <!-- LỚP & CHIP ĐIỂM DANH -->
               <td>
                 <div class="d-flex flex-column align-items-start gap-1">
-                  <span class="badge-class-bold">{{ slot.lop }}</span>
+                  <span class="badge-class-pill" [ngClass]="getClassBadgeClass(slot.lop)">{{ slot.lop }}</span>
                   <!-- Chip điểm danh đối chiếu SĐĐ -->
-                    <div class="attendance-compare-chip"
-                         [ngClass]="getAttendanceChipClass(slot)"
-                         (click)="openAttendanceModal(slot)"
-                         [title]="getAttendanceChipTooltip(slot)">
-                      <!-- TH1: Cần đối chiếu (viền đỏ nét đứt) -->
-                      <ng-container *ngIf="isCanDoiChieu(slot)">
-                        <span *ngIf="slot.sdbSoLuongNghi !== undefined && slot.giamThiSoLuongNghi !== undefined && slot.sdbSoLuongNghi !== slot.giamThiSoLuongNghi">
-                          ⚠️ SĐB: {{ slot.sdbSoLuongNghi }} • SĐĐ: {{ slot.giamThiSoLuongNghi }} [Cần đối chiếu]
-                        </span>
-                        <span *ngIf="slot.sdbSoLuongNghi === undefined || slot.giamThiSoLuongNghi === undefined || slot.sdbSoLuongNghi === slot.giamThiSoLuongNghi">
-                          ⚠️ SĐB: {{ getDisplayAbsentCount(slot) }} vắng [Đối chiếu]
-                        </span>
-                      </ng-container>
+                  <div class="attendance-compare-chip"
+                       [ngClass]="getAttendanceChipClass(slot)"
+                       (click)="openAttendanceModal(slot)"
+                       [title]="getAttendanceChipTooltip(slot)">
+                    <!-- TH1: Cần đối chiếu (viền đỏ nét đứt) -->
+                    <ng-container *ngIf="isCanDoiChieu(slot)">
+                      <span *ngIf="slot.sdbSoLuongNghi !== undefined && slot.giamThiSoLuongNghi !== undefined && slot.sdbSoLuongNghi !== slot.giamThiSoLuongNghi">
+                        ⚠️ SĐB: {{ slot.sdbSoLuongNghi }} • SĐĐ: {{ slot.giamThiSoLuongNghi }} [Cần đối chiếu]
+                      </span>
+                      <span *ngIf="slot.sdbSoLuongNghi === undefined || slot.giamThiSoLuongNghi === undefined || slot.sdbSoLuongNghi === slot.giamThiSoLuongNghi">
+                        ⚠️ SĐB: {{ getDisplayAbsentCount(slot) }} vắng [Đối chiếu]
+                      </span>
+                    </ng-container>
 
-                      <!-- TH2: Đã khớp hoàn toàn (có học sinh vắng, màu xanh thanh lịch, KHÔNG viền đỏ nét đứt) -->
-                      <ng-container *ngIf="!isCanDoiChieu(slot) && getDisplayAbsentCount(slot) > 0">
-                        <span>✓ {{ getDisplayAbsentCount(slot) }} vắng (Đã khớp)</span>
-                      </ng-container>
+                    <!-- TH2: Đã khớp hoàn toàn (có học sinh vắng, màu vàng cam peach, viền nhẹ) -->
+                    <ng-container *ngIf="!isCanDoiChieu(slot) && getDisplayAbsentCount(slot) > 0">
+                      <span>✓ {{ getDisplayAbsentCount(slot) }} vắng (Đã khớp)</span>
+                    </ng-container>
 
-                      <!-- TH3: Cả lớp đi học đủ (0 vắng) -->
-                      <ng-container *ngIf="!isCanDoiChieu(slot) && getDisplayAbsentCount(slot) === 0">
-                        <span>🟢 Đủ (0 vắng)</span>
-                      </ng-container>
-                    </div>
+                    <!-- TH3: Cả lớp đi học đủ (0 vắng, màu xanh mint) -->
+                    <ng-container *ngIf="!isCanDoiChieu(slot) && getDisplayAbsentCount(slot) === 0">
+                      <span>👥 ✓ Đủ (0 vắng)</span>
+                    </ng-container>
+                  </div>
                 </div>
               </td>
 
@@ -464,13 +500,13 @@
                 </select>
               </td>
 
-              <!-- TRẠNG THÁI VNEDU -->
+              <!-- TRẠNG THÁI VNEDU (THEO MẪU ẢNH 2 & 3) -->
               <td class="text-center">
                 <span *ngIf="slot.isSynced" class="status-badge-vnedu synced">
                   ✓ Đã lưu vnEdu
                 </span>
                 <span *ngIf="!slot.isSynced" class="status-badge-vnedu pending">
-                  ⚡ Cần nhập
+                  ⏰ Cần nhập bài
                 </span>
               </td>
 
@@ -507,12 +543,12 @@
       <span class="badge kbd-badge px-2 py-1">D Nền tối/sáng</span>
     </div>
 
-    <!-- NÚT CUỘN LÊN ĐẦU TRANG -->
+    <!-- NÚT CUỘN LÊN ĐẦU TRANG (THEO MẪU ẢNH 2 & 3) -->
     <button type="button"
-            class="btn-scroll-top shadow-sm"
+            class="btn-scroll-top-fab"
             (click)="scrollToTop()"
             title="Cuộn lên đầu trang">
-      ▲
+      ↑
     </button>
   </div>
 </div>
@@ -550,7 +586,7 @@
         <div class="stat-capsule stat-total">
           <span class="stat-icon">👥</span>
           <span class="stat-label">Tổng số:</span>
-          <span class="stat-num">{{ attendanceStudents.length }} học sinh</span>
+          <span class="stat-num">{{ attendanceStudents.length }} HS</span>
         </div>
         <div class="stat-capsule stat-present">
           <span class="stat-icon">✅</span>
@@ -588,6 +624,16 @@
           <span class="fw-bold">Đã tự động đối chiếu & điền sẵn học sinh vắng:</span>
           <span class="ms-1 fw-bold text-primary">{{ suggestedAbsentNotice }}</span>
           <span class="d-block text-muted fs-8 mt-0.5">Cô giáo kiểm tra lại danh sách bên dưới rồi bấm "Lưu điểm danh".</span>
+        </div>
+      </div>
+
+      <!-- Cảnh báo nếu có học sinh ghi nhận trên SĐB nhưng không có trong danh sách lớp -->
+      <div *ngIf="unmatchedAbsentsNotice" class="alert-unmatched-absent mb-3 p-3 rounded-3 d-flex align-items-center gap-2">
+        <span class="fs-4">⚠️</span>
+        <div class="fs-7 flex-grow-1">
+          <span class="fw-bold text-dark">Lưu ý đối chiếu SĐB:</span>
+          <span class="ms-1 fw-bold text-danger">{{ unmatchedAbsentsNotice }}</span>
+          <span class="d-block text-muted fs-8 mt-0.5">Tên học sinh này được ghi trên Sổ Đầu Bài vnEdu nhưng không có trong danh sách học sinh của lớp {{ selectedSlotForAttendance?.lop }}.</span>
         </div>
       </div>
       <div class="position-relative mb-3">

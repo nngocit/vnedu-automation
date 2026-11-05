@@ -3430,3 +3430,413 @@
   align-items: center;
   box-shadow: 0 1px 2px rgba(220, 38, 38, 0.15);
 }
+
+// ===================================================================
+// VIVID MODERN COLOR THEME EXTENSION (THEO ĐÚNG 5 MẪU ẢNH THIẾT KẾ)
+// ===================================================================
+
+// 1. HERO WELCOME CARD
+.hero-welcome-card {
+  background: linear-gradient(135deg, #0068ff 0%, #1e40af 100%);
+  border-radius: 16px;
+  padding: 1.5rem 1.75rem;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 104, 255, 0.35);
+  position: relative;
+  overflow: hidden;
+
+  .hero-tag-pill {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    border-radius: 9999px;
+    padding: 0.25rem 0.85rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+
+  .hero-title {
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.3px;
+  }
+
+  .hero-subtitle {
+    font-size: 0.92rem;
+    color: rgba(255, 255, 255, 0.92);
+    font-weight: 500;
+  }
+
+  .hero-stats-group {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .hero-stat-pill {
+    background: rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    color: #ffffff;
+    border-radius: 9999px;
+    padding: 0.45rem 1.1rem;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .hero-watermark-bg {
+    position: absolute;
+    right: -25px;
+    top: -35px;
+    opacity: 0.12;
+    pointer-events: none;
+    color: #ffffff;
+  }
+}
+
+// 2. NAV PILL BUTTONS
+.pill-soft-cyan {
+  background-color: #e0f2fe !important;
+  color: #0284c7 !important;
+  border: 1px solid #bae6fd !important;
+  font-weight: 700 !important;
+
+  &:hover {
+    background-color: #bae6fd !important;
+    color: #0369a1 !important;
+  }
+}
+
+.pill-soft-purple {
+  background-color: #f3e8ff !important;
+  color: #7c3aed !important;
+  border: 1px solid #e9d5ff !important;
+  font-weight: 700 !important;
+
+  &:hover {
+    background-color: #e9d5ff !important;
+    color: #6d28d9 !important;
+  }
+}
+
+.pill-outline-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+
+  &:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+  }
+}
+
+// 3. NOTICE BANNER SUN CIRCLE
+.notice-sun-circle {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 50%;
+  background: #fef08a;
+  border: 1px solid #fde047;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  box-shadow: 0 2px 6px rgba(234, 179, 8, 0.25);
+}
+
+// 4. DAY HEADER PILLS & DATE CAPSULES
+.day-pill {
+  color: #ffffff;
+  padding: 0.35rem 1.25rem;
+  border-radius: 9999px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+
+  &.day-pill-thu2 {
+    background-color: #2563eb !important;
+  }
+  &.day-pill-thu3 {
+    background-color: #7c3aed !important;
+  }
+  &.day-pill-thu4 {
+    background-color: #0d9488 !important;
+  }
+  &.day-pill-thu5 {
+    background-color: #ea580c !important;
+  }
+  &.day-pill-thu6 {
+    background-color: #9333ea !important;
+  }
+  &.day-pill-thu7 {
+    background-color: #4f46e5 !important;
+  }
+  &.day-pill-cn {
+    background-color: #e11d48 !important;
+  }
+  &.day-pill-default {
+    background-color: #2563eb !important;
+  }
+}
+
+.date-badge-pill {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 0.3rem 0.9rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid #e2e8f0;
+}
+
+.slot-count-badge {
+  color: #475569;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  padding: 0.3rem 0.9rem;
+  border-radius: 9999px;
+}
+
+// 5. CLASS BADGES (CYAN, BLUE, PURPLE)
+.badge-class-pill, .class-badge-mini {
+  border-radius: 8px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &.class-badge-7a2 {
+    background-color: #e0f2fe !important;
+    color: #0284c7 !important;
+    border: 1px solid #bae6fd !important;
+  }
+  &.class-badge-7a3 {
+    background-color: #dbeafe !important;
+    color: #1d4ed8 !important;
+    border: 1px solid #bfdbfe !important;
+  }
+  &.class-badge-9a2 {
+    background-color: #f3e8ff !important;
+    color: #7c3aed !important;
+    border: 1px solid #e9d5ff !important;
+  }
+  &.class-badge-default {
+    background-color: #eff6ff !important;
+    color: #2563eb !important;
+    border: 1px solid #bfdbfe !important;
+  }
+}
+
+// 6. MINI BAR TRACK & CLASS FILL
+.mini-bar-track {
+  height: 7px;
+  background: #e2e8f0;
+  border-radius: 9999px;
+  overflow: hidden;
+
+  .mini-bar-fill {
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 0.4s ease;
+
+    &.class-badge-7a2 {
+      background: #06b6d4 !important;
+    }
+    &.class-badge-7a3 {
+      background: #2563eb !important;
+    }
+    &.class-badge-9a2 {
+      background: #8b5cf6 !important;
+    }
+  }
+}
+
+// 7. ABSENT BADGES IN CLASS ROW
+.badge-absent-mini {
+  &.badge-absent-peach {
+    background-color: #fef3c7 !important;
+    color: #b45309 !important;
+    border: 1px solid #fde68a !important;
+    box-shadow: none !important;
+  }
+
+  &.badge-absent-coral {
+    background-color: #fee2e2 !important;
+    color: #dc2626 !important;
+    border: 1px solid #fca5a5 !important;
+    box-shadow: none !important;
+  }
+}
+
+// 8. SPARK BAR CAPSULES (MẬT ĐỘ TIẾT THEO NGÀY)
+.spark-bar-slot {
+  height: 58px !important;
+  width: 24px !important;
+  background: #f1f5f9 !important;
+  border-radius: 9999px !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  overflow: hidden !important;
+  padding: 1px !important;
+}
+
+.spark-bar {
+  width: 100% !important;
+  border-radius: 9999px !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: bottom;
+
+  &.spark-bar-t2 {
+    background: #06b6d4 !important;
+  }
+  &.spark-bar-t3 {
+    background: #3b82f6 !important;
+  }
+  &.spark-bar-t4 {
+    background: #10b981 !important;
+  }
+  &.spark-bar-t5 {
+    background: #e2e8f0 !important;
+  }
+  &.spark-bar-t6 {
+    background: #a855f7 !important;
+  }
+
+  &.bar-empty {
+    height: 4px !important;
+    background: #cbd5e1 !important;
+  }
+}
+
+// 9. ATTENDANCE COMPARE CHIPS
+.attendance-compare-chip {
+  cursor: pointer;
+  border-radius: 9999px;
+  padding: 0.28rem 0.8rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+
+  &.chip-matched {
+    background: #fef3c7 !important;
+    color: #b45309 !important;
+    border: 1px solid #fde68a !important;
+
+    &:hover {
+      background: #fde68a !important;
+    }
+  }
+
+  &.chip-present, &.all-present {
+    background: #ecfdf5 !important;
+    color: #059669 !important;
+    border: 1px solid #a7f3d0 !important;
+
+    &:hover {
+      background: #d1fae5 !important;
+    }
+  }
+
+  &.chip-mismatched {
+    background: #fee2e2 !important;
+    color: #dc2626 !important;
+    border: 1.5px dashed #f87171 !important;
+
+    &:hover {
+      background: #fecaca !important;
+    }
+  }
+}
+
+// 10. STATUS VNEDU PILLS
+.status-badge-vnedu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.42rem 1.15rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+
+  &.synced {
+    background: #10b981 !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(16, 185, 129, 0.3) !important;
+  }
+
+  &.pending {
+    background: #f59e0b !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(245, 158, 11, 0.3) !important;
+  }
+}
+
+// 11. FLOATING SCROLL TO TOP FAB BUTTON
+.btn-scroll-top-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #4f46e5;
+  color: #ffffff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  font-weight: 800;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.45);
+  cursor: pointer;
+  z-index: 999;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    transform: translateY(-3px) scale(1.05);
+    background: #4338ca;
+    box-shadow: 0 6px 18px rgba(79, 70, 229, 0.55);
+  }
+}
+
+// 12. ATTENDANCE MODAL ALERTS
+.alert-suggested-absent {
+  background: #fffbeb !important;
+  border: 1px solid #fef08a !important;
+  color: #854d0e !important;
+}
+
+.alert-unmatched-absent {
+  background: #fef2f2 !important;
+  border: 1px solid #fecaca !important;
+  color: #991b1b !important;
+}

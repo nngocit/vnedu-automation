@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const core = require('./sync-core');
+const localDb = require('./local_attendance_db');
 
 const app = express();
 const PORT = 3000;
@@ -331,6 +332,24 @@ app.get('/api/attendance', async (req, res) => {
         const weekNum = parseInt(week) || 9;
 
         const result = await core.getDaSachHocSinhVang(lop, weekNum, thu, tiet, chitietId || '');
+        
+        // Đọc CSDL local (nếu đã từng lưu điểm danh trước đó)
+        const localRec = localDb.getRecord(lop, weekNum, thu, tiet);
+        result.localRecord = localRec;
+
+        // Tra cứu thêm danh sách vắng ghi nhận trên live SĐB vnEdu
+        try {
+            const liveList = await core.checkLiveStatus(weekNum);
+            const live = liveList.find(l =>
+                (l.lop === lop || l.lop === lop + 'AL' || (lop && lop.includes(l.lop))) &&
+                Number(l.thu) === Number(thu) &&
+                Number(l.tiet) === Number(tiet)
+            );
+            if (live && Array.isArray(live.dsHsVang) && live.dsHsVang.length > 0) {
+                result.sdbDsVang = live.dsHsVang;
+            }
+        } catch (_) {}
+
         res.json(result);
     } catch (e) {
         res.status(500).json({ success: false, error: e.message });
@@ -463,16 +482,8 @@ const handleScanAllGiamThi = async (req, res) => {
                 isMatched = true;
             } else if (displayGiamThiCount === 0 && displaySdbCount === 0) {
                 isMatched = true;
-            } else if (displayGiamThiCount === 0 && displaySdbCount > 0) {
-                // Đã có dữ liệu trên SĐB, xem như đã đối soát chuẩn
-                isMatched = true;
-                displayGiamThiCount = displaySdbCount;
-                displayGiamThiList = sdbDsVang.map(name => ({
-                    fullName: typeof name === 'string' ? name.replace(/\s*\([PK]\)/i, '') : (name.fullName || ''),
-                    coPhep: typeof name === 'string' ? name.includes('(P)') : true,
-                    khongPhep: typeof name === 'string' ? name.includes('(K)') : false
-                }));
             } else {
+                // Số vắng trên SĐB và SĐĐ Giám thị lệch nhau (ví dụ Giám thị 0 vắng nhưng SĐB 1 vắng) -> CẦN ĐỐI CHIẾU
                 isMatched = false;
             }
 
@@ -569,6 +580,20 @@ app.post('/api/save-attendance', async (req, res) => {
 
         const absentList = (studentsData || []).filter(s => s.coPhep || s.khongPhep || s.co_phep || s.khong_phep);
         const saveRes = await core.saveHocSinhVangToVnEdu(targetChitietId, absentList);
+
+        // Lưu bản ghi vào CSDL local attendance_db.json
+        if (slot) {
+            try {
+                localDb.saveRecord(slot.lop, weekNum, slot.thu, slot.tiet, {
+                    chitietId: targetChitietId,
+                    soLuongNghi: absentList.length,
+                    absentList,
+                    studentsData
+                });
+            } catch (errDb) {
+                console.warn('Lỗi ghi CSDL local:', errDb.message);
+            }
+        }
 
         // Cập nhật lại số lượng học sinh nghỉ vào tiết Sổ đầu bài
         if (slot) {

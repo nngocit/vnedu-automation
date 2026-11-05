@@ -36,6 +36,7 @@ export class SoDauBaiComponent implements OnInit {
   selectedSlotForAttendance: VnEduSlot | null = null;
   attendanceStudents: AbsentStudent[] = [];
   suggestedAbsentNotice = '';
+  unmatchedAbsentsNotice = '';
   attendanceSearchText = '';
   isLoadingAttendance = false;
   isSavingAttendance = false;
@@ -335,6 +336,7 @@ export class SoDauBaiComponent implements OnInit {
     this.isLoadingAttendance = true;
     this.attendanceStudents = [];
     this.suggestedAbsentNotice = '';
+    this.unmatchedAbsentsNotice = '';
 
     this.vneduService.getAttendance(
       slot.lop,
@@ -348,14 +350,14 @@ export class SoDauBaiComponent implements OnInit {
         if (res.success && res.students) {
           this.attendanceStudents = res.students;
 
-          // Thu thập nguồn học sinh vắng từ cả slot.hsVangList, slot.giamThiDsVang, slot.sdbDsVang
+          // Thu thập nguồn học sinh vắng từ cả slot.hsVangList, slot.giamThiDsVang, slot.sdbDsVang, slot.dsHsVang, res.sdbDsVang
           const rawAbsents: any[] = [];
           if (Array.isArray(slot.hsVangList)) rawAbsents.push(...slot.hsVangList);
           if (Array.isArray(slot.giamThiDsVang)) rawAbsents.push(...slot.giamThiDsVang);
           if (Array.isArray(slot.sdbDsVang)) {
             slot.sdbDsVang.forEach((item: any) => {
               if (typeof item === 'string') {
-                const isKhong = item.includes('(K)');
+                const isKhong = item.includes('(K)') || item.toLowerCase().includes('không');
                 const clean = item.replace(/\s*\([PKpkCókhôngphép\s]+\)/gi, '').trim();
                 rawAbsents.push({ fullName: clean, coPhep: !isKhong, khongPhep: isKhong });
               } else if (item && typeof item === 'object') {
@@ -363,13 +365,42 @@ export class SoDauBaiComponent implements OnInit {
               }
             });
           }
+          if (Array.isArray((slot as any).dsHsVang)) {
+            (slot as any).dsHsVang.forEach((item: any) => {
+              if (typeof item === 'string') {
+                const isKhong = item.includes('(K)') || item.toLowerCase().includes('không');
+                const clean = item.replace(/\s*\([PKpkCókhôngphép\s]+\)/gi, '').trim();
+                rawAbsents.push({ fullName: clean, coPhep: !isKhong, khongPhep: isKhong });
+              } else if (item && typeof item === 'object') {
+                rawAbsents.push(item);
+              }
+            });
+          }
+          if (Array.isArray(res.sdbDsVang)) {
+            res.sdbDsVang.forEach((item: any) => {
+              if (typeof item === 'string') {
+                const isKhong = item.includes('(K)') || item.toLowerCase().includes('không');
+                const clean = item.replace(/\s*\([PKpkCókhôngphép\s]+\)/gi, '').trim();
+                rawAbsents.push({ fullName: clean, coPhep: !isKhong, khongPhep: isKhong });
+              } else if (item && typeof item === 'object') {
+                rawAbsents.push(item);
+              }
+            });
+          }
+          if (Array.isArray(res.giamThiDsVang)) {
+            rawAbsents.push(...res.giamThiDsVang);
+          }
 
           const matchedNames: string[] = [];
+          const unmatchedList: string[] = [];
 
           rawAbsents.forEach(v => {
-            const vName = (typeof v === 'string' ? v : (v.fullName || '')).replace(/\s*\([PKpkCókhôngphép\s]+\)/gi, '').trim().toLowerCase();
+            const rawName = (typeof v === 'string' ? v : (v.fullName || v.name || '')).replace(/\s*\([PKpkCókhôngphép\s]+\)/gi, '').trim();
+            const vName = rawName.toLowerCase();
             const vMaHs = (typeof v === 'object' && (v.maHs || v.id)) ? String(v.maHs || v.id).trim() : '';
             const vIsKhongPhep = (typeof v === 'object' && v.khongPhep) || (typeof v === 'string' && v.toLowerCase().includes('(k)'));
+
+            if (!vName && !vMaHs) return;
 
             const found = this.attendanceStudents.find(s => {
               const sName = (s.fullName || '').trim().toLowerCase();
@@ -382,16 +413,23 @@ export class SoDauBaiComponent implements OnInit {
               return false;
             });
 
-            if (found && !found.coPhep && !found.khongPhep) {
-              found.coPhep = !vIsKhongPhep;
-              found.khongPhep = !!vIsKhongPhep;
-              matchedNames.push(found.fullName + (found.coPhep ? ' (P)' : ' (K)'));
+            if (found) {
+              if (!found.coPhep && !found.khongPhep) {
+                found.coPhep = !vIsKhongPhep;
+                found.khongPhep = !!vIsKhongPhep;
+                matchedNames.push(found.fullName + (found.coPhep ? ' (P)' : ' (K)'));
+              }
+            } else if (rawName) {
+              unmatchedList.push(rawName + (vIsKhongPhep ? ' (K)' : ' (P)'));
             }
           });
 
           if (matchedNames.length > 0) {
             const uniqueNames = [...new Set(matchedNames)];
             this.suggestedAbsentNotice = uniqueNames.join(', ');
+          }
+          if (unmatchedList.length > 0) {
+            this.unmatchedAbsentsNotice = [...new Set(unmatchedList)].join(', ');
           }
         }
         this.cdr.detectChanges();
@@ -724,11 +762,15 @@ export class SoDauBaiComponent implements OnInit {
         if (res.success) {
           slot.hsVangList = absentList;
           slot.soLuongNghi = absentList.length;
+          slot.sdbSoLuongNghi = absentList.length;
+          slot.sdbDsVang = absentList.map(a => a.fullName + (a.coPhep ? ' (P)' : ' (K)'));
+          slot.isMatched = true;
           if (res.chitietId) {
             slot.chitietId = res.chitietId;
             slot.liveId = res.chitietId;
             slot.isSynced = true;
           }
+          this.updateDayGroups();
           this.showToast(res.msg || `Đã lưu điểm danh lớp ${slot.lop} (${absentList.length} em vắng)`, 'success');
           this.closeAttendanceModal();
         } else {
@@ -1379,6 +1421,36 @@ export class SoDauBaiComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  getClassBadgeClass(lop: string): string {
+    if (!lop) return 'class-badge-default';
+    if (lop.includes('7A2')) return 'class-badge-7a2';
+    if (lop.includes('7A3')) return 'class-badge-7a3';
+    if (lop.includes('9A2')) return 'class-badge-9a2';
+    return 'class-badge-default';
+  }
+
+  getDayPillClass(thuText: string): string {
+    if (!thuText) return 'day-pill-default';
+    if (thuText.includes('Hai')) return 'day-pill-thu2';
+    if (thuText.includes('Ba')) return 'day-pill-thu3';
+    if (thuText.includes('Tư')) return 'day-pill-thu4';
+    if (thuText.includes('Năm')) return 'day-pill-thu5';
+    if (thuText.includes('Sáu')) return 'day-pill-thu6';
+    if (thuText.includes('Bảy')) return 'day-pill-thu7';
+    if (thuText.includes('Nhật')) return 'day-pill-cn';
+    return 'day-pill-default';
+  }
+
+  getSparkBarClass(thuText: string): string {
+    if (!thuText) return 'spark-bar-default';
+    if (thuText.includes('Hai') || thuText.includes('T2')) return 'spark-bar-t2';
+    if (thuText.includes('Ba') || thuText.includes('T3')) return 'spark-bar-t3';
+    if (thuText.includes('Tư') || thuText.includes('T4')) return 'spark-bar-t4';
+    if (thuText.includes('Năm') || thuText.includes('T5')) return 'spark-bar-t5';
+    if (thuText.includes('Sáu') || thuText.includes('T6')) return 'spark-bar-t6';
+    return 'spark-bar-default';
   }
 
   scrollToTop(): void {
