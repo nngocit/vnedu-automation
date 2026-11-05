@@ -62,17 +62,22 @@ const ARTIFACT_DIR = 'C:\\Users\\xuann\\.gemini\\antigravity\\brain\\2b77183e-ec
     await page.waitForSelector('.scan-tabs-group', { timeout: 25000 });
     await page.waitForTimeout(1500);
 
-    // Click on tab "Đã Khớp Hoàn Toàn" to show matched list matching image 3
+    // Screen 3A: Default tab (Chưa Khớp / Cần Đối Chiếu)
+    await page.screenshot({ path: path.join(ARTIFACT_DIR, 'zalo_theme_screen3a_mismatched.png'), fullPage: false });
+    console.log('📸 Screen 3A saved: zalo_theme_screen3a_mismatched.png');
+
+    // Click on tab "Đã Khớp Hoàn Toàn" to show matched list
     const matchedTab = page.locator('.scan-tab-btn:has-text("Đã Khớp Hoàn Toàn")').first();
     if (await matchedTab.count() > 0) {
         await matchedTab.click();
         await page.waitForTimeout(1000);
     }
 
-    // Capture Screen 3: Supervisor Modal
+    // Capture Screen 3B: Supervisor Modal (Đã Khớp Hoàn Toàn)
+    await page.screenshot({ path: path.join(ARTIFACT_DIR, 'zalo_theme_screen3b_matched.png'), fullPage: false });
     await page.screenshot({ path: path.join(ARTIFACT_DIR, 'zalo_theme_screen3_supervisor_modal.png'), fullPage: false });
-    console.log('📸 Screen 3 saved: zalo_theme_screen3_supervisor_modal.png');
+    console.log('📸 Screen 3B saved: zalo_theme_screen3b_matched.png & supervisor_modal.png');
 
     await browser.close();
-    console.log('🎉 All 3 screens captured successfully!');
+    console.log('🎉 All screens captured successfully!');
 })();
