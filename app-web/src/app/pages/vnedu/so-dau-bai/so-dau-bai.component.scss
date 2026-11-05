@@ -2846,6 +2846,171 @@
       }
     }
   }
+
+  // ==========================================
+  // DARK MODE STYLING FOR LIEFLAT DASHBOARD
+  // ==========================================
+  :host-context([data-bs-theme="dark"]) &,
+  :host-context([data-theme="dark"]) &,
+  :host-context(.theme-dark) &,
+  [data-bs-theme="dark"] & {
+    background: rgba(13, 32, 64, 0.75) !important;
+    backdrop-filter: blur(16px);
+    border-color: rgba(56, 189, 248, 0.2) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+
+    .lieflat-header {
+      background: rgba(8, 22, 48, 0.95) !important;
+      border-bottom-color: rgba(56, 189, 248, 0.2) !important;
+
+      .lieflat-icon-badge {
+        background: rgba(56, 189, 248, 0.15) !important;
+        color: #38bdf8 !important;
+      }
+
+      .lieflat-title {
+        color: #f8fafc !important;
+      }
+
+      .badge-lieflat-glance {
+        background: rgba(56, 189, 248, 0.15) !important;
+        color: #38bdf8 !important;
+        border-color: rgba(56, 189, 248, 0.3) !important;
+      }
+
+      .lieflat-sub {
+        color: #94a3b8 !important;
+      }
+
+      .btn-toggle-lieflat {
+        background: rgba(30, 41, 59, 0.8) !important;
+        border-color: rgba(56, 189, 248, 0.25) !important;
+        color: #cbd5e1 !important;
+
+        &:hover {
+          background: rgba(56, 189, 248, 0.2) !important;
+          color: #ffffff !important;
+        }
+      }
+    }
+
+    .lieflat-metric-card {
+      background: rgba(8, 22, 48, 0.65) !important;
+      border-color: rgba(56, 189, 248, 0.15) !important;
+
+      &:hover {
+        background: rgba(13, 32, 64, 0.85) !important;
+        border-color: rgba(56, 189, 248, 0.35) !important;
+      }
+    }
+
+    .lieflat-card-label {
+      color: #94a3b8 !important;
+    }
+
+    .lieflat-big-metric {
+      .metric-val {
+        color: #38bdf8 !important;
+      }
+      .metric-divider {
+        color: #475569 !important;
+      }
+      .metric-total {
+        color: #e2e8f0 !important;
+      }
+      .metric-unit {
+        color: #94a3b8 !important;
+      }
+    }
+
+    .svg-progress-track {
+      fill: #1e293b !important;
+    }
+
+    .lieflat-rate-badge {
+      &.rate-high {
+        background: rgba(16, 185, 129, 0.2) !important;
+        color: #34d399 !important;
+        border-color: rgba(16, 185, 129, 0.4) !important;
+      }
+      &.rate-mid {
+        background: rgba(245, 158, 11, 0.2) !important;
+        color: #fbbf24 !important;
+        border-color: rgba(245, 158, 11, 0.4) !important;
+      }
+    }
+
+    .class-stat-row {
+      background: rgba(15, 23, 42, 0.6) !important;
+      border-color: rgba(255, 255, 255, 0.06) !important;
+
+      &:hover {
+        background: rgba(56, 189, 248, 0.12) !important;
+        border-color: rgba(56, 189, 248, 0.3) !important;
+      }
+
+      &.is-filtered {
+        background: rgba(56, 189, 248, 0.2) !important;
+        border-color: #38bdf8 !important;
+      }
+
+      .class-badge-mini {
+        background: rgba(56, 189, 248, 0.15) !important;
+        color: #38bdf8 !important;
+      }
+
+      .mini-bar-track {
+        background: #1e293b !important;
+        .mini-bar-fill {
+          background: #38bdf8 !important;
+        }
+      }
+
+      .badge-absent-mini {
+        background: rgba(239, 68, 68, 0.2) !important;
+        color: #f87171 !important;
+      }
+
+      .fw-semibold {
+        color: #e2e8f0 !important;
+      }
+    }
+
+    .spark-bar-slot {
+      background: #1e293b !important;
+    }
+
+    .spark-bar {
+      background: #475569 !important;
+
+      &.bar-today {
+        background: #38bdf8 !important;
+        box-shadow: 0 0 10px rgba(56, 189, 248, 0.5) !important;
+      }
+    }
+
+    .spark-day-label {
+      color: #94a3b8 !important;
+
+      &.label-today {
+        color: #38bdf8 !important;
+      }
+    }
+
+    .spark-column-item.is-today-col span.fs-10 {
+      color: #38bdf8 !important;
+    }
+
+    .pill-legend-pending {
+      background: rgba(239, 68, 68, 0.15) !important;
+      color: #f87171 !important;
+      border-color: rgba(239, 68, 68, 0.45) !important;
+    }
+
+    .text-gray-600, .text-gray-500 {
+      color: #94a3b8 !important;
+    }
+  }
 }
 
 
