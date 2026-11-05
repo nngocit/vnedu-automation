@@ -795,13 +795,47 @@ export class SoDauBaiComponent implements OnInit {
     return Array.from(set).sort();
   }
 
+  // Tổng số tiết dạy hôm nay
+  get todayTotalSlotsCount(): number {
+    return this.slots.filter(s => s.ngay === this.todayStr).length;
+  }
+
+  // Hôm nay có tiết dạy hay không
+  get todayHasSlots(): boolean {
+    return this.todayTotalSlotsCount > 0;
+  }
+
+  // Tên thứ của ngày hôm nay (VD: Thứ Năm)
+  get todayDayOfWeekText(): string {
+    const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+    return days[new Date().getDay()];
+  }
+
+  // Cuộn mượt đến thẻ ngày hôm nay
+  scrollToToday(): void {
+    const el = document.getElementById('day-card-today');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+      this.showToast(`Hôm nay (${this.todayDayOfWeekText}, ${this.todayStr}) cô không có tiết dạy trên thời khóa biểu`, 'info');
+    }
+  }
+
   // Số tiết cần nhập hôm nay
   get todayPendingSlotsCount(): number {
     return this.slots.filter(s => s.ngay === this.todayStr && !s.isSynced).length;
   }
 
   // Danh sách các nhóm ngày đã xử lý (tránh chạy getter trong ngFor gây Change Detection loop làm treo trang)
-  dayGroups: { thu: number; thuText: string; ngay: string; slots: VnEduSlot[] }[] = [];
+  dayGroups: {
+    thu: number;
+    thuText: string;
+    ngay: string;
+    isToday: boolean;
+    pendingCount: number;
+    syncedCount: number;
+    slots: VnEduSlot[];
+  }[] = [];
 
   // Nhóm các tiết theo từng ngày (Thứ Hai, Thứ Ba...)
   updateDayGroups(): void {
@@ -829,7 +863,7 @@ export class SoDauBaiComponent implements OnInit {
       8: 'Chủ Nhật'
     };
 
-    const groups: { [key: string]: { thu: number; thuText: string; ngay: string; slots: VnEduSlot[] } } = {};
+    const groups: { [key: string]: { thu: number; thuText: string; ngay: string; isToday: boolean; pendingCount: number; syncedCount: number; slots: VnEduSlot[] } } = {};
     filtered.forEach(slot => {
       const key = `${slot.thu}_${slot.ngay}`;
       if (!groups[key]) {
@@ -837,10 +871,18 @@ export class SoDauBaiComponent implements OnInit {
           thu: slot.thu,
           thuText: thuMap[slot.thu] || `Thứ ${slot.thu}`,
           ngay: slot.ngay,
+          isToday: slot.ngay === this.todayStr,
+          pendingCount: 0,
+          syncedCount: 0,
           slots: []
         };
       }
       groups[key].slots.push(slot);
+      if (slot.isSynced) {
+        groups[key].syncedCount++;
+      } else {
+        groups[key].pendingCount++;
+      }
     });
 
     this.dayGroups = Object.values(groups).sort((a, b) => a.thu - b.thu);

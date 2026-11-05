@@ -65,16 +65,38 @@
   </div>
 
   <!-- BANNER THÔNG BÁO VÀNG CAM NỔI BẬT (NHẮC NHỞ CÔ GIÁO) -->
-  <div class="notice-banner d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
-    <div class="d-flex align-items-center">
-      <span class="fs-4 me-2">⚡</span>
-      <span class="fs-7 fw-semibold">
-        <strong>Hôm nay cô còn {{ todayPendingSlotsCount }} tiết cần nhập lên vnEdu!</strong>
-        Bấm nút <em>"Đồng bộ hôm nay"</em> ở góc trên để lưu tự động vào sổ đầu bài.
-      </span>
+  <div class="notice-banner d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4"
+       [class.banner-today-active]="todayHasSlots">
+    <div class="d-flex align-items-center gap-3">
+      <span class="fs-2">{{ todayHasSlots ? (todayPendingSlotsCount > 0 ? '📍' : '🎉') : '☕' }}</span>
+      <div class="d-flex flex-column">
+        <span class="fs-7 fw-bold text-gray-900" *ngIf="todayHasSlots">
+          <strong>Hôm nay ({{ todayDayOfWeekText }}, {{ todayStr }}):</strong>
+          <span *ngIf="todayPendingSlotsCount > 0" class="text-danger fw-bolder ms-1">
+            Cô có {{ todayTotalSlotsCount }} tiết dạy (còn {{ todayPendingSlotsCount }} tiết cần nhập lên vnEdu).
+          </span>
+          <span *ngIf="todayPendingSlotsCount === 0" class="text-success fw-bolder ms-1">
+            Cô có {{ todayTotalSlotsCount }} tiết dạy và đã hoàn thành 100%!
+          </span>
+        </span>
+        <span class="fs-7 fw-semibold text-gray-800" *ngIf="!todayHasSlots">
+          <strong>Hôm nay ({{ todayDayOfWeekText }}, {{ todayStr }}):</strong> Cô không có tiết dạy trên thời khóa biểu.
+        </span>
+        <span class="fs-8 text-gray-600 mt-0.5" *ngIf="todayHasSlots && todayPendingSlotsCount > 0">
+          Bấm nút <em>"Đồng bộ hôm nay"</em> hoặc bấm <em>"Lưu nhanh"</em> ngay tại thẻ ngày để lưu tự động vào sổ đầu bài.
+        </span>
+      </div>
     </div>
 
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <button *ngIf="todayHasSlots"
+              type="button"
+              class="btn-scroll-today"
+              (click)="scrollToToday()"
+              title="Cuộn màn hình tới ngày hôm nay">
+        📍 Cuộn tới Hôm nay
+      </button>
+
       <span class="badge bg-warning bg-opacity-25 text-warning-emphasis fw-bold px-3 py-2 rounded-pill fs-8">
         ⚡ Cần nhập: {{ readySlotsCount }}
       </span>
@@ -135,15 +157,40 @@
 
   <!-- DANH SÁCH BẢNG THEO TỪNG THỨ TRONG TUẦN (CARD PER DAY) -->
   <div *ngIf="!isLoading">
-    <div *ngFor="let group of dayGroups; trackBy: trackByThu" class="day-card">
+    <div *ngFor="let group of dayGroups; trackBy: trackByThu"
+         class="day-card"
+         [class.is-today]="group.isToday"
+         [attr.id]="group.isToday ? 'day-card-today' : null">
       <!-- Header từng ngày -->
       <div class="day-card-header">
-        <div class="d-flex align-items-center">
-          <span class="day-title">{{ group.thuText }}</span>
-          <span class="date-badge">{{ group.ngay }}</span>
+        <div class="d-flex align-items-center gap-2">
+          <span class="day-title" [class.text-today-title]="group.isToday">{{ group.thuText }}</span>
+          <span class="date-badge" [class.badge-today-date]="group.isToday">{{ group.ngay }}</span>
+
+          <!-- Huy hiệu HÔM NAY nổi bật có Pulse Animation -->
+          <div *ngIf="group.isToday" class="badge-today-highlight" title="Hôm nay có tiết dạy">
+            <span class="pulse-dot"></span>
+            <span>HÔM NAY</span>
+          </div>
         </div>
-        <div class="slot-count">
-          {{ group.slots.length }} tiết dạy
+
+        <div class="d-flex align-items-center gap-2">
+          <!-- Nút hành động nhanh cho ngày hôm nay -->
+          <button *ngIf="group.isToday && group.pendingCount > 0"
+                  type="button"
+                  class="btn-sync-today-quick"
+                  (click)="syncBatch('today')"
+                  [disabled]="isSavingBatch"
+                  title="Lưu tất cả tiết học của hôm nay lên Sổ Đầu Bài vnEdu">
+            ⚡ Lưu nhanh hôm nay ({{ group.pendingCount }})
+          </button>
+          <span *ngIf="group.isToday && group.pendingCount === 0" class="badge-today-done">
+            ✓ Đã lưu đủ hôm nay
+          </span>
+
+          <div class="slot-count" [class.slot-count-today]="group.isToday">
+            {{ group.slots.length }} tiết dạy
+          </div>
         </div>
       </div>
 
@@ -162,7 +209,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let slot of group.slots; trackBy: trackBySlot">
+            <tr *ngFor="let slot of group.slots; trackBy: trackBySlot" [class.tr-today-slot]="group.isToday">
               <!-- TIẾT HỌC -->
               <td class="ps-4">
                 <div class="d-flex align-items-center gap-2">
