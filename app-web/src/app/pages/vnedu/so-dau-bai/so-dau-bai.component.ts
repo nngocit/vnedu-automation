@@ -139,61 +139,181 @@ export class SoDauBaiComponent implements OnInit {
 
   weatherInfo: {
     temp: number;
+    apparentTemp: number;
     tempMin: number;
     tempMax: number;
     condition: string;
     humidity: number;
     windSpeed: number;
     location: string;
-    iconType: 'sunny' | 'sun-cloud' | 'rainy';
+    iconType: 'sunny' | 'sun-cloud' | 'rainy' | 'night';
+    isNight: boolean;
+    currentTimeVN: string;
+    currentHourVN: number;
     warning: string;
+    hourlyList: Array<{
+      timeText: string;
+      hourNum: number;
+      temp: number;
+      icon: string;
+      condition: string;
+      pop: number;
+    }>;
   } = {
-    temp: 31,
-    tempMin: 25,
-    tempMax: 33,
-    condition: 'Nắng ấm, mây rải rác',
-    humidity: 72,
-    windSpeed: 8,
+    temp: 27,
+    apparentTemp: 32,
+    tempMin: 24,
+    tempMax: 32,
+    condition: 'Đêm mát mẻ, trời quang',
+    humidity: 83,
+    windSpeed: 5,
     location: 'THCS An Lập, Dầu Tiếng, Bình Dương',
-    iconType: 'sun-cloud',
-    warning: 'Chiều tối dự báo có khả năng xuất hiện mưa rào rải rác tại khu vực Dầu Tiếng. Cô giáo chú ý mang theo áo mưa khi tan trường.'
+    iconType: 'night',
+    isNight: true,
+    currentTimeVN: '20:15',
+    currentHourVN: 20,
+    warning: 'Đêm nay nhiệt độ khoảng 25°C - 27°C, thời tiết mát mẻ dễ chịu. Dự báo chiều mai (15h - 17h) có mưa dông 71%, cô giáo chú ý mang theo áo mưa khi tan trường.',
+    hourlyList: [
+      { timeText: '20:00', hourNum: 20, temp: 27, icon: '🌙', condition: 'Trời quang', pop: 6 },
+      { timeText: '21:00', hourNum: 21, temp: 26, icon: '🌙', condition: 'Trời mát', pop: 9 },
+      { timeText: '22:00', hourNum: 22, temp: 26, icon: '🌙', condition: 'Trời mát', pop: 10 },
+      { timeText: '23:00', hourNum: 23, temp: 25, icon: '🌙', condition: 'Đêm mát', pop: 10 },
+      { timeText: '06:00', hourNum: 6, temp: 24, icon: '🌤️', condition: 'Bình minh', pop: 2 },
+      { timeText: '07:00', hourNum: 7, temp: 26, icon: '🌤️', condition: 'Nắng sớm', pop: 0 },
+      { timeText: '10:00', hourNum: 10, temp: 30, icon: '☀️', condition: 'Nắng ấm', pop: 0 },
+      { timeText: '14:00', hourNum: 14, temp: 32, icon: '☀️', condition: 'Nắng ráo', pop: 16 },
+      { timeText: '16:00', hourNum: 16, temp: 26, icon: '⛈️', condition: 'Mưa dông', pop: 71 }
+    ]
   };
 
   fetchWeather(): void {
+    const updateTimeVN = () => {
+      try {
+        const now = new Date();
+        const vnStr = now.toLocaleTimeString('vi-VN', {
+          timeZone: 'Asia/Ho_Chi_Minh',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        });
+        const hour = Number(now.toLocaleTimeString('vi-VN', {
+          timeZone: 'Asia/Ho_Chi_Minh',
+          hour: '2-digit',
+          hour12: false
+        }));
+        this.weatherInfo.currentTimeVN = vnStr;
+        this.weatherInfo.currentHourVN = hour;
+        this.weatherInfo.isNight = hour >= 18 || hour < 6;
+      } catch (_) {}
+    };
+
+    updateTimeVN();
+
     if (typeof window === 'undefined' || !window.fetch) return;
-    fetch('https://api.open-meteo.com/v1/forecast?latitude=11.23&longitude=106.51&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FHo_Chi_Minh')
+
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=11.23&longitude=106.51&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code,precipitation_probability&timezone=Asia%2FHo_Chi_Minh&forecast_days=2')
       .then(res => res.json())
       .then(data => {
         if (data && data.current) {
           const c = data.current;
           this.weatherInfo.temp = Math.round(c.temperature_2m);
+          this.weatherInfo.apparentTemp = Math.round(c.apparent_temperature ?? c.temperature_2m);
           this.weatherInfo.humidity = c.relative_humidity_2m;
           this.weatherInfo.windSpeed = Math.round(c.wind_speed_10m);
-          if (data.daily && data.daily.temperature_2m_max) {
-            this.weatherInfo.tempMax = Math.round(data.daily.temperature_2m_max[0]);
-            this.weatherInfo.tempMin = Math.round(data.daily.temperature_2m_min[0]);
+          this.weatherInfo.isNight = c.is_day === 0;
+
+          if (c.time) {
+            const timePart = c.time.split('T')[1];
+            if (timePart) {
+              this.weatherInfo.currentTimeVN = timePart;
+              this.weatherInfo.currentHourVN = parseInt(timePart.split(':')[0], 10);
+            }
           }
 
           const code = c.weather_code;
-          if (code === 0) {
-            this.weatherInfo.condition = 'Trời nắng quang đãng';
-            this.weatherInfo.iconType = 'sunny';
-            this.weatherInfo.warning = this.weatherInfo.temp >= 33
-              ? 'Trời nắng nóng nhiệt độ cao, cô giáo lưu ý uống nhiều nước và nghỉ ngơi hợp lý.'
-              : 'Thời tiết nắng đẹp thuận lợi cho việc dạy học và các hoạt động của học sinh.';
-          } else if (code <= 3) {
-            this.weatherInfo.condition = 'Nắng ấm, mây rải rác';
-            this.weatherInfo.iconType = 'sun-cloud';
-            this.weatherInfo.warning = 'Chiều tối dự báo có khả năng xuất hiện mưa rào rải rác tại Dầu Tiếng. Cô giáo chú ý mang theo áo mưa khi tan trường.';
-          } else if (code >= 51 && code <= 67) {
-            this.weatherInfo.condition = 'Có mưa nhỏ rải rác';
-            this.weatherInfo.iconType = 'rainy';
-            this.weatherInfo.warning = 'Khu vực đang có mưa rào nhẹ, cô giáo chú ý di chuyển an toàn trên đường đến trường.';
-          } else if (code >= 80) {
-            this.weatherInfo.condition = 'Mưa rào & dông';
-            this.weatherInfo.iconType = 'rainy';
-            this.weatherInfo.warning = 'Cảnh báo mưa dông, đường trơn trượt. Cô giáo chú ý an toàn khi di chuyển!';
+          const isNight = this.weatherInfo.isNight;
+
+          if (isNight) {
+            this.weatherInfo.iconType = 'night';
+            if (code === 0) {
+              this.weatherInfo.condition = 'Đêm mát mẻ, trời quang';
+            } else if (code <= 3) {
+              this.weatherInfo.condition = 'Trời đêm mát, mây rải rác';
+            } else {
+              this.weatherInfo.condition = 'Đêm có mưa rào rải rác';
+            }
+          } else {
+            if (code === 0) {
+              this.weatherInfo.condition = 'Trời nắng quang đãng';
+              this.weatherInfo.iconType = 'sunny';
+            } else if (code <= 3) {
+              this.weatherInfo.condition = 'Nắng ấm, mây rải rác';
+              this.weatherInfo.iconType = 'sun-cloud';
+            } else if (code >= 51 && code <= 67) {
+              this.weatherInfo.condition = 'Có mưa nhỏ rải rác';
+              this.weatherInfo.iconType = 'rainy';
+            } else {
+              this.weatherInfo.condition = 'Mưa rào & dông';
+              this.weatherInfo.iconType = 'rainy';
+            }
           }
+
+          // Parse hourly list
+          if (data.hourly && Array.isArray(data.hourly.time)) {
+            const currentIsoPrefix = c.time ? c.time.substring(0, 13) : '';
+            const times: string[] = data.hourly.time;
+            const temps: number[] = data.hourly.temperature_2m;
+            const codes: number[] = data.hourly.weather_code;
+            const pops: number[] = data.hourly.precipitation_probability || [];
+
+            let startIdx = times.findIndex(t => t.startsWith(currentIsoPrefix));
+            if (startIdx < 0) startIdx = 0;
+
+            const list: any[] = [];
+            for (let i = startIdx; i < Math.min(startIdx + 8, times.length); i++) {
+              const tStr = times[i];
+              const hourOnly = tStr.split('T')[1]?.substring(0, 5) || tStr;
+              const hNum = parseInt(hourOnly.split(':')[0], 10);
+              const isHNight = hNum >= 18 || hNum < 6;
+              const wCode = codes[i] || 0;
+              let ic = isHNight ? '🌙' : '☀️';
+              let cond = 'Quang đãng';
+              if (wCode >= 80 || wCode === 95) {
+                ic = '⛈️';
+                cond = 'Mưa dông';
+              } else if (wCode >= 51) {
+                ic = '🌧️';
+                cond = 'Mưa rào';
+              } else if (wCode >= 1 && wCode <= 3) {
+                ic = isHNight ? '☁️' : '🌤️';
+                cond = 'Có mây';
+              }
+              list.push({
+                timeText: hourOnly,
+                hourNum: hNum,
+                temp: Math.round(temps[i]),
+                icon: ic,
+                condition: cond,
+                pop: pops[i] || 0
+              });
+            }
+            if (list.length > 0) {
+              this.weatherInfo.hourlyList = list;
+            }
+
+            // Find if there is upcoming rain
+            const rainySlot = list.find(item => item.pop >= 50 || item.condition.includes('Mưa'));
+            if (isNight) {
+              this.weatherInfo.warning = rainySlot
+                ? `Đêm nay nhiệt độ khoảng ${this.weatherInfo.temp}°C, trời mát. Dự báo lúc ${rainySlot.timeText} có ${rainySlot.condition.toLowerCase()} (${rainySlot.pop}%), cô giáo chú ý mang theo áo mưa khi ra ngoài.`
+                : `Đêm nay nhiệt độ khoảng ${this.weatherInfo.temp}°C, thời tiết mát mẻ dễ chịu. Chúc cô giáo có một buổi tối thư thái tại Dầu Tiếng!`;
+            } else {
+              this.weatherInfo.warning = rainySlot
+                ? `Dự báo lúc ${rainySlot.timeText} có ${rainySlot.condition.toLowerCase()} (${rainySlot.pop}%). Cô giáo chú ý mang theo áo mưa khi di chuyển.`
+                : `Thời tiết ban ngày thuận lợi (nhiệt độ ${this.weatherInfo.temp}°C). Chúc cô giáo một ngày giảng dạy hiệu quả!`;
+            }
+          }
+
           this.cdr.markForCheck();
         }
       })

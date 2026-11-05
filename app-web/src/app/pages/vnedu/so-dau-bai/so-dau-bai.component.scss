@@ -3898,6 +3898,71 @@
     &.drop-2 { animation-delay: 0.4s; }
     &.drop-3 { animation-delay: 0.8s; }
   }
+
+  // BAN ĐÊM TẠI VIỆT NAM (MOON & TWINKLING STARS ANIMATION)
+  .moon-anim {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .moon-svg {
+      transform-origin: 24px 24px;
+      animation: moonPulse 3.5s ease-in-out infinite alternate;
+    }
+
+    .star {
+      animation: starTwinkle 2s ease-in-out infinite alternate;
+
+      &.star-2 {
+        animation-delay: 0.6s;
+      }
+      &.star-3 {
+        animation-delay: 1.2s;
+      }
+    }
+  }
+}
+
+@keyframes moonPulse {
+  0% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.5)); }
+  100% { transform: scale(1.06) rotate(4deg); filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.9)); }
+}
+
+@keyframes starTwinkle {
+  0% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.3); }
+  100% { opacity: 0.4; transform: scale(0.9); }
+}
+
+.weather-hour-pill {
+  background: #eff6ff;
+  color: #0068ff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.18rem 0.6rem;
+  border-radius: 9999px;
+  border: 1px solid #bfdbfe;
+  display: inline-flex;
+  align-items: center;
+
+  strong {
+    color: #0054cc;
+    margin-left: 2px;
+  }
+}
+
+.weather-hour-badge-mini {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.2rem 0.45rem;
+  font-size: 0.72rem;
+  color: #334155;
+  display: inline-flex;
+  align-items: center;
 }
 
 @keyframes spinSunRays {
@@ -4134,17 +4199,38 @@
   &.tooltip-class-card {
     width: 340px;
   }
+
+  &.tooltip-weather-card {
+    width: 320px;
+    left: 0;
+    transform: translateY(6px);
+    bottom: calc(100% + 10px);
+
+    &::after {
+      left: 24px;
+      transform: none;
+    }
+    &::before {
+      left: 24px;
+      transform: none;
+    }
+  }
 }
 
 // Active on hover
 .class-stat-row:hover .custom-rich-tooltip-card,
 .spark-column-item:hover .custom-rich-tooltip-card,
 .pill-legend-pending:hover .custom-rich-tooltip-card,
-.pill-legend-doi-chieu:hover .custom-rich-tooltip-card {
+.pill-legend-doi-chieu:hover .custom-rich-tooltip-card,
+.weather-anim-box:hover .custom-rich-tooltip-card {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
   transform: translateX(-50%) translateY(0);
+}
+
+.weather-anim-box:hover .tooltip-weather-card {
+  transform: translateY(0) !important;
 }
 
 // 14. ATTENDANCE MODAL ALERTS
@@ -4225,5 +4311,20 @@
     strong {
       color: #fbbf24 !important;
     }
+  }
+
+  .weather-hour-pill {
+    background: rgba(59, 130, 246, 0.18) !important;
+    color: #60a5fa !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+    strong {
+      color: #93c5fd !important;
+    }
+  }
+
+  .weather-hour-badge-mini {
+    background: rgba(30, 41, 59, 0.85) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #cbd5e1 !important;
   }
 }

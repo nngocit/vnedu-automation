@@ -96,9 +96,10 @@
   <div class="notice-banner d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4"
        [class.banner-today-active]="todayHasSlots">
     <div class="d-flex align-items-center gap-3">
-      <!-- ICON THỜI TIẾT ANIMATION (MẶT TRỜI XOAY TIA, TỎA SÁNG & MÂY TRÔI) -->
-      <div class="weather-anim-box" [title]="weatherInfo.location + ' • ' + weatherInfo.condition">
-        <div class="weather-icon-anim sun-cloud-anim" *ngIf="weatherInfo.iconType === 'sun-cloud' || weatherInfo.iconType === 'sunny'">
+      <!-- ICON THỜI TIẾT ANIMATION: ĐÊM (TRĂNG KHUYẾT & SAO) HOẶC NGÀY (MẶT TRỜI XOAY TIA & MÂY) -->
+      <div class="weather-anim-box position-relative" [title]="weatherInfo.location + ' • ' + weatherInfo.condition + ' (Giờ VN: ' + weatherInfo.currentTimeVN + ')'">
+        <!-- Khi là BAN NGÀY (Daytime in VN) -->
+        <div class="weather-icon-anim sun-cloud-anim" *ngIf="!weatherInfo.isNight && (weatherInfo.iconType === 'sun-cloud' || weatherInfo.iconType === 'sunny')">
           <svg class="sun-svg" viewBox="0 0 48 48" width="40" height="40">
             <g class="sun-rays">
               <line x1="24" y1="3" x2="24" y2="8" stroke="#f59e0b" stroke-width="3" stroke-linecap="round" />
@@ -123,7 +124,26 @@
             <path d="M 8 18 A 5 5 0 0 1 10 9 A 8 8 0 0 1 24 9 A 5 5 0 0 1 28 18 Z" fill="#ffffff" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.18))" />
           </svg>
         </div>
-        <div class="weather-icon-anim rain-anim" *ngIf="weatherInfo.iconType === 'rainy'">
+
+        <!-- Khi là BAN ĐÊM (Nighttime in VN: từ 18:00 đến 06:00) -->
+        <div class="weather-icon-anim moon-anim" *ngIf="weatherInfo.isNight">
+          <svg class="moon-svg" viewBox="0 0 48 48" width="40" height="40">
+            <path class="moon-crescent" d="M 32 10 A 15 15 0 1 1 18 38 A 17 17 0 0 0 32 10 Z" fill="url(#moonGradVivid)" />
+            <circle class="star star-1" cx="36" cy="14" r="1.8" fill="#fef08a" />
+            <circle class="star star-2" cx="39" cy="24" r="1.2" fill="#ffffff" />
+            <circle class="star star-3" cx="12" cy="12" r="1.4" fill="#fef08a" />
+            <defs>
+              <linearGradient id="moonGradVivid" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#fef08a" />
+                <stop offset="70%" stop-color="#f59e0b" />
+                <stop offset="100%" stop-color="#d97706" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
+        <!-- Khi MƯA (Rainy in VN) -->
+        <div class="weather-icon-anim rain-anim" *ngIf="!weatherInfo.isNight && weatherInfo.iconType === 'rainy'">
           <svg class="cloud-rain-svg" viewBox="0 0 44 40" width="38" height="34">
             <path d="M 11 22 A 7 7 0 0 1 14 10 A 11 11 0 0 1 31 10 A 7 7 0 0 1 36 22 Z" fill="#93c5fd" />
             <line class="rain-drop drop-1" x1="16" y1="26" x2="13" y2="34" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" />
@@ -131,24 +151,64 @@
             <line class="rain-drop drop-3" x1="32" y1="26" x2="29" y2="34" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" />
           </svg>
         </div>
+
+        <!-- Custom Tooltip Nổi Xem Dự Báo Từng Giờ Khi Rê Chuột Vào Icon Thời Tiết -->
+        <div class="custom-rich-tooltip-card tooltip-weather-card">
+          <div class="rich-tooltip-header">
+            <span class="rich-tooltip-badge" [ngClass]="weatherInfo.isNight ? 'badge-mismatch-glow' : 'badge-pending-glow'">
+              {{ weatherInfo.isNight ? '🌙 Ban Đêm' : '☀️ Ban Ngày' }}
+            </span>
+            <span class="rich-tooltip-title">Dự Báo Thời Tiết Theo Giờ (VN)</span>
+            <span class="badge bg-light text-primary px-1.5 py-0.5 rounded-pill fs-9 fw-bold">GMT+7</span>
+          </div>
+          <div class="rich-tooltip-body">
+            <div class="rich-stat-item mb-2">
+              <span class="rich-stat-label">Vị trí:</span>
+              <span class="rich-stat-value text-gray-900 fw-bold">{{ weatherInfo.location }}</span>
+            </div>
+            <div class="rich-stat-item mb-2">
+              <span class="rich-stat-label">Hiện tại ({{ weatherInfo.currentTimeVN }}):</span>
+              <span class="rich-stat-value fw-bold text-primary">
+                {{ weatherInfo.temp }}°C (Cảm giác như {{ weatherInfo.apparentTemp }}°C) • {{ weatherInfo.condition }}
+              </span>
+            </div>
+            <div class="rich-stat-item">
+              <span class="rich-stat-label">Dự báo các giờ tiếp theo tại Dầu Tiếng:</span>
+              <div class="d-flex flex-wrap gap-1 mt-1">
+                <span *ngFor="let h of weatherInfo.hourlyList" class="weather-hour-badge-mini"
+                      [title]="'Lúc ' + h.timeText + ' (Giờ VN): ' + h.temp + '°C - ' + h.condition + (h.pop > 0 ? (' (Khả năng mưa: ' + h.pop + '%)') : '')">
+                  {{ h.timeText }}: <strong>{{ h.temp }}°C</strong> {{ h.icon }}
+                  <span *ngIf="h.pop >= 40" class="text-danger fw-bold ms-0.5">{{ h.pop }}%</span>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="rich-tooltip-footer">
+            💡 <em>Dữ liệu cập nhật liên tục từ trạm khí tượng theo giờ Việt Nam</em>
+          </div>
+          <div class="rich-tooltip-arrow"></div>
+        </div>
       </div>
 
       <div class="d-flex flex-column">
-        <!-- Dòng Thời Tiết & Nhiệt Độ -->
+        <!-- Dòng Thời Tiết & Nhiệt Độ Theo Giờ Hiện Tại VN -->
         <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
-          <span class="weather-temp-badge">
-            ☀️ {{ weatherInfo.temp }}°C
+          <span class="weather-hour-pill" title="Giờ hiện tại theo múi giờ Việt Nam (GMT+7)">
+            🕐 Giờ VN: <strong>{{ weatherInfo.currentTimeVN }}</strong>
           </span>
-          <span class="weather-condition-text">
+          <span class="weather-temp-badge" [title]="'Nhiệt độ hiện tại: ' + weatherInfo.temp + '°C (Cảm giác như ' + weatherInfo.apparentTemp + '°C)'">
+            {{ weatherInfo.isNight ? '🌙' : '☀️' }} {{ weatherInfo.temp }}°C
+          </span>
+          <span class="weather-condition-text" [title]="'Tình trạng: ' + weatherInfo.condition + ' • Độ ẩm: ' + weatherInfo.humidity + '% • Sức gió: ' + weatherInfo.windSpeed + ' km/h'">
             {{ weatherInfo.condition }} • Độ ẩm {{ weatherInfo.humidity }}%
           </span>
-          <span class="weather-location-pill">
+          <span class="weather-location-pill" [title]="'Định vị trạm dự báo: Trường THCS An Lập, huyện Dầu Tiếng, tỉnh Bình Dương'">
             📍 {{ weatherInfo.location }}
           </span>
         </div>
 
         <!-- Dòng Thời Khóa Biểu Hôm Nay -->
-        <span class="fs-7 fw-bold text-gray-900" *ngIf="todayHasSlots">
+        <span class="fs-7 fw-bold text-gray-900" *ngIf="todayHasSlots" title="Tình hình giảng dạy của cô trong ngày hôm nay">
           <strong>Hôm nay ({{ todayDayOfWeekText }}, {{ todayStr }}):</strong>
           <span *ngIf="todayPendingSlotsCount > 0" class="text-danger fw-bolder ms-1">
             Cô có {{ todayTotalSlotsCount }} tiết dạy (còn {{ todayPendingSlotsCount }} tiết cần nhập lên vnEdu).
@@ -157,12 +217,13 @@
             Cô có {{ todayTotalSlotsCount }} tiết dạy và đã hoàn thành 100%!
           </span>
         </span>
-        <span class="fs-7 fw-bold text-gray-800" *ngIf="!todayHasSlots">
+        <span class="fs-7 fw-bold text-gray-800" *ngIf="!todayHasSlots" title="Hôm nay cô không có tiết dạy trên thời khóa biểu">
           <strong>Hôm nay ({{ todayDayOfWeekText }}, {{ todayStr }}):</strong> Cô không có tiết dạy trên thời khóa biểu.
         </span>
 
-        <!-- Cảnh Báo Thời Tiết Cho Giáo Viên -->
-        <div class="weather-warning-pill mt-1 d-inline-flex align-items-center gap-1.5" *ngIf="weatherInfo.warning">
+        <!-- Cảnh Báo Thời Tiết & Dự Báo Theo Giờ Cho Giáo Viên -->
+        <div class="weather-warning-pill mt-1 d-inline-flex align-items-center gap-1.5" *ngIf="weatherInfo.warning"
+             title="Cảnh báo và khuyến nghị thời tiết dành riêng cho giáo viên">
           <span class="weather-warning-icon">⚠️</span>
           <span class="weather-warning-text">
             <strong>Cảnh báo thời tiết:</strong> {{ weatherInfo.warning }}
@@ -470,21 +531,23 @@
     </div>
   </div>
 
-  <!-- BỘ LỌC LỚP & TÌM KIẾM NHANH -->
+  <!-- BỘ LỌC LỚP & TÌM KIẾM NHANH (TẤT CẢ CÓ TOOLTIP CHI TIẾT) -->
   <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
     <!-- Danh sách lớp -->
     <div class="d-flex align-items-center gap-2 flex-wrap">
       <button type="button"
               class="class-filter-pill"
               [ngClass]="{'active': selectedClassFilter === 'all'}"
-              (click)="setClassFilter('all')">
+              (click)="setClassFilter('all')"
+              title="Hiển thị toàn bộ lịch dạy của tất cả các lớp trong Tuần {{ currentWeek }}">
         Tất cả các lớp
       </button>
       <button *ngFor="let cls of availableClasses; trackBy: trackByClass"
               type="button"
               class="class-filter-pill"
               [ngClass]="{'active': selectedClassFilter === cls}"
-              (click)="setClassFilter(cls)">
+              (click)="setClassFilter(cls)"
+              [title]="'Lọc danh sách chỉ hiển thị các tiết dạy của Lớp ' + cls">
         Lớp {{ cls }}
       </button>
 
@@ -494,6 +557,7 @@
                class="form-control form-control-sm rounded-pill ps-8 fs-8 w-220px top-search-input"
                [(ngModel)]="searchQuery"
                (ngModelChange)="onSearchChange()"
+               title="Nhập tên bài dạy, môn học hoặc phân môn để tìm kiếm nhanh trong tuần"
                placeholder="Tìm nhanh bài dạy, phân môn...">
         <span class="position-absolute top-50 translate-middle-y ms-3 text-gray-400">🔍</span>
       </div>
@@ -501,7 +565,8 @@
 
     <!-- Thông tin tuần bên phải -->
     <div class="d-flex align-items-center gap-2">
-      <span class="text-gray-700 fs-7 fw-bold">
+      <span class="text-gray-700 fs-7 fw-bold"
+            title="Kế hoạch giảng dạy Tuần {{ currentWeek }} (từ {{ scheduleData?.tuNgay }} đến {{ scheduleData?.denNgay }})">
         Tuần {{ currentWeek }} • Từ ngày {{ scheduleData?.tuNgay }} đến {{ scheduleData?.denNgay }}
       </span>
     </div>
@@ -516,7 +581,7 @@
     <div class="loading-state-sub fs-8 mt-1">Hệ thống đang đối chiếu sổ đầu bài và sổ điểm danh điện tử</div>
   </div>
 
-  <!-- DANH SÁCH BẢNG THEO TỪNG THỨ TRONG TUẦN (CARD PER DAY) -->
+  <!-- DANH SÁCH BẢNG THEO TỪNG THỨ TRONG TUẦN (CARD PER DAY - TOÀN BỘ CÓ TOOLTIP) -->
   <div *ngIf="!isLoading">
     <div *ngFor="let group of dayGroups; trackBy: trackByThu"
          class="day-card"
@@ -525,11 +590,15 @@
       <!-- Header từng ngày -->
       <div class="day-card-header">
         <div class="d-flex align-items-center gap-2">
-          <span class="day-pill" [ngClass]="getDayPillClass(group.thuText)">{{ group.thuText }}</span>
-          <span class="date-badge-pill" [class.badge-today-date]="group.isToday">{{ group.ngay }}</span>
+          <span class="day-pill"
+                [ngClass]="getDayPillClass(group.thuText)"
+                [title]="'Thời khóa biểu ngày ' + group.thuText + ', ngày ' + group.ngay">{{ group.thuText }}</span>
+          <span class="date-badge-pill"
+                [class.badge-today-date]="group.isToday"
+                [title]="'Ngày ' + group.ngay + ' (Tuần ' + currentWeek + ')'">{{ group.ngay }}</span>
 
           <!-- Huy hiệu HÔM NAY nổi bật có Pulse Animation -->
-          <div *ngIf="group.isToday" class="badge-today-highlight" title="Hôm nay có tiết dạy">
+          <div *ngIf="group.isToday" class="badge-today-highlight" title="Hôm nay có tiết dạy trên thời khóa biểu của cô">
             <span class="pulse-dot"></span>
             <span>HÔM NAY</span>
           </div>
@@ -542,14 +611,16 @@
                   class="btn-sync-today-quick"
                   (click)="syncBatch('today')"
                   [disabled]="isSavingBatch"
-                  title="Lưu tất cả tiết học của hôm nay lên Sổ Đầu Bài vnEdu">
+                  title="Lưu tất cả {{ group.pendingCount }} tiết học chưa lưu của hôm nay lên Sổ Đầu Bài vnEdu">
             ⚡ Lưu nhanh hôm nay ({{ group.pendingCount }})
           </button>
-          <span *ngIf="group.isToday && group.pendingCount === 0" class="badge-today-done">
+          <span *ngIf="group.isToday && group.pendingCount === 0" class="badge-today-done" title="Tất cả các tiết dạy hôm nay đã được lưu hoàn tất 100%">
             ✓ Đã lưu đủ hôm nay
           </span>
 
-          <div class="slot-count-badge" [class.slot-count-today]="group.isToday">
+          <div class="slot-count-badge"
+               [class.slot-count-today]="group.isToday"
+               [title]="'Tổng số ' + group.slots.length + ' tiết giảng dạy được phân công vào ngày ' + group.thuText">
             {{ group.slots.length }} tiết giảng dạy
           </div>
         </div>
@@ -560,13 +631,13 @@
         <table class="day-table">
           <thead>
             <tr>
-              <th class="w-100px ps-4">Tiết Học</th>
-              <th class="w-140px">Lớp & Điểm Danh</th>
-              <th class="w-180px">Môn & PPCT</th>
-              <th class="min-w-240px">Tên Bài Dạy</th>
-              <th class="min-w-200px">Nhận Xét Tiết Học</th>
-              <th class="w-140px text-center">Trạng Thái vnEdu</th>
-              <th class="w-120px text-end pe-4">Thao Tác</th>
+              <th class="w-100px ps-4" title="Thứ tự tiết dạy và khung giờ học chuẩn theo quy định trường THCS An Lập">Tiết Học</th>
+              <th class="w-140px" title="Lớp giảng dạy và tình trạng đối chiếu sĩ số/học sinh vắng với Giám Thị">Lớp & Điểm Danh</th>
+              <th class="w-180px" title="Tên môn học và số thứ tự tiết Phân Phối Chương Trình theo tuần">Môn & PPCT</th>
+              <th class="min-w-240px" title="Nội dung bài học hoặc chủ đề giảng dạy được lưu vào Sổ Đầu Bài vnEdu">Tên Bài Dạy</th>
+              <th class="min-w-200px" title="Đánh giá nề nếp và thái độ học tập của học sinh trong tiết dạy">Nhận Xét Tiết Học</th>
+              <th class="w-140px text-center" title="Tình trạng đồng bộ dữ liệu tiết dạy lên hệ thống Sổ Đầu Bài điện tử vnEdu">Trạng Thái vnEdu</th>
+              <th class="w-120px text-end pe-4" title="Hành động lưu mới hoặc cập nhật lại tiết dạy này vào vnEdu">Thao Tác</th>
             </tr>
           </thead>
           <tbody>
@@ -575,12 +646,20 @@
               <!-- TIẾT HỌC -->
               <td class="ps-4">
                 <div class="d-flex align-items-center gap-2">
-                  <span class="badge-session" [ngClass]="slot.tiet <= 5 ? 'morning' : 'afternoon'">
+                  <span class="badge-session"
+                        [ngClass]="slot.tiet <= 5 ? 'morning' : 'afternoon'"
+                        [title]="'Buổi ' + (slot.tiet <= 5 ? 'sáng: từ 07:05 đến 11:20' : 'chiều: từ 13:00 đến 17:15')">
                     {{ slot.tiet <= 5 ? 'Sáng' : 'Chiều' }}
                   </span>
                   <div class="d-flex flex-column">
-                    <span class="fw-bolder text-gray-900 fs-7">Tiết {{ slot.tiet }}</span>
-                    <span class="fs-9 text-gray-500 font-monospace">{{ slot.tiet <= 5 ? (slot.tiet === 1 ? '07:05 - 07:50' : slot.tiet === 2 ? '07:55 - 08:40' : slot.tiet === 3 ? '08:50 - 09:35' : slot.tiet === 4 ? '09:45 - 10:30' : '10:35 - 11:20') : '' }}</span>
+                    <span class="fw-bolder text-gray-900 fs-7"
+                          [title]="'Tiết số ' + slot.tiet + ' buổi ' + (slot.tiet <= 5 ? 'sáng' : 'chiều')">
+                      Tiết {{ slot.tiet }}
+                    </span>
+                    <span class="fs-9 text-gray-500 font-monospace"
+                          [title]="'Khung giờ giảng dạy: ' + (slot.tiet <= 5 ? (slot.tiet === 1 ? '07:05 - 07:50' : slot.tiet === 2 ? '07:55 - 08:40' : slot.tiet === 3 ? '08:50 - 09:35' : slot.tiet === 4 ? '09:45 - 10:30' : '10:35 - 11:20') : '')">
+                      {{ slot.tiet <= 5 ? (slot.tiet === 1 ? '07:05 - 07:50' : slot.tiet === 2 ? '07:55 - 08:40' : slot.tiet === 3 ? '08:50 - 09:35' : slot.tiet === 4 ? '09:45 - 10:30' : '10:35 - 11:20') : '' }}
+                    </span>
                   </div>
                 </div>
               </td>
@@ -588,7 +667,11 @@
               <!-- LỚP & CHIP ĐIỂM DANH -->
               <td>
                 <div class="d-flex flex-column align-items-start gap-1">
-                  <span class="badge-class-pill" [ngClass]="getClassBadgeClass(slot.lop)">{{ slot.lop }}</span>
+                  <span class="badge-class-pill"
+                        [ngClass]="getClassBadgeClass(slot.lop)"
+                        [title]="'Lớp ' + slot.lop + ' • Trường THCS An Lập'">
+                    {{ slot.lop }}
+                  </span>
                   <!-- Chip điểm danh đối chiếu SĐĐ -->
                   <div class="attendance-compare-chip"
                        [ngClass]="getAttendanceChipClass(slot)"
@@ -620,12 +703,17 @@
               <!-- MÔN & TIẾT PPCT -->
               <td>
                 <div class="d-flex flex-column">
-                  <span class="fw-bold text-gray-900 fs-7">{{ slot.mon }}</span>
-                  <div class="d-flex align-items-center text-gray-600 fs-8 mt-1">
+                  <span class="fw-bold text-gray-900 fs-7"
+                        [title]="'Môn học: ' + slot.mon + ' - Lớp ' + slot.lop">
+                    {{ slot.mon }}
+                  </span>
+                  <div class="d-flex align-items-center text-gray-600 fs-8 mt-1"
+                       [title]="'Tiết PPCT số ' + slot.ppct + ' (Có thể nhập số khác nếu có thay đổi hoặc dạy bù)'">
                     <span>Tiết PPCT: </span>
                     <input type="number"
                            class="form-control form-control-sm form-control-solid w-55px py-0 px-1 text-center fw-bold text-primary ms-1 border border-gray-300"
-                           [(ngModel)]="slot.ppct" min="1" max="150">
+                           [(ngModel)]="slot.ppct" min="1" max="150"
+                           [title]="'Tiết PPCT: ' + slot.ppct + ' (Nhấp để sửa)'">
                   </div>
                 </div>
               </td>
@@ -636,6 +724,7 @@
                   <input type="text"
                          class="form-control form-control-sm form-control-solid fw-semibold rounded-2 border border-gray-300 text-gray-900 lesson-input"
                          [(ngModel)]="slot.baiDay"
+                         [title]="'Tên bài dạy: ' + (slot.baiDay || 'Chưa nhập tên bài dạy') + ' (Tiết PPCT: ' + slot.ppct + ')'"
                          placeholder="Nhập tên bài dạy...">
 
                   <!-- Tooltip hiển thị trọn vẹn tên bài dạy khi rê chuột -->
@@ -662,7 +751,8 @@
               <!-- NHẬN XÉT TIẾT HỌC -->
               <td>
                 <select class="form-select form-select-sm form-select-solid fs-8 text-gray-800 rounded-2 border border-gray-300"
-                        [(ngModel)]="slot.nhanXet">
+                        [(ngModel)]="slot.nhanXet"
+                        [title]="'Nhận xét: ' + (slot.nhanXet || 'Lớp học nghiêm túc, tích cực') + '. Nhấp để chọn nhận xét khác.'">
                   <option value="Lớp học nghiêm túc, tích cực">Lớp học nghiêm túc, tích cực</option>
                   <option value="Lớp sôi nổi, phát biểu hăng hái">Lớp sôi nổi, phát biểu hăng hái</option>
                   <option value="Lớp ngoan, chú ý nghe giảng">Lớp ngoan, chú ý nghe giảng</option>
@@ -671,12 +761,16 @@
                 </select>
               </td>
 
-              <!-- TRẠNG THÁI VNEDU (THEO MẪU ẢNH 2 & 3) -->
+              <!-- TRẠNG THÁI VNEDU -->
               <td class="text-center">
-                <span *ngIf="slot.isSynced" class="status-badge-vnedu synced">
+                <span *ngIf="slot.isSynced"
+                      class="status-badge-vnedu synced"
+                      title="✓ Tiết học này đã được lưu thành công vào Sổ Đầu Bài điện tử vnEdu">
                   ✓ Đã lưu vnEdu
                 </span>
-                <span *ngIf="!slot.isSynced" class="status-badge-vnedu pending">
+                <span *ngIf="!slot.isSynced"
+                      class="status-badge-vnedu pending"
+                      title="⏰ Tiết học này chưa lưu lên vnEdu. Bấm 'Sửa / Lưu lại' để đồng bộ ngay">
                   ⏰ Cần nhập bài
                 </span>
               </td>
@@ -685,7 +779,8 @@
               <td class="text-end pe-4">
                 <button class="btn-action-link"
                         [disabled]="slot.isSaving"
-                        (click)="syncSingle(slot)">
+                        (click)="syncSingle(slot)"
+                        [title]="slot.isSynced ? 'Cập nhật lại thông tin bài dạy, nhận xét và điểm danh lên vnEdu' : 'Lưu tiết học này vào Sổ Đầu Bài vnEdu'">
                   <span *ngIf="slot.isSaving" class="spinner-border spinner-border-sm me-1" role="status"></span>
                   Sửa / Lưu lại
                 </button>
