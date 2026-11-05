@@ -43,6 +43,11 @@ export class SoDauBaiComponent implements OnInit {
   isScanningAllGiamThi = false;
   showAttendanceModal = false;
 
+  // Trạng thái Auto Quét SĐĐ Giám Thị chạy ngầm
+  isAutoScanning = false;
+  autoScanStatusText = '';
+  autoScanStatusClass = '';
+
   // Đăng nhập Modal
   showLoginModal = false;
   loginUsername = '051197003685';
@@ -195,6 +200,8 @@ export class SoDauBaiComponent implements OnInit {
         this.updateDayGroups();
         this.isLoading = false;
         this.cdr.detectChanges();
+        // Tự động quét đối chiếu SĐĐ Giám Thị chạy ngầm cho tuần
+        this.autoScanSupervisorQuietly();
       },
       error: (err) => {
         this.isLoading = false;
@@ -778,16 +785,47 @@ export class SoDauBaiComponent implements OnInit {
   }
 
   // Getters tính toán
+  // Danh sách tiết đang hiển thị ở bảng dưới (có áp dụng bộ lọc lớp và tìm kiếm)
+  get currentVisibleSlots(): VnEduSlot[] {
+    let list = [...this.slots];
+    if (this.selectedClassFilter !== 'all') {
+      list = list.filter(s => s.lop === this.selectedClassFilter);
+    }
+    if (this.searchQuery) {
+      const q = this.searchQuery.toLowerCase().trim();
+      list = list.filter(s =>
+        (s.baiDay && s.baiDay.toLowerCase().includes(q)) ||
+        (s.lop && s.lop.toLowerCase().includes(q)) ||
+        (s.mon && s.mon.toLowerCase().includes(q)) ||
+        String(s.ppct).includes(q)
+      );
+    }
+    return list;
+  }
+
+  // Getters tính toán trực tiếp từ danh sách đang hiển thị
   get totalSlotsCount(): number {
-    return this.slots.length;
+    return this.currentVisibleSlots.length;
   }
 
   get syncedSlotsCount(): number {
-    return this.slots.filter(s => s.isSynced).length;
+    return this.currentVisibleSlots.filter(s => s.isSynced).length;
   }
 
   get readySlotsCount(): number {
-    return this.slots.filter(s => !s.isSynced).length;
+    return this.currentVisibleSlots.filter(s => !s.isSynced).length;
+  }
+
+  get canDoiChieuCount(): number {
+    return this.currentVisibleSlots.filter(s => this.isCanDoiChieu(s)).length;
+  }
+
+  get daKhopCount(): number {
+    return this.currentVisibleSlots.filter(s => !this.isCanDoiChieu(s) && this.getDisplayAbsentCount(s) > 0).length;
+  }
+
+  get totalAbsentCount(): number {
+    return this.currentVisibleSlots.reduce((sum, s) => sum + this.getDisplayAbsentCount(s), 0);
   }
 
   get completionRate(): number {
@@ -861,6 +899,7 @@ export class SoDauBaiComponent implements OnInit {
     pending: number;
     percent: number;
     absentCount: number;
+    mismatchCount: number;
   }> = [];
 
   chartDayStats: Array<{
@@ -875,12 +914,13 @@ export class SoDauBaiComponent implements OnInit {
   }> = [];
 
   updateChartMetrics(): void {
-    // 1. Phân bổ theo từng lớp
-    const classMap: { [lop: string]: { total: number; synced: number; pending: number; absentCount: number } } = {};
+    // 1. Phân bổ theo từng lớp (Luôn tính theo toàn bộ slots của tuần để cô giáo xem tổng quan và click lọc lớp)
+    const classMap: { [lop: string]: { total: number; synced: number; pending: number; absentCount: number; mismatchCount: number } } = {};
+    
     this.slots.forEach(s => {
       const lop = s.lop || 'Khác';
       if (!classMap[lop]) {
-        classMap[lop] = { total: 0, synced: 0, pending: 0, absentCount: 0 };
+        classMap[lop] = { total: 0, synced: 0, pending: 0, absentCount: 0, mismatchCount: 0 };
       }
       classMap[lop].total++;
       if (s.isSynced) {
@@ -888,9 +928,12 @@ export class SoDauBaiComponent implements OnInit {
       } else {
         classMap[lop].pending++;
       }
-      const absent = s.soLuongNghi || (s.hsVangList ? s.hsVangList.length : 0);
+      const absent = this.getDisplayAbsentCount(s);
       if (absent) {
         classMap[lop].absentCount += Number(absent) || 0;
+      }
+      if (this.isCanDoiChieu(s)) {
+        classMap[lop].mismatchCount++;
       }
     });
 
@@ -902,36 +945,44 @@ export class SoDauBaiComponent implements OnInit {
         synced: item.synced,
         pending: item.pending,
         percent: item.total > 0 ? Math.round((item.synced / item.total) * 100) : 0,
-        absentCount: item.absentCount
+        absentCount: item.absentCount,
+        mismatchCount: item.mismatchCount
       };
     });
 
-    // 2. Mật độ tiết theo ngày trong tuần
+    // 2. Mật độ tiết theo ngày trong tuần: TÍNH ĐỘNG THEO DANH SÁCH ĐANG HIỂN THỊ Ở DƯỚI (currentVisibleSlots)
+    const visibleSlots = this.currentVisibleSlots;
     const dayMap: { [thu: number]: { thu: number; thuText: string; ngay: string; total: number; synced: number; pending: number; isToday: boolean } } = {};
     const thuLabels: { [k: number]: string } = { 2: 'T2', 3: 'T3', 4: 'T4', 5: 'T5', 6: 'T6', 7: 'T7', 8: 'CN' };
 
-    this.slots.forEach(s => {
-      if (!dayMap[s.thu]) {
-        dayMap[s.thu] = {
-          thu: s.thu,
-          thuText: thuLabels[s.thu] || `T${s.thu}`,
-          ngay: s.ngay,
-          total: 0,
-          synced: 0,
-          pending: 0,
-          isToday: s.ngay === this.todayStr
-        };
+    // Khởi tạo trước các ngày học từ T2 đến T6 để hiển thị trọn vẹn tuần học
+    [2, 3, 4, 5, 6].forEach(thu => {
+      const slotMatch = this.slots.find(s => Number(s.thu) === thu);
+      dayMap[thu] = {
+        thu,
+        thuText: thuLabels[thu] || `T${thu}`,
+        ngay: slotMatch ? slotMatch.ngay : '',
+        total: 0,
+        synced: 0,
+        pending: 0,
+        isToday: slotMatch ? slotMatch.ngay === this.todayStr : false
+      };
+    });
+
+    visibleSlots.forEach(s => {
+      const t = Number(s.thu);
+      if (dayMap[t]) {
+        dayMap[t].total++;
+        if (s.isSynced) dayMap[t].synced++;
+        else dayMap[t].pending++;
       }
-      dayMap[s.thu].total++;
-      if (s.isSynced) dayMap[s.thu].synced++;
-      else dayMap[s.thu].pending++;
     });
 
     const dayList = Object.values(dayMap).sort((a, b) => a.thu - b.thu);
     const maxDaySlots = Math.max(...dayList.map(d => d.total), 1);
     this.chartDayStats = dayList.map(d => ({
       ...d,
-      heightPercent: Math.max(18, Math.round((d.total / maxDaySlots) * 100))
+      heightPercent: d.total === 0 ? 6 : Math.max(18, Math.round((d.total / maxDaySlots) * 100))
     }));
   }
 
@@ -1185,6 +1236,62 @@ export class SoDauBaiComponent implements OnInit {
     const sdb = slot.sdbSoLuongNghi ?? count;
     const gt = slot.giamThiSoLuongNghi ?? count;
     return `Cần đối chiếu! SĐB ghi ${sdb} em vắng, SĐĐ Giám thị ghi ${gt} em vắng. Bấm để đồng bộ.`;
+  }
+
+  
+  // Tự động quét đối chiếu SĐĐ Giám Thị chạy ngầm (Silent Background Scan)
+  autoScanSupervisorQuietly(): void {
+    if (this.isAutoScanning || !this.slots || this.slots.length === 0) return;
+    this.isAutoScanning = true;
+    this.autoScanStatusText = 'Đang tự động đối chiếu SĐĐ Giám thị...';
+    this.autoScanStatusClass = 'status-scanning';
+
+    this.vneduService.scanAllGiamThi(this.currentWeek, this.slots).subscribe({
+      next: (res) => {
+        this.isAutoScanning = false;
+        if (res.success && res.schedule) {
+          res.schedule.forEach((updatedSlot: any) => {
+            const localSlot = this.slots.find(s =>
+              s.lop === updatedSlot.lop &&
+              s.thu === updatedSlot.thu &&
+              s.tiet === updatedSlot.tiet &&
+              s.buoi === updatedSlot.buoi
+            );
+            if (localSlot) {
+              localSlot.hsVangList = updatedSlot.hsVangList || [];
+              localSlot.soLuongNghi = updatedSlot.soLuongNghi || 0;
+              localSlot.isMatched = updatedSlot.isMatched;
+              localSlot.sdbSoLuongNghi = updatedSlot.sdbSoLuongNghi;
+              localSlot.sdbDsVang = updatedSlot.sdbDsVang;
+              localSlot.giamThiSoLuongNghi = updatedSlot.giamThiSoLuongNghi;
+              localSlot.giamThiDsVang = updatedSlot.giamThiDsVang;
+            }
+          });
+          this.updateDayGroups();
+
+          const mismatched = this.slots.filter(s => this.isCanDoiChieu(s)).length;
+          const matchedWithAbsents = this.slots.filter(s => !this.isCanDoiChieu(s) && this.getDisplayAbsentCount(s) > 0).length;
+
+          if (mismatched > 0) {
+            this.autoScanStatusText = `⚠️ Có ${mismatched} tiết cần đối chiếu`;
+            this.autoScanStatusClass = 'status-warning';
+          } else {
+            this.autoScanStatusText = `🛡️ SĐĐ Giám thị: Khớp 100% (${matchedWithAbsents} tiết vắng)`;
+            this.autoScanStatusClass = 'status-success';
+          }
+        } else {
+          this.autoScanStatusText = 'SĐĐ Giám thị: Sẵn sàng';
+          this.autoScanStatusClass = 'status-ready';
+        }
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.isAutoScanning = false;
+        this.autoScanStatusText = 'SĐĐ Giám thị: Đã nạp';
+        this.autoScanStatusClass = 'status-ready';
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   scrollToTop(): void {

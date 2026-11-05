@@ -121,9 +121,14 @@
           </svg>
         </div>
         <div>
-          <div class="d-flex align-items-center gap-2">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
             <h4 class="lieflat-title mb-0">Thống Kê & Phân Tích Lịch Dạy Tuần {{ currentWeek }}</h4>
             <span class="badge-lieflat-glance">Lieflat Analytics</span>
+            <!-- Badge tự động đối chiếu SĐĐ Giám Thị -->
+            <span *ngIf="autoScanStatusText" class="auto-scan-status-pill" [ngClass]="autoScanStatusClass">
+              <span *ngIf="isAutoScanning" class="spinner-border spinner-border-sm me-1" role="status"></span>
+              {{ autoScanStatusText }}
+            </span>
           </div>
           <p class="lieflat-sub mb-0">Tiến độ lưu Sổ Đầu Bài và phân bổ mật độ tiết dạy theo từng lớp</p>
         </div>
@@ -141,11 +146,13 @@
     <!-- NỘI DUNG BIỂU ĐỒ LIEFLAT (MỞ RỘNG) -->
     <div class="lieflat-body" *ngIf="showAnalyticsChart">
       <div class="row g-3">
-        <!-- Cột 1: Tiến độ hoàn thành cả tuần -->
+        <!-- Cột 1: Tiến độ hoàn thành cả tuần / lớp đang chọn -->
         <div class="col-12 col-md-4">
           <div class="lieflat-metric-card h-100">
             <div class="d-flex justify-content-between align-items-center mb-1">
-              <span class="lieflat-card-label">Tiến Độ Hoàn Thành Tuần</span>
+              <span class="lieflat-card-label">
+                Tiến Độ {{ selectedClassFilter !== 'all' ? ('(' + selectedClassFilter + ')') : 'Tuần' }}
+              </span>
               <span class="lieflat-rate-badge" [class.rate-high]="completionRate >= 80" [class.rate-mid]="completionRate < 80">
                 {{ completionRate }}%
               </span>
@@ -165,14 +172,25 @@
               </svg>
             </div>
 
-            <div class="d-flex align-items-center justify-content-between fs-9 text-gray-600">
+            <!-- Chỉ báo số liệu tính toán đồng bộ theo danh sách ở dưới -->
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-1 fs-9 text-gray-600 mt-2">
               <span class="d-inline-flex align-items-center gap-1">
                 <span class="dot-indicator bg-primary"></span>
                 <span>Đã lưu: <strong>{{ syncedSlotsCount }}</strong></span>
               </span>
-              <span class="pill-legend-pending d-inline-flex align-items-center gap-1">
+              <span class="pill-legend-pending d-inline-flex align-items-center gap-1" *ngIf="readySlotsCount > 0"
+                    title="Tiết chưa lưu bài dạy vào Sổ Đầu Bài vnEdu">
                 <span class="dot-indicator bg-danger"></span>
                 <span>Cần nhập: <strong>{{ readySlotsCount }}</strong></span>
+              </span>
+              <!-- Chỉ báo đối chiếu SĐĐ Giám Thị -->
+              <span class="pill-legend-doi-chieu d-inline-flex align-items-center gap-1"
+                    [class.is-mismatched]="canDoiChieuCount > 0"
+                    [class.is-matched]="canDoiChieuCount === 0"
+                    [title]="canDoiChieuCount > 0 ? ('Có ' + canDoiChieuCount + ' tiết cần đối chiếu với Giám thị') : 'Các tiết đã học đều khớp hoàn toàn với SĐĐ'">
+                <span class="dot-indicator" [ngClass]="canDoiChieuCount > 0 ? 'bg-danger' : 'bg-success'"></span>
+                <span *ngIf="canDoiChieuCount > 0">⚠️ Cần đối chiếu: <strong>{{ canDoiChieuCount }}</strong></span>
+                <span *ngIf="canDoiChieuCount === 0">✓ SĐĐ: <strong>Khớp</strong></span>
               </span>
             </div>
           </div>
@@ -196,7 +214,8 @@
                 <div class="flex-grow-1 mx-2">
                   <div class="d-flex justify-content-between align-items-center fs-9 mb-1">
                     <span class="fw-semibold text-gray-700">{{ c.synced }}/{{ c.total }} tiết ({{ c.percent }}%)</span>
-                    <span *ngIf="c.absentCount > 0" class="badge-absent-mini">{{ c.absentCount }} vắng</span>
+                    <span *ngIf="c.absentCount > 0" class="badge-absent-mini">{{ c.absentCount }} lượt vắng</span>
+                    <span *ngIf="(c.mismatchCount || 0) > 0" class="badge-mismatch-mini" title="Có tiết cần đối chiếu">⚠️ Lệch</span>
                     <span *ngIf="c.absentCount === 0" class="text-gray-400">0 vắng</span>
                   </div>
                   <div class="mini-bar-track">

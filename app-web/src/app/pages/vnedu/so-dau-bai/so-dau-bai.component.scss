@@ -3215,3 +3215,67 @@
 }
 
 
+
+
+// Auto Scan Status Pill (Lieflat Header)
+.auto-scan-status-pill {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.2s ease;
+
+  &.status-scanning {
+    background: #e0f2fe;
+    color: #0284c7;
+    border: 1px solid #bae6fd;
+  }
+  &.status-success {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+  }
+  &.status-warning {
+    background: #fff1f2;
+    color: #dc2626;
+    border: 1.2px dashed #ef4444;
+  }
+  &.status-ready {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+  }
+}
+
+.pill-legend-doi-chieu {
+  border-radius: 9999px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+
+  &.is-matched {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+  }
+  &.is-mismatched {
+    background: #fff1f2;
+    color: #dc2626;
+    border: 1.2px dashed #ef4444;
+  }
+}
+
+.badge-mismatch-mini {
+  background: #fff1f2;
+  color: #dc2626;
+  border: 1px dashed #ef4444;
+  font-size: 0.62rem;
+  font-weight: 800;
+  border-radius: 4px;
+  padding: 1px 4px;
+  display: inline-block;
+  margin-left: 3px;
+}
