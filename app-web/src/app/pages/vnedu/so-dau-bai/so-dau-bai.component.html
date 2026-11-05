@@ -170,8 +170,8 @@
                 <span class="dot-indicator bg-primary"></span>
                 <span>Đã lưu: <strong>{{ syncedSlotsCount }}</strong></span>
               </span>
-              <span class="d-inline-flex align-items-center gap-1">
-                <span class="dot-indicator bg-amber"></span>
+              <span class="pill-legend-pending d-inline-flex align-items-center gap-1">
+                <span class="dot-indicator bg-danger"></span>
                 <span>Cần nhập: <strong>{{ readySlotsCount }}</strong></span>
               </span>
             </div>
@@ -335,7 +335,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let slot of group.slots; trackBy: trackBySlot">
+            <tr *ngFor="let slot of group.slots; trackBy: trackBySlot"
+                [class.row-slot-pending]="!slot.isSynced">
               <!-- TIẾT HỌC -->
               <td class="ps-4">
                 <div class="d-flex align-items-center gap-2">
