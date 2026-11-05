@@ -354,17 +354,30 @@
                 <div class="d-flex flex-column align-items-start gap-1">
                   <span class="badge-class-bold">{{ slot.lop }}</span>
                   <!-- Chip điểm danh đối chiếu SĐĐ -->
-                  <div class="attendance-compare-chip"
-                       [ngClass]="slot.soLuongNghi && slot.soLuongNghi > 0 ? 'has-absent' : 'all-present'"
-                       (click)="openAttendanceModal(slot)"
-                       title="Bấm để xem và sửa điểm danh">
-                    <span *ngIf="slot.soLuongNghi && slot.soLuongNghi > 0">
-                      ⚠️ SĐB: {{ slot.soLuongNghi }} vắng [Đối chiếu]
-                    </span>
-                    <span *ngIf="!slot.soLuongNghi || slot.soLuongNghi === 0">
-                      🟢 Đủ (0 vắng)
-                    </span>
-                  </div>
+                    <div class="attendance-compare-chip"
+                         [ngClass]="getAttendanceChipClass(slot)"
+                         (click)="openAttendanceModal(slot)"
+                         [title]="getAttendanceChipTooltip(slot)">
+                      <!-- TH1: Cần đối chiếu (viền đỏ nét đứt) -->
+                      <ng-container *ngIf="isCanDoiChieu(slot)">
+                        <span *ngIf="slot.sdbSoLuongNghi !== undefined && slot.giamThiSoLuongNghi !== undefined && slot.sdbSoLuongNghi !== slot.giamThiSoLuongNghi">
+                          ⚠️ SĐB: {{ slot.sdbSoLuongNghi }} • SĐĐ: {{ slot.giamThiSoLuongNghi }} [Cần đối chiếu]
+                        </span>
+                        <span *ngIf="slot.sdbSoLuongNghi === undefined || slot.giamThiSoLuongNghi === undefined || slot.sdbSoLuongNghi === slot.giamThiSoLuongNghi">
+                          ⚠️ SĐB: {{ getDisplayAbsentCount(slot) }} vắng [Đối chiếu]
+                        </span>
+                      </ng-container>
+
+                      <!-- TH2: Đã khớp hoàn toàn (có học sinh vắng, màu xanh thanh lịch, KHÔNG viền đỏ nét đứt) -->
+                      <ng-container *ngIf="!isCanDoiChieu(slot) && getDisplayAbsentCount(slot) > 0">
+                        <span>✓ {{ getDisplayAbsentCount(slot) }} vắng (Đã khớp)</span>
+                      </ng-container>
+
+                      <!-- TH3: Cả lớp đi học đủ (0 vắng) -->
+                      <ng-container *ngIf="!isCanDoiChieu(slot) && getDisplayAbsentCount(slot) === 0">
+                        <span>🟢 Đủ (0 vắng)</span>
+                      </ng-container>
+                    </div>
                 </div>
               </td>
 
@@ -539,6 +552,15 @@
 
     <!-- Body Modal -->
     <div class="modal-body-custom p-4">
+      <!-- Banner gợi ý học sinh vắng từ Giám thị / SĐB -->
+      <div *ngIf="suggestedAbsentNotice" class="alert-suggested-absent mb-3 p-3 rounded-3 d-flex align-items-center gap-2">
+        <span class="fs-4">💡</span>
+        <div class="fs-7 flex-grow-1">
+          <span class="fw-bold">Đã tự động đối chiếu & điền sẵn học sinh vắng:</span>
+          <span class="ms-1 fw-bold text-primary">{{ suggestedAbsentNotice }}</span>
+          <span class="d-block text-muted fs-8 mt-0.5">Cô giáo kiểm tra lại danh sách bên dưới rồi bấm "Lưu điểm danh".</span>
+        </div>
+      </div>
       <div class="position-relative mb-3">
         <input type="text"
                class="form-control form-control-sm ps-8 fs-7 rounded-2 modal-search-input"

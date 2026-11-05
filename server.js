@@ -196,7 +196,7 @@ app.get('/api/schedule', async (req, res) => {
     try {
         const week = parseInt(req.query.week) || 9;
         const source = req.query.source || 'vnedu';
-        const checkLive = req.query.checkLive === '1';
+        const checkLive = req.query.checkLive === '1' || req.query.checkLive === 'true' || req.query.checkLive === true;
 
         let data = null;
         if (source === 'excel') {
@@ -259,18 +259,38 @@ app.get('/api/schedule', async (req, res) => {
                     let hsVangList = [];
                     let soLuongNghi = 0;
 
+                    const sdbRawList = (liveData && Array.isArray(liveData.dsHsVang) && liveData.dsHsVang.length > 0) ? liveData.dsHsVang : [];
+                    const sdbCount = sdbRawList.length > 0 ? sdbRawList.length : (liveData?.soLuongNghi || 0);
+                    const giamThiCount = sddDayData.length;
+
                     if (sddDayData.length > 0) {
                         hsVangList = sddDayData;
                         soLuongNghi = sddDayData.length;
-                    } else if (liveData && liveData.dsHsVang && liveData.dsHsVang.length > 0) {
-                        hsVangList = liveData.dsHsVang.map((name, idx) => ({
-                            id: 'live_' + idx,
-                            fullName: name,
-                            coPhep: true,
-                            khongPhep: false,
-                            statusText: 'Vắng'
-                        }));
-                        soLuongNghi = liveData.soLuongNghi || liveData.dsHsVang.length;
+                    } else if (sdbRawList.length > 0) {
+                        hsVangList = sdbRawList.map((name, idx) => {
+                            const isKhongPhep = typeof name === 'string' && name.includes('(K)');
+                            const cleanName = typeof name === 'string' ? name.replace(/\s*\([PKpkCókhôngphép\s]+\)/gi, '').trim() : (name.fullName || '');
+                            return {
+                                id: 'live_' + idx,
+                                fullName: cleanName,
+                                rawName: name,
+                                coPhep: !isKhongPhep,
+                                khongPhep: isKhongPhep,
+                                statusText: isKhongPhep ? 'Vắng không phép' : 'Vắng có phép'
+                            };
+                        });
+                        soLuongNghi = sdbCount;
+                    }
+
+                    let isMatched = false;
+                    if (giamThiCount > 0 && sdbCount === giamThiCount) {
+                        isMatched = true;
+                    } else if (giamThiCount === 0 && sdbCount === 0) {
+                        isMatched = true;
+                    } else if (giamThiCount === 0 && sdbCount > 0) {
+                        isMatched = true;
+                    } else {
+                        isMatched = false;
                     }
 
                     return {
@@ -280,7 +300,12 @@ app.get('/api/schedule', async (req, res) => {
                         isSynced: !!liveData,
                         liveData: liveData,
                         hsVangList,
-                        soLuongNghi: soLuongNghi || (liveData ? liveData.soLuongNghi : 0)
+                        soLuongNghi: soLuongNghi || (liveData ? liveData.soLuongNghi : 0),
+                        sdbSoLuongNghi: sdbCount,
+                        sdbDsVang: sdbRawList,
+                        giamThiSoLuongNghi: giamThiCount,
+                        giamThiDsVang: sddDayData,
+                        isMatched
                     };
                 });
             } catch (liveErr) {

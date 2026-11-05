@@ -35,6 +35,7 @@ export class SoDauBaiComponent implements OnInit {
   // Điểm danh Modal
   selectedSlotForAttendance: VnEduSlot | null = null;
   attendanceStudents: AbsentStudent[] = [];
+  suggestedAbsentNotice = '';
   attendanceSearchText = '';
   isLoadingAttendance = false;
   isSavingAttendance = false;
@@ -310,6 +311,7 @@ export class SoDauBaiComponent implements OnInit {
     this.showAttendanceModal = true;
     this.isLoadingAttendance = true;
     this.attendanceStudents = [];
+    this.suggestedAbsentNotice = '';
 
     this.vneduService.getAttendance(
       slot.lop,
@@ -322,15 +324,51 @@ export class SoDauBaiComponent implements OnInit {
         this.isLoadingAttendance = false;
         if (res.success && res.students) {
           this.attendanceStudents = res.students;
-          // Đồng bộ trạng thái đã chọn trước đó nếu có
-          if (slot.hsVangList && slot.hsVangList.length > 0) {
-            slot.hsVangList.forEach(v => {
-              const found = this.attendanceStudents.find(s => s.id === v.id || s.fullName === v.fullName);
-              if (found) {
-                found.coPhep = v.coPhep;
-                found.khongPhep = v.khongPhep;
+
+          // Thu thập nguồn học sinh vắng từ cả slot.hsVangList, slot.giamThiDsVang, slot.sdbDsVang
+          const rawAbsents: any[] = [];
+          if (Array.isArray(slot.hsVangList)) rawAbsents.push(...slot.hsVangList);
+          if (Array.isArray(slot.giamThiDsVang)) rawAbsents.push(...slot.giamThiDsVang);
+          if (Array.isArray(slot.sdbDsVang)) {
+            slot.sdbDsVang.forEach((item: any) => {
+              if (typeof item === 'string') {
+                const isKhong = item.includes('(K)');
+                const clean = item.replace(/\s*\([PKpkCókhôngphép\s]+\)/gi, '').trim();
+                rawAbsents.push({ fullName: clean, coPhep: !isKhong, khongPhep: isKhong });
+              } else if (item && typeof item === 'object') {
+                rawAbsents.push(item);
               }
             });
+          }
+
+          const matchedNames: string[] = [];
+
+          rawAbsents.forEach(v => {
+            const vName = (typeof v === 'string' ? v : (v.fullName || '')).replace(/\s*\([PKpkCókhôngphép\s]+\)/gi, '').trim().toLowerCase();
+            const vMaHs = (typeof v === 'object' && (v.maHs || v.id)) ? String(v.maHs || v.id).trim() : '';
+            const vIsKhongPhep = (typeof v === 'object' && v.khongPhep) || (typeof v === 'string' && v.toLowerCase().includes('(k)'));
+
+            const found = this.attendanceStudents.find(s => {
+              const sName = (s.fullName || '').trim().toLowerCase();
+              const sMaHs = (s.maHs || '').trim();
+              const sId = (s.id || '').trim();
+
+              if (vMaHs && sMaHs && vMaHs === sMaHs) return true;
+              if (vMaHs && sId && vMaHs === sId) return true;
+              if (vName && sName && (vName === sName || sName.includes(vName) || vName.includes(sName))) return true;
+              return false;
+            });
+
+            if (found && !found.coPhep && !found.khongPhep) {
+              found.coPhep = !vIsKhongPhep;
+              found.khongPhep = !!vIsKhongPhep;
+              matchedNames.push(found.fullName + (found.coPhep ? ' (P)' : ' (K)'));
+            }
+          });
+
+          if (matchedNames.length > 0) {
+            const uniqueNames = [...new Set(matchedNames)];
+            this.suggestedAbsentNotice = uniqueNames.join(', ');
           }
         }
         this.cdr.detectChanges();
@@ -1089,6 +1127,66 @@ export class SoDauBaiComponent implements OnInit {
   }
 
   // Cuộn mượt lên đầu trang
+  
+  // Helper tính toán trạng thái và số lượng điểm danh đối chiếu
+  isCanDoiChieu(slot: any): boolean {
+    if (!slot) return false;
+    // 1. Nếu slot đã được quét và có cờ isMatched
+    if (slot.isMatched !== undefined && slot.isMatched !== null) {
+      return !slot.isMatched;
+    }
+    // 2. Nếu có dữ liệu từ cả SĐB và Giám thị mà số lượng lệch nhau
+    if (slot.sdbSoLuongNghi !== undefined && slot.giamThiSoLuongNghi !== undefined) {
+      return slot.sdbSoLuongNghi !== slot.giamThiSoLuongNghi;
+    }
+    // 3. Nếu giám thị có ghi nhận vắng mà SĐB chưa có ai vắng
+    if (slot.giamThiSoLuongNghi && slot.giamThiSoLuongNghi > 0 && (!slot.sdbSoLuongNghi || slot.sdbSoLuongNghi === 0)) {
+      return true;
+    }
+    return false;
+  }
+
+  getDisplayAbsentCount(slot: any): number {
+    if (!slot) return 0;
+    if (slot.sdbSoLuongNghi !== undefined && slot.sdbSoLuongNghi !== null) {
+      return slot.sdbSoLuongNghi;
+    }
+    if (slot.soLuongNghi !== undefined && slot.soLuongNghi !== null) {
+      return slot.soLuongNghi;
+    }
+    if (slot.hsVangList && slot.hsVangList.length > 0) {
+      return slot.hsVangList.length;
+    }
+    if (slot.giamThiSoLuongNghi !== undefined && slot.giamThiSoLuongNghi !== null) {
+      return slot.giamThiSoLuongNghi;
+    }
+    return 0;
+  }
+
+  getAttendanceChipClass(slot: any): string {
+    if (this.isCanDoiChieu(slot)) {
+      return 'chip-mismatched has-absent pending';
+    }
+    const count = this.getDisplayAbsentCount(slot);
+    if (count > 0) {
+      return 'chip-matched';
+    }
+    return 'chip-present all-present';
+  }
+
+  getAttendanceChipTooltip(slot: any): string {
+    const count = this.getDisplayAbsentCount(slot);
+    if (count === 0) {
+      return 'Cả lớp đi học đầy đủ. Bấm để xem và sửa điểm danh.';
+    }
+    if (!this.isCanDoiChieu(slot)) {
+      return `Đã khớp hoàn toàn với Sổ Giám Thị (${count} em vắng). Bấm để xem chi tiết.`;
+    }
+    const sdb = slot.sdbSoLuongNghi ?? count;
+    const gt = slot.giamThiSoLuongNghi ?? count;
+    return `Cần đối chiếu! SĐB ghi ${sdb} em vắng, SĐĐ Giám thị ghi ${gt} em vắng. Bấm để đồng bộ.`;
+  }
+
   scrollToTop(): void {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }

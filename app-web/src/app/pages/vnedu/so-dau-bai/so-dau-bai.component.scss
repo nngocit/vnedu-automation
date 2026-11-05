@@ -690,6 +690,7 @@
 }
 
 // Chip điểm danh đối chiếu dạng Pill - Đường viền hairline thanh mảnh, bỏ dashed
+// Chip điểm danh đối chiếu dạng Pill - Đẳng cấp UI/UX WCAG
 .attendance-compare-chip {
   display: inline-flex;
   align-items: center;
@@ -702,25 +703,42 @@
   margin-top: 5px;
   border: 1px solid transparent;
 
-  &.has-absent {
-    background-color: #fff1f2;
-    color: #b91c1c;
-    border: 1.5px dashed #ef4444;
+  // Cần đối chiếu: Viền đỏ nét đứt nổi bật
+  &.chip-mismatched,
+  &.has-absent,
+  &.pending {
+    background-color: #fff1f2 !important;
+    color: #b91c1c !important;
+    border: 1.5px dashed #ef4444 !important;
 
     &:hover {
-      background-color: #fee2e2;
-      border-color: #dc2626;
+      background-color: #fee2e2 !important;
+      border-color: #dc2626 !important;
     }
   }
 
-  &.all-present {
-    background-color: #ecfdf5;
-    color: #047857;
-    border: 1px solid #a7f3d0;
+  // Đã khớp hoàn toàn: Màu xanh ngọc thanh lịch, KHÔNG viền đỏ nét đứt
+  &.chip-matched {
+    background-color: #ecfdf5 !important;
+    color: #047857 !important;
+    border: 1px solid #a7f3d0 !important;
 
     &:hover {
-      background-color: #d1fae5;
-      border-color: #6ee7b7;
+      background-color: #d1fae5 !important;
+      border-color: #6ee7b7 !important;
+    }
+  }
+
+  // Đủ 0 vắng
+  &.chip-present,
+  &.all-present {
+    background-color: #f8fafc !important;
+    color: #475569 !important;
+    border: 1px solid #e2e8f0 !important;
+
+    &:hover {
+      background-color: #f1f5f9 !important;
+      border-color: #cbd5e1 !important;
     }
   }
 }
@@ -1943,6 +1961,189 @@
     border: 1px solid rgba(56, 189, 248, 0.2) !important;
     color: #93c5fd !important;
   }
+
+    // Alert banner đối chiếu Dark mode
+    .alert-suggested-absent {
+      background: rgba(30, 58, 138, 0.35) !important;
+      border: 1.5px dashed #38bdf8 !important;
+      color: #e0f2fe !important;
+    }
+
+    // Chip điểm danh trong Dark mode
+    .attendance-compare-chip {
+      &.chip-mismatched,
+      &.has-absent,
+      &.pending {
+        background-color: rgba(239, 68, 68, 0.18) !important;
+        color: #fca5a5 !important;
+        border: 1.5px dashed #ef4444 !important;
+        &:hover {
+          background-color: rgba(239, 68, 68, 0.28) !important;
+        }
+      }
+
+      &.chip-matched {
+        background-color: rgba(16, 185, 129, 0.18) !important;
+        color: #34d399 !important;
+        border: 1px solid rgba(16, 185, 129, 0.45) !important;
+        &:hover {
+          background-color: rgba(16, 185, 129, 0.28) !important;
+        }
+      }
+
+      &.chip-present,
+      &.all-present {
+        background-color: rgba(30, 41, 59, 0.6) !important;
+        color: #94a3b8 !important;
+        border: 1px solid rgba(56, 189, 248, 0.15) !important;
+        &:hover {
+          background-color: rgba(56, 189, 248, 0.15) !important;
+        }
+      }
+    }
+
+    // ==========================================
+    // LIEFLAT ANALYTICS DASHBOARD - DARK MODE SAPPHIRE GLASSMORPHISM
+    // ==========================================
+    .lieflat-dashboard-card {
+      background: rgba(13, 32, 64, 0.85) !important;
+      backdrop-filter: blur(16px) !important;
+      border: 1px solid rgba(56, 189, 248, 0.22) !important;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45) !important;
+
+      .lieflat-header {
+        background: rgba(8, 22, 48, 0.95) !important;
+        border-bottom: 1px solid rgba(56, 189, 248, 0.2) !important;
+
+        .lieflat-icon-badge {
+          background: rgba(56, 189, 248, 0.15) !important;
+          color: #38bdf8 !important;
+        }
+
+        .lieflat-title {
+          color: #f8fafc !important;
+        }
+
+        .badge-lieflat-glance {
+          background: rgba(56, 189, 248, 0.15) !important;
+          color: #38bdf8 !important;
+          border-color: rgba(56, 189, 248, 0.3) !important;
+        }
+
+        .lieflat-sub {
+          color: #94a3b8 !important;
+        }
+
+        .btn-toggle-lieflat {
+          background: rgba(30, 41, 59, 0.8) !important;
+          border-color: rgba(56, 189, 248, 0.25) !important;
+          color: #cbd5e1 !important;
+
+          &:hover {
+            background: rgba(56, 189, 248, 0.2) !important;
+            color: #ffffff !important;
+          }
+        }
+      }
+
+      .lieflat-body {
+        background: transparent !important;
+      }
+
+      .lieflat-metric-card {
+        background: rgba(8, 22, 48, 0.7) !important;
+        border: 1px solid rgba(56, 189, 248, 0.18) !important;
+
+        &:hover {
+          background: rgba(13, 32, 64, 0.9) !important;
+          border-color: rgba(56, 189, 248, 0.4) !important;
+        }
+      }
+
+      .lieflat-card-label {
+        color: #94a3b8 !important;
+      }
+
+      .lieflat-big-metric {
+        .metric-val {
+          color: #38bdf8 !important;
+        }
+        .metric-divider {
+          color: #475569 !important;
+        }
+        .metric-total {
+          color: #e2e8f0 !important;
+        }
+        .metric-unit {
+          color: #94a3b8 !important;
+        }
+      }
+
+      .svg-progress-track {
+        fill: #1e293b !important;
+      }
+
+      .lieflat-rate-badge {
+        &.rate-high {
+          background: rgba(16, 185, 129, 0.2) !important;
+          color: #34d399 !important;
+          border-color: rgba(16, 185, 129, 0.4) !important;
+        }
+        &.rate-mid {
+          background: rgba(245, 158, 11, 0.2) !important;
+          color: #fbbf24 !important;
+          border-color: rgba(245, 158, 11, 0.4) !important;
+        }
+      }
+
+      .class-stat-row {
+        background: rgba(15, 23, 42, 0.6) !important;
+        border-color: rgba(56, 189, 248, 0.12) !important;
+
+        &:hover {
+          background: rgba(30, 58, 138, 0.35) !important;
+          border-color: rgba(56, 189, 248, 0.4) !important;
+        }
+
+        &.is-filtered {
+          background: rgba(14, 165, 233, 0.25) !important;
+          border-color: #38bdf8 !important;
+        }
+
+        .class-badge-mini {
+          background: rgba(56, 189, 248, 0.2) !important;
+          color: #7dd3fc !important;
+          border-color: rgba(56, 189, 248, 0.35) !important;
+        }
+
+        .fw-semibold.text-gray-700 {
+          color: #e2e8f0 !important;
+        }
+        .text-gray-400 {
+          color: #64748b !important;
+        }
+      }
+
+      .radar-widget-container {
+        background: rgba(8, 22, 48, 0.6) !important;
+        border-color: rgba(56, 189, 248, 0.15) !important;
+
+        .radar-day-slot {
+          .radar-day-label {
+            color: #94a3b8 !important;
+          }
+          .radar-count-label {
+            color: #38bdf8 !important;
+          }
+          &.has-teaching {
+            .radar-day-label {
+              color: #f8fafc !important;
+            }
+          }
+        }
+      }
+    }
+
 }
 
 // ============================================================
