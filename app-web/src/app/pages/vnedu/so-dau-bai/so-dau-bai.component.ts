@@ -800,11 +800,101 @@ export class SoDauBaiComponent implements OnInit {
     slot.nhanXet = comment;
   }
 
-  // Lấy danh sách các lớp để lọc
-  get availableClasses(): string[] {
+  // Danh sách các lớp để lọc (lưu property để tránh re-render getter)
+  availableClasses: string[] = [];
+
+  updateAvailableClasses(): void {
     const set = new Set<string>();
     this.slots.forEach(s => { if (s.lop) set.add(s.lop); });
-    return Array.from(set).sort();
+    this.availableClasses = Array.from(set).sort();
+  }
+
+  // Lieflat Charts & Analytics State
+  showAnalyticsChart: boolean = true;
+
+  toggleAnalyticsChart(): void {
+    this.showAnalyticsChart = !this.showAnalyticsChart;
+  }
+
+  chartClassStats: Array<{
+    lop: string;
+    total: number;
+    synced: number;
+    pending: number;
+    percent: number;
+    absentCount: number;
+  }> = [];
+
+  chartDayStats: Array<{
+    thu: number;
+    thuText: string;
+    ngay: string;
+    total: number;
+    synced: number;
+    pending: number;
+    isToday: boolean;
+    heightPercent: number;
+  }> = [];
+
+  updateChartMetrics(): void {
+    // 1. Phân bổ theo từng lớp
+    const classMap: { [lop: string]: { total: number; synced: number; pending: number; absentCount: number } } = {};
+    this.slots.forEach(s => {
+      const lop = s.lop || 'Khác';
+      if (!classMap[lop]) {
+        classMap[lop] = { total: 0, synced: 0, pending: 0, absentCount: 0 };
+      }
+      classMap[lop].total++;
+      if (s.isSynced) {
+        classMap[lop].synced++;
+      } else {
+        classMap[lop].pending++;
+      }
+      const absent = s.soLuongNghi || (s.hsVangList ? s.hsVangList.length : 0);
+      if (absent) {
+        classMap[lop].absentCount += Number(absent) || 0;
+      }
+    });
+
+    this.chartClassStats = Object.keys(classMap).sort().map(lop => {
+      const item = classMap[lop];
+      return {
+        lop,
+        total: item.total,
+        synced: item.synced,
+        pending: item.pending,
+        percent: item.total > 0 ? Math.round((item.synced / item.total) * 100) : 0,
+        absentCount: item.absentCount
+      };
+    });
+
+    // 2. Mật độ tiết theo ngày trong tuần
+    const dayMap: { [thu: number]: { thu: number; thuText: string; ngay: string; total: number; synced: number; pending: number; isToday: boolean } } = {};
+    const thuLabels: { [k: number]: string } = { 2: 'T2', 3: 'T3', 4: 'T4', 5: 'T5', 6: 'T6', 7: 'T7', 8: 'CN' };
+
+    this.slots.forEach(s => {
+      if (!dayMap[s.thu]) {
+        dayMap[s.thu] = {
+          thu: s.thu,
+          thuText: thuLabels[s.thu] || `T${s.thu}`,
+          ngay: s.ngay,
+          total: 0,
+          synced: 0,
+          pending: 0,
+          isToday: s.ngay === this.todayStr
+        };
+      }
+      dayMap[s.thu].total++;
+      if (s.isSynced) dayMap[s.thu].synced++;
+      else dayMap[s.thu].pending++;
+    });
+
+    const dayList = Object.values(dayMap).sort((a, b) => a.thu - b.thu);
+    const maxDaySlots = Math.max(...dayList.map(d => d.total), 1);
+    this.chartDayStats = dayList.map(d => ({
+      ...d,
+      heightPercent: Math.max(18, Math.round((d.total / maxDaySlots) * 100))
+    }));
   }
 
   // Tổng số tiết dạy hôm nay
@@ -898,6 +988,8 @@ export class SoDauBaiComponent implements OnInit {
     });
 
     this.dayGroups = Object.values(groups).sort((a, b) => a.thu - b.thu);
+    this.updateAvailableClasses();
+    this.updateChartMetrics();
   }
 
   setClassFilter(cls: string): void {
@@ -915,6 +1007,38 @@ export class SoDauBaiComponent implements OnInit {
 
   trackBySlot(index: number, slot: VnEduSlot): string {
     return `${slot.thu}_${slot.buoi}_${slot.tiet}_${slot.lop}_${slot.chitietId || slot.liveId || index}`;
+  }
+
+  trackByStudent(index: number, stu: AbsentStudent): string | number {
+    return stu.id || stu.maHs || index;
+  }
+
+  trackByScanSlot(index: number, slot: any): string | number {
+    return slot.chitietId || slot.liveId || (slot.thu + '_' + slot.tiet + '_' + slot.lop) || index;
+  }
+
+  trackByClass(index: number, cls: string): string {
+    return cls;
+  }
+
+  trackByWeek(index: number, opt: any): number {
+    return opt.weekNumber;
+  }
+
+  trackByLog(index: number, log: any): number {
+    return index;
+  }
+
+  trackByHs(index: number, hs: any): string | number {
+    return hs.id || hs.fullName || hs || index;
+  }
+
+  trackByDayStat(index: number, item: any): number {
+    return item.thu;
+  }
+
+  trackByClassStat(index: number, item: any): string {
+    return item.lop;
   }
 
   @HostListener('window:keydown', ['$event'])
