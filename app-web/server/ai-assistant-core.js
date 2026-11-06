@@ -161,7 +161,8 @@ Nguyên tắc ứng xử và xưng hô bắt buộc:
                     ],
                     generationConfig: {
                         temperature: 0.7,
-                        maxOutputTokens: 1200
+                        maxOutputTokens: 8192,
+                        thinkingConfig: { thinkingBudget: 0 }
                     }
                 })
             });

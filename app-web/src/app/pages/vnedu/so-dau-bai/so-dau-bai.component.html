@@ -983,11 +983,16 @@
 
     <!-- Khi không có dữ liệu -->
     <div *ngIf="dayGroups.length === 0" class="empty-state-card p-10 text-center rounded-3 shadow-xs">
-      <div class="fs-6 fw-bold text-gray-800">Không có tiết dạy nào phù hợp với bộ lọc</div>
-      <div class="fs-7 text-gray-500 mt-1" *ngIf="!isWeekPlanCreatedAndHasData">
+      <div class="fs-1 mb-2">📅</div>
+      <div class="fs-5 fw-bold text-gray-800" *ngIf="totalSlotsCount === 0">Tuần {{ currentWeek }} chưa có Kế hoạch giáo dục (KHGD)</div>
+      <div class="fs-6 fw-bold text-gray-800" *ngIf="totalSlotsCount > 0">Không có tiết dạy nào phù hợp với bộ lọc</div>
+      <div class="fs-7 text-gray-500 mt-2" *ngIf="totalSlotsCount === 0">
+        Tuần này chưa được phân công thời khóa biểu hoặc chưa lập Kế hoạch dạy học trên vnEdu / Excel. Cô có thể bấm chọn tuần khác trên thanh công cụ phía trên ạ. 🌸
+      </div>
+      <div class="fs-7 text-gray-500 mt-1" *ngIf="totalSlotsCount > 0 && !isWeekPlanCreatedAndHasData">
         Vui lòng chọn tuần khác hoặc bấm "Lập trước KHDH".
       </div>
-      <div class="fs-7 text-gray-500 mt-1" *ngIf="isWeekPlanCreatedAndHasData">
+      <div class="fs-7 text-gray-500 mt-1" *ngIf="totalSlotsCount > 0 && isWeekPlanCreatedAndHasData">
         Kế hoạch Tuần {{ currentWeek }} đã được lưu trên vnEdu. Bấm nút "Tất cả các lớp" để xem lại các tiết dạy.
       </div>
     </div>

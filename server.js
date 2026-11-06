@@ -201,19 +201,27 @@ app.get('/api/schedule', async (req, res) => {
 
         let data = null;
         if (source === 'excel') {
-            data = core.parseWeekSchedule(week);
+            try {
+                data = core.parseWeekSchedule(week);
+            } catch (err) { }
         } else {
             try {
                 data = await core.getWeekScheduleFromVnEdu(week);
             } catch (err) {
-                data = core.parseWeekSchedule(week);
+                try {
+                    data = core.parseWeekSchedule(week);
+                } catch (err2) { }
             }
         }
 
         if (!data || !data.schedule || data.schedule.length === 0) {
-            data = core.parseWeekSchedule(week);
+            try {
+                data = core.parseWeekSchedule(week);
+            } catch (err) { }
         }
-        if (!data || !data.schedule || data.schedule.length === 0) {
+        // Chỉ fallback cho Tuần 9 (tuần hiện tại) nếu mất mạng hoặc vnEdu chưa có dữ liệu.
+        // Tuyệt đối KHÔNG fallback dữ liệu giả cho các tuần khác hoặc tuần tương lai!
+        if ((!data || !data.schedule || data.schedule.length === 0) && week === 9) {
             try {
                 const fallbackData = core.parseWeekSchedule(7);
                 if (fallbackData && fallbackData.schedule && fallbackData.schedule.length > 0) {
@@ -233,6 +241,20 @@ app.get('/api/schedule', async (req, res) => {
                     };
                 }
             } catch (fbErr) { }
+        }
+
+        // Nếu tuần này chưa có KHGD (chưa có thời khóa biểu)
+        if (!data || !data.schedule || data.schedule.length === 0) {
+            return res.json({
+                success: true,
+                weekNumber: week,
+                hasData: false,
+                schedule: [],
+                totalSlots: 0,
+                syncedSlots: 0,
+                readySlots: 0,
+                message: `Tuần ${week} chưa có Kế hoạch giáo dục (KHGD)`
+            });
         }
 
         if (checkLive) {

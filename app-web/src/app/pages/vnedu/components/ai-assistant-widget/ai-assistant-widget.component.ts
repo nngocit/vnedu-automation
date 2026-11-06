@@ -223,16 +223,28 @@ export class AiAssistantWidgetComponent implements OnInit, OnDestroy, AfterViewC
 
   formatMarkdown(text: string): string {
     if (!text) return '';
-    // Hỗ trợ định dạng cơ bản: bold, italics, bullets, linebreaks
     let formatted = text
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
 
+    // Headers ### Title
+    formatted = formatted.replace(/^### (.*?)$/gm, '<h6 class="fw-bold text-primary mt-2 mb-1">$1</h6>');
+    formatted = formatted.replace(/^## (.*?)$/gm, '<h5 class="fw-bold text-dark mt-2.5 mb-1.5">$1</h5>');
+    formatted = formatted.replace(/^# (.*?)$/gm, '<h4 class="fw-bolder text-dark mt-3 mb-2">$1</h4>');
+
+    // Horizontal rule ---
+    formatted = formatted.replace(/^---$/gm, '<hr class="my-2 border-secondary border-opacity-25"/>');
+
     // Bold **text**
-    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
     // Italic *text*
-    formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    formatted = formatted.replace(/(?<!\*)\*([^\*\n]+?)\*(?!\*)/g, '<em>$1</em>');
+
+    // Bullet points * item hoặc - item
+    formatted = formatted.replace(/^[*-] (.+)$/gm, '• $1');
+
     // Line breaks
     formatted = formatted.replace(/\n/g, '<br/>');
 

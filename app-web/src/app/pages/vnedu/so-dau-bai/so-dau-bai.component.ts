@@ -38,6 +38,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   slots: VnEduSlot[] = [];
 
   currentWeek = 9;
+  realCurrentWeek = 9; // Tuần thực tế đang diễn ra trong năm học
   dataSource: 'vnedu' | 'excel' = 'vnedu';
   todayStr = '';
   selectedClassFilter: string = 'all';
@@ -465,6 +466,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     this.vneduService.getInfo(this.dataSource).subscribe({
       next: (info) => {
         this.info = info;
+        this.realCurrentWeek = info.currentRealWeek || 9;
         this.currentWeek = info.currentRealWeek || 9;
         if (info.weeks && info.weeks.length > 0) {
           this.weeksList = info.weeks.map((w, idx) => ({
@@ -504,15 +506,20 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
           };
         });
         this.updateDayGroups();
-    this.loadAuditNotifications();
+        this.loadAuditNotifications();
         this.isLoading = false;
         this.cdr.detectChanges();
-        // Tự động quét đối chiếu SĐĐ Giám Thị chạy ngầm cho tuần
-        this.autoScanSupervisorQuietly();
+        // Tự động quét đối chiếu SĐĐ Giám Thị chạy ngầm cho tuần nếu tuần có tiết dạy
+        if (this.slots.length > 0) {
+          this.autoScanSupervisorQuietly();
+        }
       },
       error: (err) => {
+        // Tuần chưa có KHGD hoặc gặp lỗi: Xóa sạch dữ liệu, không giữ lại dữ liệu tuần cũ
+        this.scheduleData = null;
+        this.slots = [];
+        this.updateDayGroups();
         this.isLoading = false;
-        this.showToast('Lỗi khi tải lịch học: ' + err.message, 'danger');
         this.cdr.detectChanges();
       }
     });
@@ -1488,6 +1495,11 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   }
 
   get isWeekCompleted(): boolean {
+    // Chỉ tính hoàn tất cho tuần hiện tại và các tuần trước đó (quá khứ).
+    // Các tuần sau tuần hiện tại (tuần tương lai) hoặc tuần chưa có KHGD thì không thể coi là hoàn tất SĐB.
+    if (this.currentWeek > this.realCurrentWeek) {
+      return false;
+    }
     return this.totalSlotsCount > 0 && this.readySlotsCount === 0;
   }
 
@@ -1808,7 +1820,9 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     });
 
     Object.values(groups).forEach(g => {
-      g.isCompleted = g.slots.length > 0 && g.pendingCount === 0;
+      // Chỉ đánh dấu hoàn thành xanh nếu tuần đang xem là tuần hiện tại hoặc quá khứ
+      const isPastOrCurrentWeek = this.currentWeek <= this.realCurrentWeek;
+      g.isCompleted = isPastOrCurrentWeek && g.slots.length > 0 && g.pendingCount === 0;
     });
 
     this.dayGroups = Object.values(groups).sort((a, b) => a.thu - b.thu);
