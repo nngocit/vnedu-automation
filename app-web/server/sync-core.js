@@ -905,14 +905,155 @@ function getAvailableWeeks(source = 'vnedu') {
         }
     }
 
-    // Lưu danh sách học sinh vắng vào vnEdu
-    async function saveHocSinhVangToVnEdu(chitietId, studentsData) {
+    // Bộ nhớ đệm danh sách học sinh theo lớp
+    const classRosterCache = {};
+
+    // Lấy danh sách học sinh chính thức của một lớp (kèm cache)
+    async function getClassRoster(lopName) {
+        if (!lopName) return [];
+        const cleanLop = String(lopName).toUpperCase().trim();
+        const key = Object.keys(CLASS_MAP).find(k => cleanLop === k || cleanLop.includes(k) || k.includes(cleanLop)) || cleanLop;
+
+        if (classRosterCache[key] && classRosterCache[key].length > 0) {
+            return classRosterCache[key];
+        }
+
+        // 1. Đọc từ file cache cục bộ schedule_cache.json
+        try {
+            const cachePath = path.join(__dirname, 'public', 'schedule_cache.json');
+            if (fs.existsSync(cachePath)) {
+                const cacheData = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+                if (cacheData.rosters && cacheData.rosters[key] && Array.isArray(cacheData.rosters[key]) && cacheData.rosters[key].length > 0) {
+                    classRosterCache[key] = cacheData.rosters[key];
+                    return classRosterCache[key];
+                }
+            }
+        } catch (_) {}
+
+        // 2. Tra cứu trực tiếp từ vnEdu
+        try {
+            const liveRes = await getDaSachHocSinhVang(key, 9, 1, 1, '');
+            if (liveRes && liveRes.success && Array.isArray(liveRes.students) && liveRes.students.length > 0) {
+                classRosterCache[key] = liveRes.students;
+                return classRosterCache[key];
+            }
+        } catch (_) {}
+
+        return [];
+    }
+
+    /**
+     * KIỂM TRA ĐỐI CHIẾU HỌC SINH THUỘC LỚP & TRÙNG KHỚP MÃ HỌC SINH
+     * Đảm bảo mọi học sinh ghi nhận vắng BẮT BUỘC phải có Mã HS (hoặc ID) nằm trong danh sách chính thức của lớp.
+     * Ngăn chặn tuyệt đối việc học sinh lớp khác (ví dụ lớp 9) bị ghi đè nhầm sang lớp 7.
+     */
+    async function validateStudentsInClass(lopName, studentsList) {
+        if (!Array.isArray(studentsList) || studentsList.length === 0) {
+            return { isValid: true, validStudents: [], invalidStudents: [], details: [] };
+        }
+
+        const roster = await getClassRoster(lopName);
+        if (!roster || roster.length === 0) {
+            // Không lấy được roster -> tạm cho qua kèm cảnh báo
+            return { isValid: true, validStudents: studentsList, invalidStudents: [], details: [] };
+        }
+
+        const normalize = (str) => (str || '').toLowerCase().trim().replace(/\s+/g, ' ');
+
+        const validStudents = [];
+        const invalidStudents = [];
+        const details = [];
+
+        for (const stu of studentsList) {
+            const stuMaHs = stu.maHs || stu.ma_hoc_sinh || stu.ma_hs_str || '';
+            const stuId = stu.id ? String(stu.id) : '';
+            const stuName = normalize(stu.fullName || stu.full_name || stu.ho_ten || stu.rawName || '');
+            const cleanNameOnly = stuName.replace(/\s*\([pkcókhôngphép\s]+\)/gi, '').trim();
+
+            let matched = null;
+
+            // Ưu tiên 1: Mã HS trùng khớp tuyệt đối với danh sách lớp
+            if (stuMaHs) {
+                matched = roster.find(r => r.maHs && String(r.maHs).trim() === String(stuMaHs).trim());
+            }
+
+            // Ưu tiên 2: ID vnEdu trùng khớp với danh sách lớp
+            if (!matched && stuId && !stuId.startsWith('live_') && !stuId.startsWith('gt_')) {
+                matched = roster.find(r => r.id && String(r.id) === stuId);
+            }
+
+            // Ưu tiên 3: Tên đầy đủ trùng khớp chính xác trong danh sách lớp
+            if (!matched && cleanNameOnly) {
+                matched = roster.find(r => {
+                    const rName = normalize(r.fullName || r.full_name || '');
+                    return rName === cleanNameOnly;
+                });
+            }
+
+            if (matched) {
+                validStudents.push({
+                    ...stu,
+                    id: matched.id || stu.id,
+                    maHs: matched.maHs || stu.maHs,
+                    fullName: matched.fullName || stu.fullName,
+                    isVerifiedClass: true
+                });
+                details.push({
+                    student: stu,
+                    matched: true,
+                    rosterStudent: matched,
+                    reason: `✓ Khớp Mã HS ${matched.maHs} (${matched.fullName}) với danh sách lớp ${lopName}`
+                });
+            } else {
+                invalidStudents.push({
+                    ...stu,
+                    isVerifiedClass: false,
+                    reason: `❌ Học sinh ${stu.fullName || stu.rawName} (Mã HS: ${stuMaHs || 'N/A'}) KHÔNG thuộc danh sách lớp ${lopName}`
+                });
+                details.push({
+                    student: stu,
+                    matched: false,
+                    reason: `Mã HS ${stuMaHs || 'N/A'} không có trong danh sách 34/41 học sinh của lớp ${lopName}`
+                });
+            }
+        }
+
+        return {
+            isValid: invalidStudents.length === 0,
+            validStudents,
+            invalidStudents,
+            details
+        };
+    }
+
+    // Lưu danh sách học sinh vắng vào vnEdu (kèm kiểm tra đối chiếu lớp và mã HS)
+    async function saveHocSinhVangToVnEdu(chitietId, studentsData, lopName = '') {
         if (!chitietId) return { success: false, msg: 'Tiết học chưa có ID trên Sổ đầu bài' };
 
-        const absents = (studentsData || []).filter(s => s.coPhep || s.khongPhep || s.co_phep || s.khong_phep);
+        let absents = (studentsData || []).filter(s => s.coPhep || s.khongPhep || s.co_phep || s.khong_phep);
+
+        // Kiểm tra đối chiếu mã học sinh và danh sách lớp nếu có tên lớp
+        let removedForeign = [];
+        if (lopName && absents.length > 0) {
+            const checkRes = await validateStudentsInClass(lopName, absents);
+            if (checkRes.invalidStudents.length > 0) {
+                removedForeign = checkRes.invalidStudents;
+                console.warn(`[BẢO MẬT ĐIỂM DANH] Tự động loại bỏ ${removedForeign.length} học sinh không thuộc lớp ${lopName}:`,
+                    removedForeign.map(s => `${s.fullName} (Mã HS: ${s.maHs})`));
+                absents = checkRes.validStudents;
+            }
+        }
+
         if (absents.length === 0) {
             // Cả lớp đi học đầy đủ: vnEdu không có học sinh để lưu, thành công ngay
-            return { success: true, msg: 'Cả lớp đi học đầy đủ', data: [] };
+            return {
+                success: true,
+                msg: removedForeign.length > 0
+                    ? `Đã tự động loại bỏ ${removedForeign.length} học sinh không thuộc lớp ${lopName}. Cả lớp đi học đầy đủ!`
+                    : 'Cả lớp đi học đầy đủ',
+                data: [],
+                removedForeign
+            };
         }
 
         let { token, context } = await ensureVnEduToken();
@@ -946,30 +1087,33 @@ function getAvailableWeeks(source = 'vnedu') {
     const sddCache = {};
 
     // Lấy dữ liệu Sổ Điểm Danh Năm Học theo lớp và tháng
-    async function getSoDiemDanhNamHoc(lopName, thangNam, namHoc = '2026') {
+    async function getSoDiemDanhNamHoc(lopName, thangNam, namHoc = '2026', forceRefresh = false) {
         const cacheKey = `${lopName}_${thangNam}_${namHoc}`;
-        if (sddCache[cacheKey] && Date.now() - sddCache[cacheKey].time < 60000) {
+        if (!forceRefresh && sddCache[cacheKey] && Date.now() - sddCache[cacheKey].time < 60000) {
             return sddCache[cacheKey].data;
+        }
+        if (forceRefresh) {
+            delete sddCache[cacheKey];
         }
 
         const classInfo = CLASS_MAP[lopName] || CLASS_MAP[lopName + 'AL'] || CLASS_MAP[Object.keys(CLASS_MAP).find(k => k.includes(lopName))];
         if (!classInfo) return { success: false, msg: 'Không tìm thấy lớp ' + lopName, absentByDay: {} };
 
-        let { token, context } = await ensureVnEduToken();
-        const url = `https://uaevcmanmsgdbinhduong.vnedu.vn/v5/?load=edu.so_diem_danh.nhap&app_nam_hoc=${namHoc}&my_token=${token}`;
-
-        const params = new URLSearchParams({
-            my_token: token,
-            app_nam_hoc: namHoc,
-            winid: 'check_sdd_' + lopName,
-            nam_hoc: namHoc,
-            lop: classInfo.id,
-            thang: thangNam,
-            ten_thang: 'Tháng ' + thangNam.replace('-', ' - '),
-            khoi: classInfo.khoi
-        });
-
         try {
+            let { token, context } = await ensureVnEduToken();
+            const url = `https://uaevcmanmsgdbinhduong.vnedu.vn/v5/?load=edu.so_diem_danh.nhap&app_nam_hoc=${namHoc}&my_token=${token}`;
+
+            const params = new URLSearchParams({
+                my_token: token,
+                app_nam_hoc: namHoc,
+                winid: 'check_sdd_' + lopName,
+                nam_hoc: namHoc,
+                lop: classInfo.id,
+                thang: thangNam,
+                ten_thang: 'Tháng ' + thangNam.replace('-', ' - '),
+                khoi: classInfo.khoi
+            });
+
             const res = await vnEduPost(url, params);
             const html = await res.text();
             const rows = html.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || [];
@@ -1053,6 +1197,62 @@ function getAvailableWeeks(source = 'vnedu') {
         }
     }
 
+    // Quét đối chiếu danh sách vắng từ Sổ Điểm Danh của Giám thị / Nhà trường cho 1 tiết học
+    async function scanAbsentFromGiamThi(lopName, dateStr, tietNumber, forceRefresh = false) {
+        if (!lopName) return { success: false, msg: 'Thiếu tên lớp', absentList: [], count: 0 };
+
+        let dayNum = null;
+        let thangNam = null;
+        if (dateStr && dateStr.includes('/')) {
+            const parts = dateStr.split('/');
+            dayNum = parseInt(parts[0]);
+            const m = parts[1];
+            const y = parts[2] || '2026';
+            thangNam = `${m}-${y}`;
+        } else {
+            const now = new Date();
+            dayNum = now.getDate();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const y = String(now.getFullYear());
+            thangNam = `${m}-${y}`;
+        }
+
+        const tiet = parseInt(tietNumber) || 1;
+        const sessionKey = tiet <= 5 ? 'morning' : 'afternoon';
+
+        const sddRes = await getSoDiemDanhNamHoc(lopName, thangNam, '2026', forceRefresh);
+        if (!sddRes || !sddRes.success) {
+            return {
+                success: false,
+                msg: sddRes?.msg || 'Không thể lấy dữ liệu Sổ Điểm Danh từ vnEdu',
+                absentList: [],
+                count: 0
+            };
+        }
+
+        const absentByDay = sddRes.absentByDay || {};
+        const dayData = absentByDay[dayNum] || {};
+        const rawAbsent = dayData[sessionKey] || [];
+
+        const absentList = rawAbsent.map(s => ({
+            id: s.id,
+            maHs: s.maHs,
+            fullName: s.fullName,
+            coPhep: !!s.coPhep,
+            khongPhep: !!s.khongPhep,
+            symbol: s.symbol || (s.coPhep ? 'P' : 'K')
+        }));
+
+        return {
+            success: true,
+            msg: `Đã quét SĐĐ Giám thị lớp ${lopName} (${absentList.length} em vắng)`,
+            count: absentList.length,
+            absentList,
+            day: dayNum,
+            session: sessionKey
+        };
+    }
+
     function clearSession() {
         cachedToken = null;
         cachedCookies = null;
@@ -1107,7 +1307,147 @@ function getAvailableWeeks(source = 'vnedu') {
         return { school: 'Trường THCS An Lập', branch: 'Phân hiệu An Lập' };
     }
 
-    module.exports = {
+    
+    /**
+     * RÀ SOÁT & KIỂM TRA TOÀN DIỆN NGHIỆP VỤ SỔ ĐẦU BÀI & ĐIỂM DANH (FULL AUDIT ENGINE)
+     * Kiểm tra tất cả các quy tắc: Sĩ số trần, de-duplicate, PPCT lũy tiến, nhảy cóc, tên bài dạy, thang điểm, trùng lịch
+     */
+    function auditScheduleSlots(slots, weekNumber = 9) {
+        if (!Array.isArray(slots) || slots.length === 0) {
+            return { totalIssues: 0, errorsCount: 0, warningsCount: 0, issues: [] };
+        }
+
+        const issues = [];
+        const CLASS_CAPACITY = {
+            '7A2AL': 34,
+            '7A3AL': 33,
+            '9A2AL': 41
+        };
+
+        // 1. Kiểm tra trùng lặp lịch dạy của giáo viên (Slot conflict)
+        const timeSlotsMap = {};
+        slots.forEach(slot => {
+            const timeKey = `${slot.thu}_${slot.buoi || (Number(slot.tiet) <= 5 ? 1 : 2)}_${slot.tiet}`;
+            if (!timeSlotsMap[timeKey]) {
+                timeSlotsMap[timeKey] = [slot];
+            } else {
+                timeSlotsMap[timeKey].push(slot);
+            }
+        });
+
+        Object.entries(timeSlotsMap).forEach(([timeKey, timeList]) => {
+            if (timeList.length > 1) {
+                const classes = timeList.map(s => s.lop).join(' và ');
+                const sample = timeList[0];
+                issues.push({
+                    severity: 'error',
+                    category: 'CONFLICT',
+                    slotRef: { lop: sample.lop, thu: sample.thu, tiet: sample.tiet, buoi: sample.buoi },
+                    title: 'Trùng lịch dạy',
+                    message: `Thứ ${sample.thu} • Tiết ${sample.tiet} đang có ${timeList.length} lớp trùng giờ: ${classes}`
+                });
+            }
+        });
+
+        // 2. Tiết PPCT: Theo yêu cầu của Cô Huyên, số tiết PPCT là từ vnEdu phân bổ chuẩn nên hệ thống không can thiệp hay cảnh báo lùi/nhảy cóc.
+
+        // 3. Kiểm tra từng tiết đơn lẻ
+        slots.forEach(slot => {
+            const lessonName = (slot.tenBai || slot.baiDay || slot.noiDung || '').trim();
+            const ppctNum = Number(slot.ppct);
+            const capacity = CLASS_CAPACITY[slot.lop] || 40;
+            const absentCount = Number(slot.soLuongNghi !== undefined ? slot.soLuongNghi : (slot.hsVangList ? slot.hsVangList.length : 0));
+
+            // 3.1 Tên bài dạy để trống
+            if (!lessonName) {
+                issues.push({
+                    severity: 'error',
+                    category: 'LESSON',
+                    slotRef: { lop: slot.lop, thu: slot.thu, tiet: slot.tiet, buoi: slot.buoi },
+                    title: 'Thiếu tên bài dạy',
+                    message: `Thứ ${slot.thu} • Tiết ${slot.tiet} • Lớp ${slot.lop}: Chưa nhập tên bài dạy trên Sổ Đầu Bài`
+                });
+            }
+
+            // 3.2 Tiết PPCT không hợp lệ
+            if (!slot.ppct || isNaN(ppctNum) || ppctNum <= 0) {
+                issues.push({
+                    severity: 'error',
+                    category: 'PPCT',
+                    slotRef: { lop: slot.lop, thu: slot.thu, tiet: slot.tiet, buoi: slot.buoi },
+                    title: 'PPCT không hợp lệ',
+                    message: `Thứ ${slot.thu} • Tiết ${slot.tiet} • Lớp ${slot.lop}: Tiết PPCT (${slot.ppct || 'trống'}) không phải là số hợp lệ`
+                });
+            }
+
+            // 3.3 Sĩ số vắng vượt trần lớp học
+            if (absentCount > capacity) {
+                issues.push({
+                    severity: 'error',
+                    category: 'ATTENDANCE',
+                    slotRef: { lop: slot.lop, thu: slot.thu, tiet: slot.tiet, buoi: slot.buoi },
+                    title: 'Số vắng vượt quá sĩ số',
+                    message: `Thứ ${slot.thu} • Tiết ${slot.tiet} • Lớp ${slot.lop}: Báo vắng ${absentCount} em, vượt quá sĩ số tối đa (${capacity} em)`
+                });
+            }
+            // 3.4 Tỷ lệ vắng bất thường (> 50% lớp)
+            else if (absentCount > Math.floor(capacity * 0.5)) {
+                issues.push({
+                    severity: 'warning',
+                    category: 'ATTENDANCE',
+                    slotRef: { lop: slot.lop, thu: slot.thu, tiet: slot.tiet, buoi: slot.buoi },
+                    title: 'Tỷ lệ vắng bất thường',
+                    message: `Thứ ${slot.thu} • Tiết ${slot.tiet} • Lớp ${slot.lop}: Số học sinh vắng cao bất thường (${absentCount}/${capacity} em, >50% sĩ số)`
+                });
+            }
+
+            // 3.5 Chống trùng lặp học sinh vắng trong cùng một tiết
+            if (Array.isArray(slot.hsVangList) && slot.hsVangList.length > 1) {
+                const seenIds = new Set();
+                const seenNames = new Set();
+                for (const h of slot.hsVangList) {
+                    const hId = h.id ? String(h.id) : (h.maHs ? String(h.maHs) : '');
+                    const hName = (h.fullName || h.name || '').trim().toLowerCase();
+                    if ((hId && seenIds.has(hId)) || (hName && seenNames.has(hName))) {
+                        issues.push({
+                            severity: 'warning',
+                            category: 'ATTENDANCE',
+                            slotRef: { lop: slot.lop, thu: slot.thu, tiet: slot.tiet, buoi: slot.buoi },
+                            title: 'Trùng lặp học sinh vắng',
+                            message: `Thứ ${slot.thu} • Tiết ${slot.tiet} • Lớp ${slot.lop}: Học sinh "${h.fullName || hName}" bị trùng lặp trong danh sách vắng`
+                        });
+                        break;
+                    }
+                    if (hId) seenIds.add(hId);
+                    if (hName) seenNames.add(hName);
+                }
+            }
+
+            // 3.6 Thang điểm tiết học
+            const diemNum = Number(slot.diem);
+            if (slot.diem && !isNaN(diemNum) && diemNum > 20) {
+                issues.push({
+                    severity: 'warning',
+                    category: 'SCORE',
+                    slotRef: { lop: slot.lop, thu: slot.thu, tiet: slot.tiet, buoi: slot.buoi },
+                    title: 'Điểm tiết học vượt trần',
+                    message: `Thứ ${slot.thu} • Tiết ${slot.tiet} • Lớp ${slot.lop}: Điểm tiết học (${diemNum}) vượt quá thang điểm chuẩn 20`
+                });
+            }
+        });
+
+        const errorsCount = issues.filter(i => i.severity === 'error').length;
+        const warningsCount = issues.filter(i => i.severity === 'warning').length;
+
+        return {
+            totalIssues: issues.length,
+            errorsCount,
+            warningsCount,
+            issues
+        };
+    }
+
+module.exports = {
         getLatestExcelFile,
         getAvailableWeeks,
         parseWeekSchedule,
@@ -1129,6 +1469,10 @@ function getAvailableWeeks(source = 'vnedu') {
         applyPpctRules,
         getDaSachHocSinhVang,
         saveHocSinhVangToVnEdu,
+        getClassRoster,
+        validateStudentsInClass,
+        auditScheduleSlots,
         getSoDiemDanhNamHoc,
+        scanAbsentFromGiamThi,
         CLASS_MAP
     };

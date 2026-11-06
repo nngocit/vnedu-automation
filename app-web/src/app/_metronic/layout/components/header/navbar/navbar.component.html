@@ -1,6 +1,106 @@
+<!-- CHUÔNG THÔNG BÁO & CẢNH BÁO NGHIỆP VỤ VNEDU TRÊN TOP HEADER BAR -->
+<div class="app-navbar-item position-relative header-bell-container" [ngClass]="itemClass">
+  <button type="button"
+          class="btn btn-icon btn-custom btn-icon-muted btn-active-light btn-active-color-primary w-35px h-35px w-md-40px h-md-40px position-relative header-bell-btn"
+          (click)="toggleNotificationDropdown()"
+          [class.has-critical]="hasCriticalErrors"
+          [class.has-unread]="unreadNotificationsCount > 0"
+          title="Trung tâm thông báo & cảnh báo nghiệp vụ SĐB">
+    <span class="bell-icon fs-2" [class.bell-ringing]="unreadNotificationsCount > 0">🔔</span>
+    <span *ngIf="unreadNotificationsCount > 0"
+          class="badge-bell-count"
+          [ngClass]="hasCriticalErrors ? 'badge-danger-glow' : 'badge-warning-glow'">
+      {{ unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount }}
+    </span>
+  </button>
+
+  <!-- BACKDROP ĐỂ ĐÓNG DROPDOWN KHI CLICK RA NGOÀI -->
+  <div *ngIf="showNotificationDropdown" class="header-notif-backdrop" (click)="closeNotificationDropdown()"></div>
+
+  <!-- POPUP DROPDOWN TRUNG TÂM THÔNG BÁO TRỔ XUỐNG TỪ TOP HEADER BAR -->
+  <div *ngIf="showNotificationDropdown" class="header-notif-dropdown shadow-2xl rounded-3 border">
+    <!-- Header của Dropdown -->
+    <div class="notif-header d-flex align-items-center justify-content-between p-3 border-bottom">
+      <div class="d-flex align-items-center gap-2">
+        <span class="fs-4">🔔</span>
+        <div>
+          <div class="fw-bold fs-7 text-dark">Thông Báo & Cảnh Báo</div>
+          <div class="fs-9 text-muted">{{ unreadNotificationsCount }} thông báo chưa đọc</div>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-1">
+        <button type="button" class="btn btn-xs btn-light-primary fs-9 py-1 px-2" (click)="reaudit()" title="Kiểm tra lại toàn bộ">
+          🔄 Quét lại
+        </button>
+        <button *ngIf="unreadNotificationsCount > 0" type="button" class="btn btn-xs btn-light fs-9 py-1 px-2" (click)="markAllAsRead()" title="Đánh dấu tất cả là đã đọc">
+          ✓ Đã đọc
+        </button>
+      </div>
+    </div>
+
+    <!-- Bộ lọc tab thông báo -->
+    <div class="notif-tabs d-flex px-3 pt-2 pb-1 border-bottom gap-2">
+      <button class="notif-tab-btn" [class.active]="activeNotificationTab === 'all'" (click)="setNotificationTab('all')">
+        Tất cả ({{ notifications.length }})
+      </button>
+      <button class="notif-tab-btn" [class.active]="activeNotificationTab === 'alerts'" (click)="setNotificationTab('alerts')">
+        ⚠️ Cảnh báo
+      </button>
+      <button class="notif-tab-btn" [class.active]="activeNotificationTab === 'info'" (click)="setNotificationTab('info')">
+        ℹ️ Thông tin
+      </button>
+    </div>
+
+    <!-- Danh sách thông báo -->
+    <div class="notif-list-body">
+      <div *ngIf="filteredNotifications.length === 0" class="p-6 text-center text-muted fs-8">
+        <span class="fs-2 d-block mb-1">🎉</span>
+        Tuyệt vời! Không có cảnh báo nghiệp vụ nào cần xử lý.
+      </div>
+
+      <div *ngFor="let notif of filteredNotifications"
+           class="notif-item p-3 border-bottom d-flex align-items-start gap-2.5 transition-all"
+           [class.unread]="!notif.isRead"
+           [class.border-error]="notif.severity === 'error'"
+           [class.border-warning]="notif.severity === 'warning'"
+           [class.border-info]="notif.severity === 'info'"
+           (click)="navigateToSlot(notif)">
+        <div class="notif-icon-badge mt-0.5"
+             [ngClass]="{
+               'bg-danger-subtle text-danger': notif.severity === 'error',
+               'bg-warning-subtle text-warning': notif.severity === 'warning',
+               'bg-primary-subtle text-primary': notif.severity === 'info',
+               'bg-success-subtle text-success': notif.severity === 'success'
+             }">
+          <span *ngIf="notif.severity === 'error'">❌</span>
+          <span *ngIf="notif.severity === 'warning'">⚠️</span>
+          <span *ngIf="notif.severity === 'info'">ℹ️</span>
+          <span *ngIf="notif.severity === 'success'">✓</span>
+        </div>
+        <div class="flex-grow-1 min-w-0">
+          <div class="d-flex align-items-center justify-content-between">
+            <div class="fw-bold fs-8 text-dark text-truncate">{{ notif.title }}</div>
+            <span class="fs-9 text-muted ms-1">{{ notif.time }}</span>
+          </div>
+          <div class="fs-8 text-gray-700 mt-0.5 line-clamp-2">{{ notif.message }}</div>
+          <div *ngIf="notif.slotRef" class="mt-1 d-flex align-items-center gap-1.5">
+            <span class="badge badge-light-primary fs-9 py-0.5 px-1.5">
+              Thứ {{ notif.slotRef.thu }} • Tiết {{ notif.slotRef.tiet }} • {{ notif.slotRef.lop }}
+            </span>
+            <span class="fs-9 text-primary fw-bold cursor-pointer hover-underline" (click)="navigateToSlot(notif, $event)">Xem tiết 👉</span>
+          </div>
+        </div>
+        <button type="button" class="btn btn-icon btn-xs btn-ghost text-muted ms-auto" (click)="dismissNotification(notif.id, $event)" title="Xóa thông báo">
+          ✕
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Nút chuyển chế độ Sáng / Tối -->
 <div class="app-navbar-item" [ngClass]="itemClass">
-  <app-theme-mode-switcher [toggleBtnClass]="btnClass" toggleBtnClass="{`btn-active-light-primary btn-custom ${toolbarButtonHeightClass}`}"></app-theme-mode-switcher>
+  <app-theme-mode-switcher [toggleBtnClass]="btnClass"></app-theme-mode-switcher>
 </div>
 
 <!-- Cụm Avatar Cô Huyên & Menu Người Dùng -->
@@ -16,12 +116,3 @@
   </div>
   <app-user-inner data-kt-menu='true'></app-user-inner>
 </div>
-
-<!-- Nút Toggle Mobile Menu (Chỉ hiện trên mobile) -->
-<ng-container *ngIf="appHeaderDefaulMenuDisplay">
-  <div class="app-navbar-item d-lg-none ms-2 me-n3" title="Show header menu">
-    <div class="btn btn-icon btn-active-color-primary w-35px h-35px" id="kt_app_header_menu_toggle">
-      <app-keenicon name="element-4" class="fs-1" [ngClass]="btnIconClass"></app-keenicon>
-    </div>
-  </div>
-</ng-container>

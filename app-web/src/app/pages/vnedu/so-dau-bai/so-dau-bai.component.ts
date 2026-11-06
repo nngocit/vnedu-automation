@@ -189,6 +189,18 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
       }
     } catch (_) {}
 
+    // Lắng nghe sự kiện chuyển đến tiết học từ chuông thông báo trên top header
+    this.vneduService.navigateSlot$.subscribe(slotRef => {
+      if (slotRef) {
+        this.navigateToSlot(slotRef);
+      }
+    });
+
+    // Lắng nghe yêu cầu quét lại từ chuông thông báo
+    this.vneduService.reaudit$.subscribe(() => {
+      this.loadAuditNotifications();
+    });
+
     this.loadInitialData();
     this.fetchWeather();
 
@@ -529,17 +541,20 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
             });
           });
 
-          // Thêm thông báo đối chiếu SĐĐ Giám thị
+          // Thêm thông báo đối chiếu SĐĐ Giám thị (từng tiết có link xem chi tiết)
           const mismatchedSlots = this.slots.filter(s => s.isMatched === false);
           if (mismatchedSlots.length > 0) {
-            newNotifs.push({
-              id: `gt_mismatch_${Date.now()}`,
-              title: 'Cần đối chiếu SĐĐ Giám thị',
-              message: `Phát hiện ${mismatchedSlots.length} tiết học có số vắng lệch giữa SĐB và Giám thị`,
-              category: 'ATTENDANCE',
-              severity: 'warning',
-              time: nowStr,
-              isRead: false
+            mismatchedSlots.forEach(s => {
+              newNotifs.push({
+                id: `gt_mismatch_${s.thu}_${s.tiet}_${s.lop}`,
+                title: `Lệch điểm danh: Lớp ${s.lop} (Thứ ${s.thu} • Tiết ${s.tiet})`,
+                message: `SĐB ghi ${s.sdbSoLuongNghi || 0} vắng, SĐĐ Giám thị ghi ${s.giamThiSoLuongNghi || 0} vắng`,
+                category: 'ATTENDANCE',
+                severity: 'warning',
+                time: nowStr,
+                slotRef: { thu: s.thu, tiet: s.tiet, lop: s.lop },
+                isRead: false
+              });
             });
           }
 
@@ -555,6 +570,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
           });
 
           this.notifications = newNotifs;
+          this.vneduService.setNotifications(newNotifs);
           this.cdr.detectChanges();
         }
       },
@@ -579,6 +595,33 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     if (event) event.stopPropagation();
     this.notifications = this.notifications.filter(n => n.id !== id);
     this.cdr.detectChanges();
+  }
+
+  // Điều hướng và làm nổi bật tiết học từ thông báo
+  navigateToSlot(slotRef: { thu: number; tiet: number; lop: string }): void {
+    const target = this.slots.find(s =>
+      String(s.lop) === String(slotRef.lop) &&
+      Number(s.thu) === Number(slotRef.thu) &&
+      Number(s.tiet) === Number(slotRef.tiet)
+    );
+
+    if (target) {
+      if (this.selectedClassFilter !== 'all' && this.selectedClassFilter !== target.lop) {
+        this.selectedClassFilter = 'all';
+        this.updateDayGroups();
+      }
+      this.cdr.detectChanges();
+
+      setTimeout(() => {
+        const id = `slot_row_${target.thu}_${target.tiet}_${target.lop}`;
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.classList.add('highlight-pulse');
+          setTimeout(() => el.classList.remove('highlight-pulse'), 3500);
+        }
+      }, 200);
+    }
   }
 
   navigateToSlotFromNotification(notif: AppNotification): void {
@@ -635,23 +678,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
       warnings.push(`Số học sinh vắng cao bất thường: ${absentCount}/${capacity} em (> 50% sĩ số lớp).`);
     }
 
-    // 4. Kiểm tra PPCT lũy tiến trong tuần
-    const sameClassSlots = this.slots
-      .filter(s => s.lop === slot.lop && s.mon === slot.mon)
-      .sort((a, b) => a.thu !== b.thu ? a.thu - b.thu : a.tiet - b.tiet);
-
-    const slotIndex = sameClassSlots.findIndex(s => s.thu === slot.thu && s.tiet === slot.tiet);
-    if (slotIndex > 0) {
-      const prevSlot = sameClassSlots[slotIndex - 1];
-      const prevPpct = Number(prevSlot.ppct);
-      if (!isNaN(prevPpct) && !isNaN(ppctNum) && prevPpct > 0 && ppctNum > 0) {
-        if (ppctNum < prevPpct) {
-          warnings.push(`Tiết PPCT (${ppctNum}) nhỏ hơn tiết trước PPCT (${prevPpct}) của Thứ ${prevSlot.thu}.`);
-        } else if (ppctNum - prevPpct > 2) {
-          warnings.push(`Tiết PPCT nhảy cóc từ ${prevPpct} lên ${ppctNum} (cách ${ppctNum - prevPpct} tiết).`);
-        }
-      }
-    }
+    // 4. Tiết PPCT: Theo yêu cầu của Cô Huyên, số tiết PPCT do vnEdu phân bổ chuẩn nên hệ thống không can thiệp hay cảnh báo.
 
     // 5. Điểm số
     if (slot.diem && Number(slot.diem) > 20) {

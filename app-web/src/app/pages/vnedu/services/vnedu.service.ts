@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, BehaviorSubject, Subject } from 'rxjs';
 import {
   VnEduInfo,
   VnEduWeekSchedule,
@@ -10,11 +10,50 @@ import {
   PpctConfig
 } from '../models/vnedu.model';
 
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  category: string;
+  severity: 'error' | 'warning' | 'info' | 'success';
+  time: string;
+  slotRef?: { thu: number; tiet: number; lop: string };
+  isRead: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class VnEduService {
   private baseUrl = '/api';
+
+  // Shared Notifications State (Dùng chung cho Top Header Navbar & Sổ Đầu Bài)
+  private notificationsSubject = new BehaviorSubject<AppNotification[]>([]);
+  public notifications$ = this.notificationsSubject.asObservable();
+
+  // Sự kiện cuộn và highlight tiết học khi bấm từ chuông thông báo
+  private navigateSlotSubject = new Subject<{ thu: number; tiet: number; lop: string }>();
+  public navigateSlot$ = this.navigateSlotSubject.asObservable();
+
+  // Sự kiện yêu cầu quét lại từ chuông
+  private reauditSubject = new Subject<number>();
+  public reaudit$ = this.reauditSubject.asObservable();
+
+  setNotifications(list: AppNotification[]): void {
+    this.notificationsSubject.next(list);
+  }
+
+  getNotifications(): AppNotification[] {
+    return this.notificationsSubject.getValue();
+  }
+
+  triggerNavigateToSlot(slotRef: { thu: number; tiet: number; lop: string }): void {
+    this.navigateSlotSubject.next(slotRef);
+  }
+
+  triggerReaudit(week?: number): void {
+    this.reauditSubject.next(week || 9);
+  }
 
   constructor(private http: HttpClient) {}
 

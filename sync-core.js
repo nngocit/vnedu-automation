@@ -1349,52 +1349,7 @@ function getAvailableWeeks(source = 'vnedu') {
             }
         });
 
-        // 2. Kiểm tra tính lũy tiến & nhảy cóc của Phân Phối Chương Trình (PPCT)
-        const subjectClassMap = {};
-        slots.forEach(slot => {
-            const key = `${slot.lop}_${(slot.mon || '').toLowerCase().trim()}`;
-            if (!subjectClassMap[key]) subjectClassMap[key] = [];
-            subjectClassMap[key].push(slot);
-        });
-
-        Object.entries(subjectClassMap).forEach(([key, subSlots]) => {
-            // Sắp xếp các tiết theo thứ tự diễn ra trong tuần: Thứ -> Buổi -> Tiết
-            subSlots.sort((a, b) => {
-                if (a.thu !== b.thu) return a.thu - b.thu;
-                if (a.buoi !== b.buoi) return (a.buoi || 1) - (b.buoi || 1);
-                return a.tiet - b.tiet;
-            });
-
-            for (let i = 1; i < subSlots.length; i++) {
-                const prev = subSlots[i - 1];
-                const curr = subSlots[i];
-                const prevPpct = Number(prev.ppct);
-                const currPpct = Number(curr.ppct);
-
-                if (!isNaN(prevPpct) && !isNaN(currPpct) && prevPpct > 0 && currPpct > 0) {
-                    // Kiểm tra PPCT bị giảm lùi
-                    if (currPpct < prevPpct) {
-                        issues.push({
-                            severity: 'warning',
-                            category: 'PPCT',
-                            slotRef: { lop: curr.lop, thu: curr.thu, tiet: curr.tiet, buoi: curr.buoi },
-                            title: 'Tiết PPCT giảm lùi',
-                            message: `Lớp ${curr.lop} (${curr.mon}): Tiết ${curr.tiet} Thứ ${curr.thu} có PPCT (${currPpct}) nhỏ hơn tiết trước PPCT (${prevPpct}) vào Thứ ${prev.thu}`
-                        });
-                    }
-                    // Kiểm tra PPCT nhảy cóc (> 2 tiết)
-                    else if (currPpct - prevPpct > 2) {
-                        issues.push({
-                            severity: 'warning',
-                            category: 'PPCT',
-                            slotRef: { lop: curr.lop, thu: curr.thu, tiet: curr.tiet, buoi: curr.buoi },
-                            title: 'Tiết PPCT nhảy cóc',
-                            message: `Lớp ${curr.lop} (${curr.mon}): PPCT nhảy từ ${prevPpct} (Thứ ${prev.thu}) lên ${currPpct} (Thứ ${curr.thu}), cách ${currPpct - prevPpct} tiết`
-                        });
-                    }
-                }
-            }
-        });
+        // 2. Tiết PPCT: Theo yêu cầu của Cô Huyên, số tiết PPCT là từ vnEdu phân bổ chuẩn nên hệ thống không can thiệp hay cảnh báo lùi/nhảy cóc.
 
         // 3. Kiểm tra từng tiết đơn lẻ
         slots.forEach(slot => {
