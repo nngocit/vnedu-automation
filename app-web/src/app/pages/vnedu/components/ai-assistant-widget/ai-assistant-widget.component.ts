@@ -223,7 +223,63 @@ export class AiAssistantWidgetComponent implements OnInit, OnDestroy, AfterViewC
 
   formatMarkdown(text: string): string {
     if (!text) return '';
-    let formatted = text
+    let formatted = text;
+
+    // 0. Làm sạch và định dạng công thức Toán học & Hình học THCS trước
+    // Degree 60^\circ, 60^{\circ}, 60\circ
+    formatted = formatted.replace(/(\d+)\s*\^?\s*\\?\{?\\circ\}?/g, '$1°');
+    formatted = formatted.replace(/\^\\circ/g, '°');
+    formatted = formatted.replace(/\\circ/g, '°');
+
+    // Góc: \hat{A}, \widehat{ABC}, \angle ABC
+    formatted = formatted.replace(/\\(?:hat|widehat)\s*\{?([A-Za-z0-9]+)\}?/g, 'Góc $1');
+    formatted = formatted.replace(/\\angle\s*\{?([A-Za-z0-9]+)\}?/g, 'Góc $1');
+
+    // Tam giác: \Delta, \triangle
+    formatted = formatted.replace(/\\(?:Delta|triangle)\s*([A-Za-z0-9]+)?/g, (m, g1) => '△' + (g1 ? g1 : ''));
+
+    // Ký hiệu hình học & đại số
+    formatted = formatted
+      .replace(/\\(?:text|mathrm|mathbf|mathit|textbf)\{([^}]+)\}/g, '$1')
+      .replace(/\\(?:left|right)\s*/g, '')
+      .replace(/\\overline\{([A-Za-z0-9]+)\}/g, '$1')
+      .replace(/\\perp/g, '⊥')
+      .replace(/\\parallel/g, '//')
+      .replace(/\\sim/g, '∽')
+      .replace(/\\approx/g, '≈')
+      .replace(/\\equiv/g, '≡')
+      .replace(/\\neq/g, '≠')
+      .replace(/\\le(?:q)?\b/g, '≤')
+      .replace(/\\ge(?:q)?\b/g, '≥')
+      .replace(/\\times/g, '×')
+      .replace(/\\cdot/g, '·')
+      .replace(/\\pm/g, '±')
+      .replace(/\\in\b/g, '∈')
+      .replace(/\\notin\b/g, '∉')
+      .replace(/\\subset\b/g, '⊂')
+      .replace(/\\cup\b/g, '∪')
+      .replace(/\\cap\b/g, '∩')
+      .replace(/\\pi\b/g, 'π')
+      .replace(/\\alpha\b/g, 'α')
+      .replace(/\\beta\b/g, 'β')
+      .replace(/\\gamma\b/g, 'γ')
+      .replace(/\\theta\b/g, 'θ')
+      .replace(/\\infty\b/g, '∞')
+      .replace(/\\Rightarrow|\\implies/g, '⇒')
+      .replace(/\\Leftrightarrow|\\iff/g, '⇔')
+      .replace(/([a-zA-Z0-9\)])\^2\b/g, '$1²')
+      .replace(/([a-zA-Z0-9\)])\^3\b/g, '$1³')
+      .replace(/([a-zA-Z0-9\)])\^0\b/g, '$1⁰')
+      .replace(/([a-zA-Z0-9\)])\^1\b/g, '$1¹')
+      .replace(/([a-zA-Z0-9\)])\^n\b/g, '$1ⁿ')
+      .replace(/([a-zA-Z0-9\)])\^\{([^}]+)\}/g, '$1^($2)')
+      .replace(/\\sqrt\{([^}]+)\}/g, '√($1)')
+      .replace(/\\sqrt\s*([a-zA-Z0-9]+)/g, '√$1')
+      .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1/$2)')
+      .replace(/\$\$([^\$]+)\$\$/g, '$1')
+      .replace(/\$([^\$\n]+)\$/g, '$1');
+
+    formatted = formatted
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
@@ -244,19 +300,6 @@ export class AiAssistantWidgetComponent implements OnInit, OnDestroy, AfterViewC
 
     // Inline code `code`
     formatted = formatted.replace(/`([^`\n]+)`/g, '<code class="bg-light px-1.5 py-0.5 rounded text-indigo fw-semibold">$1</code>');
-
-    // Toán học & Ký hiệu hình học phổ biến cho GV Toán
-    formatted = formatted
-      .replace(/\\Delta/g, 'Δ')
-      .replace(/\\triangle/g, '△')
-      .replace(/\\approx/g, '≈')
-      .replace(/\\neq/g, '≠')
-      .replace(/\\le(?:q)?\b/g, '≤')
-      .replace(/\\ge(?:q)?\b/g, '≥')
-      .replace(/\\times/g, '×')
-      .replace(/\\pm/g, '±')
-      .replace(/\\circ/g, '°')
-      .replace(/\$([^\$\n]+)\$/g, '<span class="fw-semibold text-primary">$1</span>');
 
     // Bullet points * item hoặc - item (hỗ trợ cả lùi đầu dòng)
     formatted = formatted.replace(/^(\s*)[*-] (.+)$/gm, (match, spaces, content) => {

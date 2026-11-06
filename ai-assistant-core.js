@@ -128,6 +128,76 @@ function getGeminiApiKey() {
     return DEFAULT_GEMINI_API_KEY;
 }
 
+function cleanMathFormulas(text) {
+    if (!text) return '';
+    let s = text;
+    // 0. Bỏ các thẻ bao quanh LaTeX như \text{...}, \mathrm{...}, \mathbf{...}
+    s = s.replace(/\\(?:text|mathrm|mathbf|mathit|textbf)\{([^}]+)\}/g, '$1');
+    s = s.replace(/\\(?:left|right)\s*/g, '');
+    
+    // 1. Đoạn thẳng
+    s = s.replace(/\\overline\{([A-Za-z0-9]+)\}/g, '$1');
+
+    // 2. Độ (degree): 60^\circ, 60^{\circ}, 60\circ, ^\circ
+    s = s.replace(/(\d+)\s*\^?\s*\\?\{?\\circ\}?/g, '$1°');
+    s = s.replace(/\^\\circ/g, '°');
+    s = s.replace(/\\circ/g, '°');
+    
+    // 3. Góc: \hat{A}, \widehat{ABC}, \angle ABC, \widehat A, \angle{A}
+    s = s.replace(/\\(?:hat|widehat)\s*\{?([A-Za-z0-9]+)\}?/g, 'Góc $1');
+    s = s.replace(/\\angle\s*\{?([A-Za-z0-9]+)\}?/g, 'Góc $1');
+    
+    // 4. Tam giác: \Delta, \triangle
+    s = s.replace(/\\(?:Delta|triangle)\s*([A-Za-z0-9]+)?/g, (m, g1) => '△' + (g1 ? g1 : ''));
+    
+    // 5. Ký hiệu hình học & quan hệ
+    s = s.replace(/\\perp/g, '⊥');
+    s = s.replace(/\\parallel/g, '//');
+    s = s.replace(/\\sim/g, '∽');
+    s = s.replace(/\\approx/g, '≈');
+    s = s.replace(/\\equiv/g, '≡');
+    s = s.replace(/\\neq/g, '≠');
+    s = s.replace(/\\le(?:q)?\b/g, '≤');
+    s = s.replace(/\\ge(?:q)?\b/g, '≥');
+    s = s.replace(/\\times/g, '×');
+    s = s.replace(/\\cdot/g, '·');
+    s = s.replace(/\\pm/g, '±');
+    s = s.replace(/\\in\b/g, '∈');
+    s = s.replace(/\\notin\b/g, '∉');
+    s = s.replace(/\\subset\b/g, '⊂');
+    s = s.replace(/\\cup\b/g, '∪');
+    s = s.replace(/\\cap\b/g, '∩');
+    s = s.replace(/\\pi\b/g, 'π');
+    s = s.replace(/\\alpha\b/g, 'α');
+    s = s.replace(/\\beta\b/g, 'β');
+    s = s.replace(/\\gamma\b/g, 'γ');
+    s = s.replace(/\\theta\b/g, 'θ');
+    s = s.replace(/\\infty\b/g, '∞');
+    s = s.replace(/\\Rightarrow|\\implies/g, '⇒');
+    s = s.replace(/\\Leftrightarrow|\\iff/g, '⇔');
+    
+    // 6. Mũ số (superscript)
+    s = s.replace(/([a-zA-Z0-9\)])\^2\b/g, '$1²');
+    s = s.replace(/([a-zA-Z0-9\)])\^3\b/g, '$1³');
+    s = s.replace(/([a-zA-Z0-9\)])\^0\b/g, '$1⁰');
+    s = s.replace(/([a-zA-Z0-9\)])\^1\b/g, '$1¹');
+    s = s.replace(/([a-zA-Z0-9\)])\^n\b/g, '$1ⁿ');
+    s = s.replace(/([a-zA-Z0-9\)])\^\{([^}]+)\}/g, '$1^($2)');
+
+    // 7. Căn thức
+    s = s.replace(/\\sqrt\{([^}]+)\}/g, '√($1)');
+    s = s.replace(/\\sqrt\s*([a-zA-Z0-9]+)/g, '√$1');
+    
+    // 8. Phân số: \frac{a}{b} -> a/b
+    s = s.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1/$2)');
+    
+    // 9. Xóa bỏ dấu math delimiter $ ... $ hoặc $$ ... $$
+    s = s.replace(/\$\$([^\$]+)\$\$/g, '$1');
+    s = s.replace(/\$([^\$\n]+)\$/g, '$1');
+    
+    return s;
+}
+
 async function callGeminiLLM({ message, currentWeek = 9, history = [], context = null }) {
     const apiKey = getGeminiApiKey();
     if (!apiKey) {
@@ -145,7 +215,16 @@ Nguyên tắc ứng xử và xưng hô bắt buộc:
 4. Trả lời:
    - Nếu hỏi về mô hình AI: Xác nhận em là Trợ lý AI chính thức sử dụng mô hình Google Gemini AI thế hệ mới kết hợp cùng hệ thống đối soát dữ liệu vnEdu thời gian thực của trường THCS An Lập.
    - Với các câu hỏi chuyên môn Toán THCS (đại số, hình học, định lý, bài tập, lời giải mẫu), sư phạm, soạn giáo án, nhận xét học sinh, quản lý nề nếp lớp học, hoặc các câu hỏi kiến thức chung: Trả lời sâu sắc, chu đáo, ĐẦY ĐỦ TOÀN BỘ Ý, TUYỆT ĐỐI KHÔNG BỊ CẮT NGANG HAY DỪNG GIỮA CHỪNG. Trình bày bằng Markdown đẹp mắt với gạch đầu dòng và in đậm rõ ràng.
-5. Luôn hoàn thiện câu trả lời trọn vẹn, không viết dở dang câu chữ.`;
+5. Luôn hoàn thiện câu trả lời trọn vẹn, không viết dở dang câu chữ.
+6. QUY TẮC HIỂN THỊ CÔNG THỨC TOÁN & HÌNH HỌC (CHUẨN SƯ PHẠM SGK THCS):
+   - TUYỆT ĐỐI KHÔNG dùng mã LaTeX thô và KHÔNG dùng dấu $ để bọc công thức (ví dụ: không dùng $ABC$, $60^\\circ$, \\hat{A}, \\Delta, \\frac).
+   - Dùng trực tiếp ký hiệu Unicode tiếng Việt chuẩn SGK:
+     * Góc: Viết "Góc A", "Góc B", "Góc C" hoặc "Góc ABC".
+     * Độ: Viết ký tự độ trực tiếp như "60°", "90°", "180°" (không viết ^\\circ).
+     * Tam giác: Viết "△ABC" hoặc "tam giác ABC".
+     * Cạnh, đoạn thẳng: Viết "AB = BC = CA" tự nhiên.
+     * Ký hiệu: ⊥ (vuông góc), // (song song), ∽ (đồng dạng), = (bằng nhau), ≠ (khác), ≤, ≥, ⇒, ⇔.
+     * Mũ & căn: x², x³, √x. Phân số viết dạng a/b (ví dụ 1/2, 3/4).`;
 
     const userPromptWithSystem = `${systemPrompt}\n\n[Câu hỏi từ Cô Lê Thị Diệu Huyên]: ${message}`;
 
@@ -191,7 +270,7 @@ Nguyên tắc ứng xử và xưng hô bắt buộc:
             if (fullText && fullText.trim().length > 0) {
                 return {
                     model,
-                    text: fullText.trim(),
+                    text: cleanMathFormulas(fullText).trim(),
                     finishReason: candidate?.finishReason
                 };
             }
