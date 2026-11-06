@@ -16,6 +16,8 @@ export interface ChatMessage {
   role: 'ai' | 'user';
   text: string;
   time: string;
+  model?: string;
+  isGemini?: boolean;
   quickActions?: Array<{
     type: string;
     slotRef?: { thu: number; tiet: number; lop: string };
@@ -162,6 +164,8 @@ export class AiAssistantWidgetComponent implements OnInit, OnDestroy, AfterViewC
             role: 'ai',
             text: res.reply,
             time: aiTime,
+            model: res.model,
+            isGemini: res.isGemini,
             quickActions: res.quickActions || []
           });
 

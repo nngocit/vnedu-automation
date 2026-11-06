@@ -98,6 +98,90 @@ function normalizeText(text) {
     return (text || '').toLowerCase().trim();
 }
 
+const GEMINI_CANDIDATE_MODELS = [
+    'gemini-3.5-flash',
+    'gemini-3.1-flash-lite',
+    'gemini-flash-lite-latest',
+    'gemini-3.8-flash'
+];
+
+function getGeminiApiKey() {
+    if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim()) return process.env.GEMINI_API_KEY.trim();
+    if (process.env.GOOGLE_API_KEY && process.env.GOOGLE_API_KEY.trim()) return process.env.GOOGLE_API_KEY.trim();
+    try {
+        const fs = require('fs');
+        const path = require('path');
+        const envPath = path.join(__dirname, '.env');
+        if (fs.existsSync(envPath)) {
+            const lines = fs.readFileSync(envPath, 'utf8').split('\n');
+            for (const line of lines) {
+                const match = line.match(/^\s*(?:GEMINI_API_KEY|GOOGLE_API_KEY)\s*=\s*(.*?)\s*$/);
+                if (match && match[1]) {
+                    return match[1].trim().replace(/^["']|["']$/g, '');
+                }
+            }
+        }
+    } catch (e) {}
+    return null;
+}
+
+async function callGeminiLLM({ message, currentWeek = 9, history = [], context = null }) {
+    const apiKey = getGeminiApiKey();
+    if (!apiKey) {
+        return null;
+    }
+
+    const systemPrompt = `Bạn là Trợ lý AI vnEdu thông minh, am hiểu chuyên môn sư phạm và tận tâm của Cô Lê Thị Diệu Huyên (giáo viên dạy môn Toán tại trường THCS An Lập).
+Nguyên tắc ứng xử và xưng hô bắt buộc:
+1. Xưng hô: Luôn xưng "Em" và gọi giáo viên là "Cô" hoặc "Cô Lê Thị Diệu Huyên" (tuyệt đối KHÔNG viết thành "Huyền", không xưng "tôi", không gọi "bạn").
+2. Giọng điệu: Thân thiện, lễ phép, ấm áp, chuẩn mực sư phạm, súc tích và có tính xây dựng cao.
+3. Bối cảnh giảng dạy thực tế của Cô Diệu Huyên:
+   - Giáo viên môn Toán các lớp 7A2AL (sĩ số 34), 7A3AL (sĩ số 33), và 9A2AL (sĩ số 41) tại trường THCS An Lập.
+   - Hiện tại đang trong Tuần ${currentWeek} năm học 2026-2027.
+   - Sổ đầu bài điện tử vnEdu và Sổ điểm danh giám thị được đồng bộ tự động.
+4. Trả lời:
+   - Nếu hỏi về mô hình AI: Xác nhận em là Trợ lý AI chính thức sử dụng mô hình Google Gemini AI thế hệ mới kết hợp cùng hệ thống đối soát dữ liệu vnEdu thời gian thực của trường THCS An Lập.
+   - Với các câu hỏi chuyên môn Toán THCS (đại số, hình học, định lý, bài tập, lời giải mẫu), sư phạm, soạn giáo án, nhận xét học sinh, quản lý nề nếp lớp học, hoặc các câu hỏi kiến thức chung: Trả lời sâu sắc, chu đáo, trình bày bằng Markdown đẹp mắt với gạch đầu dòng và in đậm rõ ràng.
+5. Giữ câu trả lời cô đọng, dễ đọc trên giao diện khung chat của giáo viên.`;
+
+    const userPromptWithSystem = `${systemPrompt}\n\n[Câu hỏi từ Cô Lê Thị Diệu Huyên]: ${message}`;
+
+    for (const model of GEMINI_CANDIDATE_MODELS) {
+        try {
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [
+                        {
+                            role: 'user',
+                            parts: [{ text: userPromptWithSystem }]
+                        }
+                    ],
+                    generationConfig: {
+                        temperature: 0.7,
+                        maxOutputTokens: 1200
+                    }
+                })
+            });
+
+            if (!res.ok) continue;
+            const data = await res.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (text && text.trim().length > 0) {
+                return {
+                    model,
+                    text: text.trim()
+                };
+            }
+        } catch (err) {
+            continue;
+        }
+    }
+    return null;
+}
+
 async function processAiQuery({ message, currentWeek = 9, history = [], clientSlots = null }) {
     const raw = normalizeText(message);
     const context = await getWeekContext(currentWeek, clientSlots);
@@ -153,7 +237,7 @@ async function processAiQuery({ message, currentWeek = 9, history = [], clientSl
             reply += `\n💡 *Cô chỉ cần nhấp vào nút dưới từng tiết để kiểm tra lại bài dạy và sĩ số điểm danh ạ.*`;
         }
         suggestions.push('Điểm danh hôm nay có ai vắng?', 'Lịch dạy hôm nay', 'Cập nhật từ Giám thị');
-        return { success: true, reply, suggestions, quickActions };
+        return { success: true, reply, model: 'vnEdu Engine', isGemini: false, suggestions, quickActions };
     }
 
     // ========================================================
@@ -220,7 +304,7 @@ async function processAiQuery({ message, currentWeek = 9, history = [], clientSl
                 reply += `💡 *Cô có thể bấm vào nút dưới từng tiết để kiểm tra chi tiết hoặc quét đối chiếu SĐĐ Giám thị nhé!*`;
                 suggestions.push('Cập nhật từ Giám thị', 'Ai vắng trong tuần này?', 'Lịch dạy hôm nay');
             }
-            return { success: true, reply, suggestions, quickActions };
+            return { success: true, reply, model: 'vnEdu Engine', isGemini: false, suggestions, quickActions };
         }
 
         // Trường hợp 1.2: Hỏi điểm danh theo Thứ cụ thể (Ví dụ: "Thứ 2 có ai vắng", "Thứ 3 vắng những ai")
@@ -247,7 +331,7 @@ async function processAiQuery({ message, currentWeek = 9, history = [], clientSl
                 });
             }
             suggestions.push('Điểm danh hôm nay có ai vắng?', 'Cập nhật từ Giám thị', 'Sĩ số các lớp');
-            return { success: true, reply, suggestions, quickActions };
+            return { success: true, reply, model: 'vnEdu Engine', isGemini: false, suggestions, quickActions };
         }
 
         // Trường hợp 1.3: Tổng hợp toàn tuần hoặc hỏi sĩ số
@@ -273,7 +357,7 @@ async function processAiQuery({ message, currentWeek = 9, history = [], clientSl
             });
         }
         suggestions.push('Điểm danh hôm nay có ai vắng?', 'Cập nhật từ Giám thị', 'Tiết nào chưa lưu vnEdu?');
-        return { success: true, reply, suggestions, quickActions };
+        return { success: true, reply, model: 'vnEdu Engine', isGemini: false, suggestions, quickActions };
     }
 
     // ========================================================
@@ -300,7 +384,7 @@ async function processAiQuery({ message, currentWeek = 9, history = [], clientSl
             reply += `💡 *Cô có thể bấm vào liên kết dưới mỗi tiết hoặc nút "Sửa / Lưu lại" trên bảng để đưa lên vnEdu nhé!*`;
             suggestions.push('Tiết nào chưa có tên bài?', 'Kiểm tra lệch Giám thị', 'Lịch dạy hôm nay');
         }
-        return { success: true, reply, suggestions, quickActions };
+        return { success: true, reply, model: 'vnEdu Engine', isGemini: false, suggestions, quickActions };
     }
 
     // ========================================================
@@ -323,7 +407,7 @@ async function processAiQuery({ message, currentWeek = 9, history = [], clientSl
             });
         }
         suggestions.push('Tiết nào chưa lưu vnEdu?', 'Gợi ý nhận xét tiết học', 'Kiểm tra lệch Giám thị');
-        return { success: true, reply, suggestions, quickActions };
+        return { success: true, reply, model: 'vnEdu Engine', isGemini: false, suggestions, quickActions };
     }
 
     // ========================================================
@@ -338,7 +422,7 @@ async function processAiQuery({ message, currentWeek = 9, history = [], clientSl
             `• Để đối chiếu trực tiếp dữ liệu mới nhất, Cô có thể bấm nút **"🛡️ Quét SĐĐ Giám Thị"** trên thanh công cụ.\n` +
             `• Mọi tiết có số vắng khác nhau sẽ được thông báo ngay tại **Chiếc Chuông trên thanh Header** để Cô đối chiếu bằng 1 chạm!`;
         suggestions.push('Điểm danh hôm nay có ai vắng?', 'Xem các tiết chưa lưu', 'Lịch dạy hôm nay');
-        return { success: true, reply, suggestions, quickActions };
+        return { success: true, reply, model: 'vnEdu Engine', isGemini: false, suggestions, quickActions };
     }
 
     // ========================================================
@@ -369,7 +453,7 @@ async function processAiQuery({ message, currentWeek = 9, history = [], clientSl
             });
             suggestions.push('Điểm danh hôm nay có ai vắng?', 'Tiết nào chưa lưu vnEdu?', 'Kiểm tra lệch Giám thị');
         }
-        return { success: true, reply, suggestions, quickActions };
+        return { success: true, reply, model: 'vnEdu Engine', isGemini: false, suggestions, quickActions };
     }
 
     // ========================================================
@@ -398,7 +482,7 @@ async function processAiQuery({ message, currentWeek = 9, history = [], clientSl
             });
         }
         suggestions.push('Điểm danh hôm nay có ai vắng?', 'Tiết nào chưa lưu vnEdu?', 'Có ai vắng Thứ ' + targetThu + '?');
-        return { success: true, reply, suggestions, quickActions };
+        return { success: true, reply, model: 'vnEdu Engine', isGemini: false, suggestions, quickActions };
     }
 
     // ========================================================
@@ -413,7 +497,7 @@ async function processAiQuery({ message, currentWeek = 9, history = [], clientSl
             `• 👥 **Tiết có học sinh vắng:** ${context.slotsWithAbsence.length} tiết\n\n` +
             `Cô cần em kiểm tra hoặc nhắc việc gì hôm nay ạ?`;
         suggestions.push('Điểm danh hôm nay có ai vắng?', 'Hôm nay cô dạy tiết nào?', 'Tiết nào chưa lưu vnEdu?', 'Sĩ số các lớp');
-        return { success: true, reply, suggestions, quickActions };
+        return { success: true, reply, model: 'vnEdu Engine', isGemini: false, suggestions, quickActions };
     }
 
     // ========================================================
@@ -458,13 +542,15 @@ async function processAiQuery({ message, currentWeek = 9, history = [], clientSl
         }
 
         suggestions.push('Điểm danh hôm nay có ai vắng?', 'Tiết nào chưa lưu vnEdu?', 'Sĩ số các lớp');
-        return { success: true, reply, suggestions, quickActions };
+        return { success: true, reply, model: 'vnEdu Engine', isGemini: false, suggestions, quickActions };
     }
 
     // ========================================================
-    // ƯU TIÊN 9: GỢI Ý NHẬN XÉT TIẾT HỌC
+    // ƯU TIÊN 9: MẪU NHẬN XÉT TIẾT HỌC NHANH (Static Quick Template)
     // ========================================================
-    if (raw.includes('nhận xét') || raw.includes('gợi ý') || raw.includes('lời phê')) {
+    const isQuickTemplateQuery = (raw === 'nhận xét' || raw === 'mẫu nhận xét' || raw === 'gợi ý nhận xét' || raw === 'lời phê') ||
+                                 (raw.includes('nhận xét') && !raw.includes('toán') && !raw.includes('bài') && !raw.includes('học sinh') && !raw.includes('khen') && raw.length < 25);
+    if (isQuickTemplateQuery) {
         reply = `💡 **Mẫu nhận xét tiết học chuẩn mực cho Cô tham khảo:**\n\n` +
             `1. **Lớp tích cực (Điểm 19-20):**\n` +
             `   - *"Lớp học nghiêm túc, tích cực phát biểu xây dựng bài, trật tự tốt."*\n` +
@@ -476,10 +562,30 @@ async function processAiQuery({ message, currentWeek = 9, history = [], clientSl
             `   - *"Còn một số em mất trật tự, nhắc nhở nề nếp đầu giờ."*\n\n` +
             `*Cô có thể chọn nhanh các mẫu này trực tiếp trên menu dropdown Nhận xét của bảng SĐB ạ!*`;
         suggestions.push('Điểm danh hôm nay có ai vắng?', 'Tiết nào chưa lưu vnEdu?', 'Lịch dạy hôm nay');
-        return { success: true, reply, suggestions, quickActions };
+        return { success: true, reply, model: 'vnEdu Engine', isGemini: false, suggestions, quickActions };
     }
 
-    // Fallback: Mặc định thân thiện, không bao giờ in ra chữ ' có ' vô nghĩa
+    // ========================================================
+    // MÔ HÌNH GOOGLE GEMINI AI LLM (Creative, Pedagogical & General Reasoning)
+    // ========================================================
+    const geminiResult = await callGeminiLLM({ message, currentWeek, history, context });
+    if (geminiResult && geminiResult.text) {
+        return {
+            success: true,
+            reply: geminiResult.text,
+            model: geminiResult.model,
+            isGemini: true,
+            suggestions: [
+                'Điểm danh hôm nay có ai vắng?',
+                'Hôm nay cô dạy tiết nào?',
+                'Tiết nào chưa lưu vnEdu?',
+                'Gợi ý nhận xét tiết học'
+            ],
+            quickActions
+        };
+    }
+
+    // Fallback: Mặc định thân thiện nếu mất mạng hoặc chưa cấu hình API
     if (raw.length <= 4) {
         reply = `Dạ thưa **Cô Lê Thị Diệu Huyên**, Cô cần em hỗ trợ mở tiết nào hay tra cứu thông tin gì cho Cô ạ? 🌸\n\n` +
             `Cô có thể bấm vào một trong các gợi ý nhanh bên dưới nhé:`;
@@ -494,7 +600,7 @@ async function processAiQuery({ message, currentWeek = 9, history = [], clientSl
     }
 
     suggestions.push('Điểm danh hôm nay có ai vắng?', 'Hôm nay cô dạy tiết nào?', 'Tiết nào chưa lưu vnEdu?', 'Cập nhật từ Giám thị');
-    return { success: true, reply, suggestions, quickActions };
+    return { success: true, reply, model: 'vnEdu Engine', isGemini: false, suggestions, quickActions };
 }
 
 module.exports = {

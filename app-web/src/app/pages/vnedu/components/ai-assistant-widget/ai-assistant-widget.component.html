@@ -27,7 +27,7 @@
       <div>
         <div class="fw-bolder fs-6 text-white lh-1 mb-1 d-flex align-items-center gap-1.5">
           <span>Trợ Lý AI vnEdu</span>
-          <span class="badge-ai-version">Pro</span>
+          <span class="badge-ai-version">Gemini AI</span>
         </div>
         <div class="fs-8 text-white text-opacity-75 lh-1">
           Cô Lê Thị Diệu Huyên • THCS An Lập
@@ -75,8 +75,13 @@
           </button>
         </div>
 
-        <div class="msg-timestamp text-end mt-1">
-          {{ msg.time }}
+        <div class="msg-footer d-flex align-items-center justify-content-between mt-1 pt-0.5">
+          <span *ngIf="msg.role === 'ai'" class="badge-model-tag" [class.badge-gemini]="msg.isGemini">
+            <span *ngIf="msg.isGemini">✨ Gemini AI</span>
+            <span *ngIf="!msg.isGemini">🛡️ vnEdu Engine</span>
+          </span>
+          <span *ngIf="msg.role !== 'ai'"></span>
+          <span class="msg-timestamp">{{ msg.time }}</span>
         </div>
       </div>
     </div>

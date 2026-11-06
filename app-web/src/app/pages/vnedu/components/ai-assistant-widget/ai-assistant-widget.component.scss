@@ -243,6 +243,26 @@
           color: #1e293b;
         }
 
+        .msg-footer {
+          gap: 8px;
+        }
+
+        .badge-model-tag {
+          font-size: 0.65rem;
+          font-weight: 700;
+          padding: 1px 6px;
+          border-radius: 6px;
+          background: #f1f5f9;
+          color: #475569;
+          border: 1px solid #e2e8f0;
+
+          &.badge-gemini {
+            background: linear-gradient(135deg, #eff6ff 0%, #ede9fe 100%);
+            color: #4f46e5;
+            border-color: #c7d2fe;
+          }
+        }
+
         .msg-timestamp {
           color: #94a3b8;
           font-size: 0.68rem;
