@@ -64,6 +64,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  openAiChat(): void {
+    this.vneduService.toggleAiChat(true);
+  }
+
   closeNotificationDropdown(): void {
     this.showNotificationDropdown = false;
     this.cdr.detectChanges();

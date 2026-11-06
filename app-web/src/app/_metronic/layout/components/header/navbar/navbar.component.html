@@ -99,6 +99,16 @@
 </div>
 
 <!-- Nút chuyển chế độ Sáng / Tối -->
+  <!-- NÚT TRỢ LÝ AI TRÊN TOP NAVBAR -->
+  <div class="app-navbar-item" [ngClass]="itemClass">
+    <button type="button"
+            class="btn btn-icon btn-custom btn-icon-muted btn-active-light btn-active-color-primary w-35px h-35px w-md-40px h-md-40px position-relative header-ai-btn shadow-xs"
+            (click)="openAiChat()"
+            title="Trợ lý AI vnEdu • Cô Lê Thị Diệu Huyên">
+      <span class="fs-2">🤖</span>
+    </button>
+  </div>
+
 <div class="app-navbar-item" [ngClass]="itemClass">
   <app-theme-mode-switcher [toggleBtnClass]="btnClass"></app-theme-mode-switcher>
 </div>

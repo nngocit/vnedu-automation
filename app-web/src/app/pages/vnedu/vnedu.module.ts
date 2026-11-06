@@ -4,12 +4,14 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { VnEduRoutingModule } from './vnedu-routing.module';
 import { SoDauBaiComponent } from './so-dau-bai/so-dau-bai.component';
 import { PpctConfigComponent } from './ppct-config/ppct-config.component';
+import { AiAssistantWidgetComponent } from './components/ai-assistant-widget/ai-assistant-widget.component';
 import { SharedModule } from 'src/app/_metronic/shared/shared.module';
 
 @NgModule({
   declarations: [
     SoDauBaiComponent,
-    PpctConfigComponent
+    PpctConfigComponent,
+    AiAssistantWidgetComponent
   ],
   imports: [
     CommonModule,
@@ -17,6 +19,9 @@ import { SharedModule } from 'src/app/_metronic/shared/shared.module';
     ReactiveFormsModule,
     VnEduRoutingModule,
     SharedModule
+  ],
+  exports: [
+    AiAssistantWidgetComponent
   ]
 })
 export class VnEduModule {}

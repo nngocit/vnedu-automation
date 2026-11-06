@@ -55,6 +55,26 @@ export class VnEduService {
     this.reauditSubject.next(week || 9);
   }
 
+  // Trạng thái mở/đóng Trợ lý AI Chat
+  private aiChatOpenSubject = new BehaviorSubject<boolean>(false);
+  public isAiChatOpen$ = this.aiChatOpenSubject.asObservable();
+
+  toggleAiChat(forceState?: boolean): void {
+    if (forceState !== undefined) {
+      this.aiChatOpenSubject.next(forceState);
+    } else {
+      this.aiChatOpenSubject.next(!this.aiChatOpenSubject.getValue());
+    }
+  }
+
+  sendAiChat(message: string, currentWeek: number = 9, history: any[] = []): Observable<any> {
+    return this.http.post<any>('/api/ai/chat', { message, currentWeek, history });
+  }
+
+  getAiSummary(week: number = 9): Observable<any> {
+    return this.http.get<any>(`/api/ai/summary?week=${week}`);
+  }
+
   constructor(private http: HttpClient) {}
 
   private getHeaders(): HttpHeaders {

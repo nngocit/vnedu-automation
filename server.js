@@ -791,6 +791,44 @@ app.post('/api/sync-batch', async (req, res) => {
 
 // API 404 handler: luôn trả JSON thay vì HTML để tránh lỗi JSON parse trên web
 // API 404 handler: luôn trả JSON thay vì HTML để tránh lỗi JSON parse trên web
+// ========================================================
+// TRỢ LÝ AI VNEDU (AI ASSISTANT CHATBOT)
+// ========================================================
+const aiAssistant = require('./ai-assistant-core');
+
+app.post('/api/ai/chat', async (req, res) => {
+    try {
+        const { message, currentWeek, history } = req.body;
+        if (!message) {
+            return res.status(400).json({ success: false, error: 'Thiếu nội dung câu hỏi' });
+        }
+        const week = parseInt(currentWeek) || 9;
+        const result = await aiAssistant.processAiQuery({ message, currentWeek: week, history: history || [] });
+        res.json(result);
+    } catch (e) {
+        console.error('Lỗi AI Chat:', e);
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+app.get('/api/ai/summary', async (req, res) => {
+    try {
+        const week = parseInt(req.query.week) || 9;
+        const context = await aiAssistant.getWeekContext(week);
+        res.json({
+            success: true,
+            week,
+            totalSlots: context.totalSlots,
+            syncedSlots: context.syncedSlots,
+            unsyncedCount: context.unsyncedSlots.length,
+            missingLessonCount: context.missingLessonSlots.length,
+            slotsWithAbsenceCount: context.slotsWithAbsence.length
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
 app.use('/api', (req, res) => {
     res.status(404).json({ success: false, error: `API endpoint không tồn tại: ${req.method} ${req.path}` });
 });
