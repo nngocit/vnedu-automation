@@ -116,6 +116,18 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   pendingValidationAction: (() => void) | null = null;
 
 
+    // Kiểm tra tuần hiện tại đã có kế hoạch và đã có nhập liệu hay chưa
+  get isWeekPlanCreatedAndHasData(): boolean {
+    if (!this.slots || this.slots.length === 0) return false;
+    return this.slots.some(s =>
+      s.isSynced ||
+      (s.baiDay && s.baiDay.trim() !== '' && s.baiDay !== 'Tiết dạy theo TKB') ||
+      (s.soLuongNghi !== undefined && s.soLuongNghi > 0) ||
+      (s.hsVangList && s.hsVangList.length > 0) ||
+      (s.chitietId && s.chitietId !== '')
+    );
+  }
+
   get displayScanSlots(): any[] {
     if (this.scanFilterTab === 'mismatched') {
       return this.scanAbsentSlots.filter((s: any) => !s.isMatched);
@@ -763,8 +775,39 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Lập kế hoạch dạy học tuần mới
+  // Chặn thao tác bấm tạo khi tuần đã có kế hoạch & nhập liệu
+  onBlockedCreatePlanClick(): void {
+    this.validationModalTitle = `Bảo Vệ An Toàn Dữ Liệu: Tuần ${this.currentWeek}`;
+    this.validationModalErrors = [
+      `Kế hoạch dạy học Tuần ${this.currentWeek} đã được tạo và đã có dữ liệu nhập liệu trên vnEdu (${this.slots.length} tiết giảng dạy).`,
+      `Để đảm bảo an toàn tuyệt đối, hệ thống khóa nút tạo mới để chống việc sinh lại từ TKB làm ghi đè hoặc mất bài dạy và nhận xét của Cô.`,
+      `Cô vui lòng sử dụng nút "🔄 Cập nhật từ vnEdu" trên thanh công cụ để nạp dữ liệu chuẩn xác nhất.`
+    ];
+    this.validationModalWarnings = [];
+    this.validationCanProceed = false; // Chặn hoàn toàn không cho tạo đè
+    this.pendingValidationAction = null;
+    this.showValidationModal = true;
+    this.cdr.detectChanges();
+  }
+
+  // Cập nhật dữ liệu trực tiếp từ vnEdu cho an toàn (không tạo mới, không ghi đè mất bài dạy)
+  refreshFromVnEdu(): void {
+    this.isLoading = true;
+    this.showToast(`Đang cập nhật dữ liệu an toàn từ cổng vnEdu cho Tuần ${this.currentWeek}...`, 'info');
+    this.loadSchedule(this.currentWeek);
+    setTimeout(() => {
+      this.loadAuditNotifications();
+      this.showToast(`✓ Đã cập nhật dữ liệu an toàn từ vnEdu cho Tuần ${this.currentWeek}!`, 'success');
+    }, 1200);
+  }
+
+  // Lập kế hoạch dạy học tuần mới (chỉ cho phép khi tuần CHƯA CÓ dữ liệu)
   autoPlanNewWeek(): void {
+    if (this.isWeekPlanCreatedAndHasData) {
+      this.onBlockedCreatePlanClick();
+      return;
+    }
+
     this.isLoading = true;
     this.showToast(`Đang tự động lập kế hoạch tuần ${this.currentWeek} lên vnEdu...`, 'info');
 

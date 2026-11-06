@@ -65,13 +65,34 @@
         🛡️ Quét SĐĐ Giám Thị
       </button>
 
-      <button class="pill-btn pill-outline shadow-xs" (click)="autoPlanNewWeek()" [disabled]="isLoading" title="Tự động chuẩn bị KHDH cho tuần mới">
+      <!-- TH1: Khi Kế hoạch tuần ĐÃ TẠO và CÓ NHẬP LIỆU -> KHÓA TẠO MỚI ĐỂ BẢO VỆ AN TOÀN -->
+      <button *ngIf="isWeekPlanCreatedAndHasData"
+              type="button"
+              class="pill-btn pill-locked-safe shadow-xs"
+              (click)="onBlockedCreatePlanClick()"
+              title="🛡️ Kế hoạch Tuần {{ currentWeek }} đã tạo và có dữ liệu nhập liệu trên vnEdu. Khóa tạo mới để chống ghi đè mất dữ liệu.">
+        <span class="fs-5 me-1">🔒</span>
+        <span class="text-gray-600 fw-bold fs-8">KHDH Đã Tạo</span>
+      </button>
+
+      <!-- TH2: Khi Tuần CHƯA CÓ KẾ HOẠCH -> Cho phép Lập trước KHDH -->
+      <button *ngIf="!isWeekPlanCreatedAndHasData"
+              class="pill-btn pill-outline shadow-xs"
+              (click)="autoPlanNewWeek()"
+              [disabled]="isLoading"
+              title="Tự động chuẩn bị KHDH cho tuần mới">
         <app-keenicon name="calendar-add" class="fs-4 me-1 text-gray-700"></app-keenicon>
         Lập trước KHDH
       </button>
 
-      <button class="pill-btn pill-outline-circle shadow-xs" (click)="loadSchedule(currentWeek)" [disabled]="isLoading" title="Tải lại dữ liệu tuần">
-        <app-keenicon name="arrows-circle" class="fs-4 text-gray-700" [ngClass]="{'fa-spin': isLoading}"></app-keenicon>
+      <!-- NÚT CẬP NHẬT TỪ VNEDU CHO AN TOÀN (CHỈ UPDATE, KHÔNG TẠO ĐÈ) -->
+      <button type="button"
+              class="pill-btn pill-update-vnedu shadow-xs"
+              (click)="refreshFromVnEdu()"
+              [disabled]="isLoading"
+              title="Cập nhật dữ liệu mới nhất từ cổng vnEdu (An toàn tuyệt đối, không ghi đè dữ liệu bài dạy)">
+        <app-keenicon name="arrows-circle" class="fs-4 me-1 text-primary" [ngClass]="{'fa-spin': isLoading}"></app-keenicon>
+        <span>Cập nhật từ vnEdu</span>
       </button>
     </div>
 
@@ -1032,7 +1053,12 @@
     <!-- Khi không có dữ liệu -->
     <div *ngIf="dayGroups.length === 0" class="empty-state-card p-10 text-center rounded-3 shadow-xs">
       <div class="fs-6 fw-bold text-gray-800">Không có tiết dạy nào phù hợp với bộ lọc</div>
-      <div class="fs-7 text-gray-500 mt-1">Vui lòng chọn tuần khác hoặc bấm "Lập trước KHDH".</div>
+      <div class="fs-7 text-gray-500 mt-1" *ngIf="!isWeekPlanCreatedAndHasData">
+        Vui lòng chọn tuần khác hoặc bấm "Lập trước KHDH".
+      </div>
+      <div class="fs-7 text-gray-500 mt-1" *ngIf="isWeekPlanCreatedAndHasData">
+        Kế hoạch Tuần {{ currentWeek }} đã được lưu trên vnEdu. Bấm nút "Tất cả các lớp" để xem lại các tiết dạy.
+      </div>
     </div>
 
     <!-- FOOTER PHÍM TẮT CHUẨN MẪU -->
