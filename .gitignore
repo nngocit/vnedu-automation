@@ -43,4 +43,8 @@ scratch/
 .DS_Store
 Thumbs.db
 
+# Environment secrets
+.env
+.env.local
+
 dist/
