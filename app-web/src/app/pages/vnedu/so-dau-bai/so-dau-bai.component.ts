@@ -37,6 +37,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   attendanceStudents: AbsentStudent[] = [];
   suggestedAbsentNotice = '';
   unmatchedAbsentsNotice = '';
+  isAttendanceRosterVerified = true;
   attendanceSearchText = '';
   isLoadingAttendance = false;
   isSavingAttendance = false;
@@ -595,33 +596,41 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
           const matchedNames: string[] = [];
           const unmatchedList: string[] = [];
 
+          const normalize = (str: string) => (str || '').toLowerCase().trim().replace(/\s+/g, ' ');
+
           rawAbsents.forEach(v => {
             const rawName = (typeof v === 'string' ? v : (v.fullName || v.name || '')).replace(/\s*\([PKpkCókhôngphép\s]+\)/gi, '').trim();
-            const vName = rawName.toLowerCase();
-            const vMaHs = (typeof v === 'object' && (v.maHs || v.id)) ? String(v.maHs || v.id).trim() : '';
+            const vName = normalize(rawName);
+            const vMaHs = (typeof v === 'object' && (v.maHs || v.ma_hoc_sinh)) ? String(v.maHs || v.ma_hoc_sinh).trim() : '';
+            const vId = (typeof v === 'object' && v.id) ? String(v.id).trim() : '';
             const vIsKhongPhep = (typeof v === 'object' && v.khongPhep) || (typeof v === 'string' && v.toLowerCase().includes('(k)'));
 
-            if (!vName && !vMaHs) return;
+            if (!vName && !vMaHs && !vId) return;
 
-            const found = this.attendanceStudents.find(s => {
-              const sName = (s.fullName || '').trim().toLowerCase();
-              const sMaHs = (s.maHs || '').trim();
-              const sId = (s.id || '').trim();
-
-              if (vMaHs && sMaHs && vMaHs === sMaHs) return true;
-              if (vMaHs && sId && vMaHs === sId) return true;
-              if (vName && sName && (vName === sName || sName.includes(vName) || vName.includes(sName))) return true;
-              return false;
-            });
+            // KIỂM TRA ĐỐI CHIẾU: Bắt buộc học sinh vắng phải thuộc danh sách lớp & trùng khớp Mã HS
+            let found: AbsentStudent | undefined;
+            // 1. So khớp theo Mã HS (Chính xác tuyệt đối)
+            if (vMaHs) {
+              found = this.attendanceStudents.find(s => s.maHs && String(s.maHs).trim() === vMaHs);
+            }
+            // 2. So khớp theo ID vnEdu
+            if (!found && vId && !vId.startsWith('live_') && !vId.startsWith('gt_')) {
+              found = this.attendanceStudents.find(s => s.id && String(s.id).trim() === vId);
+            }
+            // 3. So khớp họ tên chính xác trong danh sách lớp
+            if (!found && vName) {
+              found = this.attendanceStudents.find(s => normalize(s.fullName) === vName);
+            }
 
             if (found) {
               if (!found.coPhep && !found.khongPhep) {
                 found.coPhep = !vIsKhongPhep;
                 found.khongPhep = !!vIsKhongPhep;
-                matchedNames.push(found.fullName + (found.coPhep ? ' (P)' : ' (K)'));
+                matchedNames.push(`${found.fullName} [Mã: ${found.maHs || '---'}]` + (found.coPhep ? ' (P)' : ' (K)'));
               }
             } else if (rawName) {
-              unmatchedList.push(rawName + (vIsKhongPhep ? ' (K)' : ' (P)'));
+              const displayLabel = vMaHs ? `${rawName} (Mã HS: ${vMaHs})` : rawName;
+              unmatchedList.push(displayLabel + (vIsKhongPhep ? ' (K)' : ' (P)'));
             }
           });
 
@@ -630,7 +639,11 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
             this.suggestedAbsentNotice = uniqueNames.join(', ');
           }
           if (unmatchedList.length > 0) {
+            this.isAttendanceRosterVerified = false;
             this.unmatchedAbsentsNotice = [...new Set(unmatchedList)].join(', ');
+          } else {
+            this.isAttendanceRosterVerified = true;
+            this.unmatchedAbsentsNotice = '';
           }
         }
         this.cdr.detectChanges();

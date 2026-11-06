@@ -603,8 +603,22 @@ app.post('/api/save-attendance', async (req, res) => {
             });
         }
 
-        const absentList = (studentsData || []).filter(s => s.coPhep || s.khongPhep || s.co_phep || s.khong_phep);
-        const saveRes = await core.saveHocSinhVangToVnEdu(targetChitietId, absentList);
+        const targetLop = (slot && slot.lop) || req.body.lop || req.body.className || '';
+        let absentList = (studentsData || []).filter(s => s.coPhep || s.khongPhep || s.co_phep || s.khong_phep);
+
+        // KIỂM TRA BẢO MẬT: Xác thực học sinh vắng BẮT BUỘC phải thuộc danh sách lớp & trùng khớp Mã HS
+        let removedForeign = [];
+        if (targetLop && absentList.length > 0) {
+            const valCheck = await core.validateStudentsInClass(targetLop, absentList);
+            if (valCheck.invalidStudents.length > 0) {
+                removedForeign = valCheck.invalidStudents;
+                console.warn(`[KIỂM SOÁT LỚP HỌC] Đã phát hiện và loại bỏ ${removedForeign.length} học sinh không thuộc lớp ${targetLop}:`,
+                    removedForeign.map(s => `${s.fullName} (Mã HS: ${s.maHs})`));
+                absentList = valCheck.validStudents;
+            }
+        }
+
+        const saveRes = await core.saveHocSinhVangToVnEdu(targetChitietId, absentList, targetLop);
 
         // Lưu bản ghi vào CSDL local attendance_db.json
         if (slot) {
@@ -647,6 +661,22 @@ app.post('/api/save-attendance', async (req, res) => {
 });
 
 // API: Đồng bộ 1 tiết đơn lẻ
+// API: Kiểm tra đối chiếu học sinh theo lớp & Mã HS
+app.post('/api/attendance/validate-class', async (req, res) => {
+    try {
+        const { lop, students } = req.body;
+        if (!lop) return res.status(400).json({ success: false, msg: 'Thiếu tên lớp cần đối chiếu' });
+        const check = await core.validateStudentsInClass(lop, students || []);
+        res.json({
+            success: true,
+            lop,
+            ...check
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
 app.post('/api/sync-slot', async (req, res) => {
     try {
         const { slot, week } = req.body;

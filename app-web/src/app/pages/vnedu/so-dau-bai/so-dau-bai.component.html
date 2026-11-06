@@ -994,6 +994,14 @@
           <span class="stat-num">{{ countTotalVang }} em</span>
           <span *ngIf="countTotalVang > 0" class="stat-detail">({{ countVangPhep }} phép, {{ countVangKhongPhep }} k.phép)</span>
         </div>
+        <div class="stat-capsule" [ngClass]="isAttendanceRosterVerified ? 'stat-verified-badge' : 'stat-unmatched-badge'"
+             [title]="isAttendanceRosterVerified ? ('100% Mã HS trùng khớp với danh sách lớp ' + selectedSlotForAttendance?.lop) : 'Phát hiện học sinh không thuộc lớp này'">
+          <span class="stat-icon">{{ isAttendanceRosterVerified ? '🛡️' : '⚠️' }}</span>
+          <span class="stat-label">Mã HS Lớp:</span>
+          <span class="stat-num" [class.text-success]="isAttendanceRosterVerified" [class.text-danger]="!isAttendanceRosterVerified">
+            {{ isAttendanceRosterVerified ? '✓ Khớp 100%' : 'Lệch lớp' }}
+          </span>
+        </div>
       </div>
 
       <div class="d-flex align-items-center gap-2">
@@ -1022,13 +1030,17 @@
         </div>
       </div>
 
-      <!-- Cảnh báo nếu có học sinh ghi nhận trên SĐB nhưng không có trong danh sách lớp -->
-      <div *ngIf="unmatchedAbsentsNotice" class="alert-unmatched-absent mb-3 p-3 rounded-3 d-flex align-items-center gap-2">
-        <span class="fs-4">⚠️</span>
+      <!-- Cảnh báo nếu có học sinh ghi nhận trên SĐB hoặc Giám thị nhưng không có trong danh sách lớp -->
+      <div *ngIf="unmatchedAbsentsNotice" class="alert-unmatched-absent mb-3 p-3 rounded-3 d-flex align-items-center gap-3 shadow-xs">
+        <span class="fs-3">🛡️</span>
         <div class="fs-7 flex-grow-1">
-          <span class="fw-bold text-dark">Lưu ý đối chiếu SĐB:</span>
-          <span class="ms-1 fw-bold text-danger">{{ unmatchedAbsentsNotice }}</span>
-          <span class="d-block text-muted fs-8 mt-0.5">Tên học sinh này được ghi trên Sổ Đầu Bài vnEdu nhưng không có trong danh sách học sinh của lớp {{ selectedSlotForAttendance?.lop }}.</span>
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="badge badge-danger px-2.5 py-1 fs-8 fw-bolder">ĐÃ CHẶN HỌC SINH NGOẠI LAI</span>
+            <span class="fw-bold text-danger fs-7">{{ unmatchedAbsentsNotice }}</span>
+          </div>
+          <span class="d-block text-muted fs-8 mt-1">
+            Hệ thống đã tự động đối chiếu Mã HS với danh sách lớp <strong>{{ selectedSlotForAttendance?.lop }}</strong>: Học sinh này <strong>không có mã trong lớp</strong> nên đã được tự động loại bỏ để bảo vệ Sổ Đầu Bài không bị sai lệch.
+          </span>
         </div>
       </div>
       <div class="position-relative mb-3">
@@ -1050,7 +1062,7 @@
             <tr class="fw-bold text-uppercase fs-8">
               <th class="ps-3 w-50px">STT</th>
               <th class="min-w-160px">Họ và Tên Học Sinh</th>
-              <th class="w-100px text-gray-500 font-monospace">Mã HS</th>
+              <th class="w-120px text-gray-600 font-monospace">Mã HS Lớp</th>
               <th class="text-end pe-3 min-w-180px">Trạng Thái Điểm Danh</th>
             </tr>
           </thead>

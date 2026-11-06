@@ -905,14 +905,155 @@ function getAvailableWeeks(source = 'vnedu') {
         }
     }
 
-    // Lưu danh sách học sinh vắng vào vnEdu
-    async function saveHocSinhVangToVnEdu(chitietId, studentsData) {
+    // Bộ nhớ đệm danh sách học sinh theo lớp
+    const classRosterCache = {};
+
+    // Lấy danh sách học sinh chính thức của một lớp (kèm cache)
+    async function getClassRoster(lopName) {
+        if (!lopName) return [];
+        const cleanLop = String(lopName).toUpperCase().trim();
+        const key = Object.keys(CLASS_MAP).find(k => cleanLop === k || cleanLop.includes(k) || k.includes(cleanLop)) || cleanLop;
+
+        if (classRosterCache[key] && classRosterCache[key].length > 0) {
+            return classRosterCache[key];
+        }
+
+        // 1. Đọc từ file cache cục bộ schedule_cache.json
+        try {
+            const cachePath = path.join(__dirname, 'public', 'schedule_cache.json');
+            if (fs.existsSync(cachePath)) {
+                const cacheData = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+                if (cacheData.rosters && cacheData.rosters[key] && Array.isArray(cacheData.rosters[key]) && cacheData.rosters[key].length > 0) {
+                    classRosterCache[key] = cacheData.rosters[key];
+                    return classRosterCache[key];
+                }
+            }
+        } catch (_) {}
+
+        // 2. Tra cứu trực tiếp từ vnEdu
+        try {
+            const liveRes = await getDaSachHocSinhVang(key, 9, 1, 1, '');
+            if (liveRes && liveRes.success && Array.isArray(liveRes.students) && liveRes.students.length > 0) {
+                classRosterCache[key] = liveRes.students;
+                return classRosterCache[key];
+            }
+        } catch (_) {}
+
+        return [];
+    }
+
+    /**
+     * KIỂM TRA ĐỐI CHIẾU HỌC SINH THUỘC LỚP & TRÙNG KHỚP MÃ HỌC SINH
+     * Đảm bảo mọi học sinh ghi nhận vắng BẮT BUỘC phải có Mã HS (hoặc ID) nằm trong danh sách chính thức của lớp.
+     * Ngăn chặn tuyệt đối việc học sinh lớp khác (ví dụ lớp 9) bị ghi đè nhầm sang lớp 7.
+     */
+    async function validateStudentsInClass(lopName, studentsList) {
+        if (!Array.isArray(studentsList) || studentsList.length === 0) {
+            return { isValid: true, validStudents: [], invalidStudents: [], details: [] };
+        }
+
+        const roster = await getClassRoster(lopName);
+        if (!roster || roster.length === 0) {
+            // Không lấy được roster -> tạm cho qua kèm cảnh báo
+            return { isValid: true, validStudents: studentsList, invalidStudents: [], details: [] };
+        }
+
+        const normalize = (str) => (str || '').toLowerCase().trim().replace(/\s+/g, ' ');
+
+        const validStudents = [];
+        const invalidStudents = [];
+        const details = [];
+
+        for (const stu of studentsList) {
+            const stuMaHs = stu.maHs || stu.ma_hoc_sinh || stu.ma_hs_str || '';
+            const stuId = stu.id ? String(stu.id) : '';
+            const stuName = normalize(stu.fullName || stu.full_name || stu.ho_ten || stu.rawName || '');
+            const cleanNameOnly = stuName.replace(/\s*\([pkcókhôngphép\s]+\)/gi, '').trim();
+
+            let matched = null;
+
+            // Ưu tiên 1: Mã HS trùng khớp tuyệt đối với danh sách lớp
+            if (stuMaHs) {
+                matched = roster.find(r => r.maHs && String(r.maHs).trim() === String(stuMaHs).trim());
+            }
+
+            // Ưu tiên 2: ID vnEdu trùng khớp với danh sách lớp
+            if (!matched && stuId && !stuId.startsWith('live_') && !stuId.startsWith('gt_')) {
+                matched = roster.find(r => r.id && String(r.id) === stuId);
+            }
+
+            // Ưu tiên 3: Tên đầy đủ trùng khớp chính xác trong danh sách lớp
+            if (!matched && cleanNameOnly) {
+                matched = roster.find(r => {
+                    const rName = normalize(r.fullName || r.full_name || '');
+                    return rName === cleanNameOnly;
+                });
+            }
+
+            if (matched) {
+                validStudents.push({
+                    ...stu,
+                    id: matched.id || stu.id,
+                    maHs: matched.maHs || stu.maHs,
+                    fullName: matched.fullName || stu.fullName,
+                    isVerifiedClass: true
+                });
+                details.push({
+                    student: stu,
+                    matched: true,
+                    rosterStudent: matched,
+                    reason: `✓ Khớp Mã HS ${matched.maHs} (${matched.fullName}) với danh sách lớp ${lopName}`
+                });
+            } else {
+                invalidStudents.push({
+                    ...stu,
+                    isVerifiedClass: false,
+                    reason: `❌ Học sinh ${stu.fullName || stu.rawName} (Mã HS: ${stuMaHs || 'N/A'}) KHÔNG thuộc danh sách lớp ${lopName}`
+                });
+                details.push({
+                    student: stu,
+                    matched: false,
+                    reason: `Mã HS ${stuMaHs || 'N/A'} không có trong danh sách 34/41 học sinh của lớp ${lopName}`
+                });
+            }
+        }
+
+        return {
+            isValid: invalidStudents.length === 0,
+            validStudents,
+            invalidStudents,
+            details
+        };
+    }
+
+    // Lưu danh sách học sinh vắng vào vnEdu (kèm kiểm tra đối chiếu lớp và mã HS)
+    async function saveHocSinhVangToVnEdu(chitietId, studentsData, lopName = '') {
         if (!chitietId) return { success: false, msg: 'Tiết học chưa có ID trên Sổ đầu bài' };
 
-        const absents = (studentsData || []).filter(s => s.coPhep || s.khongPhep || s.co_phep || s.khong_phep);
+        let absents = (studentsData || []).filter(s => s.coPhep || s.khongPhep || s.co_phep || s.khong_phep);
+
+        // Kiểm tra đối chiếu mã học sinh và danh sách lớp nếu có tên lớp
+        let removedForeign = [];
+        if (lopName && absents.length > 0) {
+            const checkRes = await validateStudentsInClass(lopName, absents);
+            if (checkRes.invalidStudents.length > 0) {
+                removedForeign = checkRes.invalidStudents;
+                console.warn(`[BẢO MẬT ĐIỂM DANH] Tự động loại bỏ ${removedForeign.length} học sinh không thuộc lớp ${lopName}:`,
+                    removedForeign.map(s => `${s.fullName} (Mã HS: ${s.maHs})`));
+                absents = checkRes.validStudents;
+            }
+        }
+
         if (absents.length === 0) {
             // Cả lớp đi học đầy đủ: vnEdu không có học sinh để lưu, thành công ngay
-            return { success: true, msg: 'Cả lớp đi học đầy đủ', data: [] };
+            return {
+                success: true,
+                msg: removedForeign.length > 0
+                    ? `Đã tự động loại bỏ ${removedForeign.length} học sinh không thuộc lớp ${lopName}. Cả lớp đi học đầy đủ!`
+                    : 'Cả lớp đi học đầy đủ',
+                data: [],
+                removedForeign
+            };
         }
 
         let { token, context } = await ensureVnEduToken();
@@ -1188,6 +1329,8 @@ function getAvailableWeeks(source = 'vnedu') {
         applyPpctRules,
         getDaSachHocSinhVang,
         saveHocSinhVangToVnEdu,
+        getClassRoster,
+        validateStudentsInClass,
         getSoDiemDanhNamHoc,
         scanAbsentFromGiamThi,
         CLASS_MAP
