@@ -662,6 +662,38 @@ app.post('/api/save-attendance', async (req, res) => {
 
 // API: Đồng bộ 1 tiết đơn lẻ
 // API: Kiểm tra đối chiếu học sinh theo lớp & Mã HS
+// API: Rà soát & kiểm toán toàn diện quy tắc nghiệp vụ cho 1 tuần học
+app.get('/api/validation/audit-week', async (req, res) => {
+    try {
+        const week = parseInt(req.query.week) || 9;
+        let schedule = [];
+        try {
+            const data = await core.getWeekScheduleFromVnEdu(week);
+            if (data && Array.isArray(data.schedule)) schedule = data.schedule;
+        } catch (_) {}
+
+        if (schedule.length === 0) {
+            try {
+                const cachePath = path.join(__dirname, 'public', 'schedule_cache.json');
+                if (fs.existsSync(cachePath)) {
+                    const cache = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+                    schedule = cache.weeks?.[String(week)]?.schedule || [];
+                }
+            } catch (_) {}
+        }
+
+        const auditResult = core.auditScheduleSlots(schedule, week);
+        res.json({
+            success: true,
+            week,
+            totalSlots: schedule.length,
+            ...auditResult
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
 app.post('/api/attendance/validate-class', async (req, res) => {
     try {
         const { lop, students } = req.body;

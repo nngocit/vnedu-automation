@@ -123,6 +123,12 @@ export class VnEduService {
     });
   }
 
+  auditWeek(week: number = 9): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/validation/audit-week?week=${week}`, {
+      headers: this.getHeaders()
+    });
+  }
+
   resetExcel(): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/reset-excel`, {}, {
       headers: this.getHeaders()

@@ -1307,7 +1307,192 @@ function getAvailableWeeks(source = 'vnedu') {
         return { school: 'Trường THCS An Lập', branch: 'Phân hiệu An Lập' };
     }
 
-    module.exports = {
+    
+    /**
+     * RÀ SOÁT & KIỂM TRA TOÀN DIỆN NGHIỆP VỤ SỔ ĐẦU BÀI & ĐIỂM DANH (FULL AUDIT ENGINE)
+     * Kiểm tra tất cả các quy tắc: Sĩ số trần, de-duplicate, PPCT lũy tiến, nhảy cóc, tên bài dạy, thang điểm, trùng lịch
+     */
+    function auditScheduleSlots(slots, weekNumber = 9) {
+        if (!Array.isArray(slots) || slots.length === 0) {
+            return { totalIssues: 0, errorsCount: 0, warningsCount: 0, issues: [] };
+        }
+
+        const issues = [];
+        const CLASS_CAPACITY = {
+            '7A2AL': 34,
+            '7A3AL': 33,
+            '9A2AL': 41
+        };
+
+        // 1. Kiểm tra trùng lặp lịch dạy của giáo viên (Slot conflict)
+        const timeSlotsMap = {};
+        slots.forEach(slot => {
+            const timeKey = `${slot.thu}_${slot.buoi || (Number(slot.tiet) <= 5 ? 1 : 2)}_${slot.tiet}`;
+            if (!timeSlotsMap[timeKey]) {
+                timeSlotsMap[timeKey] = [slot];
+            } else {
+                timeSlotsMap[timeKey].push(slot);
+            }
+        });
+
+        Object.entries(timeSlotsMap).forEach(([timeKey, timeList]) => {
+            if (timeList.length > 1) {
+                const classes = timeList.map(s => s.lop).join(' và ');
+                const sample = timeList[0];
+                issues.push({
+                    severity: 'error',
+                    category: 'CONFLICT',
+                    slotRef: { lop: sample.lop, thu: sample.thu, tiet: sample.tiet, buoi: sample.buoi },
+                    title: 'Trùng lịch dạy',
+                    message: `Thứ ${sample.thu} • Tiết ${sample.tiet} đang có ${timeList.length} lớp trùng giờ: ${classes}`
+                });
+            }
+        });
+
+        // 2. Kiểm tra tính lũy tiến & nhảy cóc của Phân Phối Chương Trình (PPCT)
+        const subjectClassMap = {};
+        slots.forEach(slot => {
+            const key = `${slot.lop}_${(slot.mon || '').toLowerCase().trim()}`;
+            if (!subjectClassMap[key]) subjectClassMap[key] = [];
+            subjectClassMap[key].push(slot);
+        });
+
+        Object.entries(subjectClassMap).forEach(([key, subSlots]) => {
+            // Sắp xếp các tiết theo thứ tự diễn ra trong tuần: Thứ -> Buổi -> Tiết
+            subSlots.sort((a, b) => {
+                if (a.thu !== b.thu) return a.thu - b.thu;
+                if (a.buoi !== b.buoi) return (a.buoi || 1) - (b.buoi || 1);
+                return a.tiet - b.tiet;
+            });
+
+            for (let i = 1; i < subSlots.length; i++) {
+                const prev = subSlots[i - 1];
+                const curr = subSlots[i];
+                const prevPpct = Number(prev.ppct);
+                const currPpct = Number(curr.ppct);
+
+                if (!isNaN(prevPpct) && !isNaN(currPpct) && prevPpct > 0 && currPpct > 0) {
+                    // Kiểm tra PPCT bị giảm lùi
+                    if (currPpct < prevPpct) {
+                        issues.push({
+                            severity: 'warning',
+                            category: 'PPCT',
+                            slotRef: { lop: curr.lop, thu: curr.thu, tiet: curr.tiet, buoi: curr.buoi },
+                            title: 'Tiết PPCT giảm lùi',
+                            message: `Lớp ${curr.lop} (${curr.mon}): Tiết ${curr.tiet} Thứ ${curr.thu} có PPCT (${currPpct}) nhỏ hơn tiết trước PPCT (${prevPpct}) vào Thứ ${prev.thu}`
+                        });
+                    }
+                    // Kiểm tra PPCT nhảy cóc (> 2 tiết)
+                    else if (currPpct - prevPpct > 2) {
+                        issues.push({
+                            severity: 'warning',
+                            category: 'PPCT',
+                            slotRef: { lop: curr.lop, thu: curr.thu, tiet: curr.tiet, buoi: curr.buoi },
+                            title: 'Tiết PPCT nhảy cóc',
+                            message: `Lớp ${curr.lop} (${curr.mon}): PPCT nhảy từ ${prevPpct} (Thứ ${prev.thu}) lên ${currPpct} (Thứ ${curr.thu}), cách ${currPpct - prevPpct} tiết`
+                        });
+                    }
+                }
+            }
+        });
+
+        // 3. Kiểm tra từng tiết đơn lẻ
+        slots.forEach(slot => {
+            const lessonName = (slot.tenBai || slot.baiDay || slot.noiDung || '').trim();
+            const ppctNum = Number(slot.ppct);
+            const capacity = CLASS_CAPACITY[slot.lop] || 40;
+            const absentCount = Number(slot.soLuongNghi !== undefined ? slot.soLuongNghi : (slot.hsVangList ? slot.hsVangList.length : 0));
+
+            // 3.1 Tên bài dạy để trống
+            if (!lessonName) {
+                issues.push({
+                    severity: 'error',
+                    category: 'LESSON',
+                    slotRef: { lop: slot.lop, thu: slot.thu, tiet: slot.tiet, buoi: slot.buoi },
+                    title: 'Thiếu tên bài dạy',
+                    message: `Thứ ${slot.thu} • Tiết ${slot.tiet} • Lớp ${slot.lop}: Chưa nhập tên bài dạy trên Sổ Đầu Bài`
+                });
+            }
+
+            // 3.2 Tiết PPCT không hợp lệ
+            if (!slot.ppct || isNaN(ppctNum) || ppctNum <= 0) {
+                issues.push({
+                    severity: 'error',
+                    category: 'PPCT',
+                    slotRef: { lop: slot.lop, thu: slot.thu, tiet: slot.tiet, buoi: slot.buoi },
+                    title: 'PPCT không hợp lệ',
+                    message: `Thứ ${slot.thu} • Tiết ${slot.tiet} • Lớp ${slot.lop}: Tiết PPCT (${slot.ppct || 'trống'}) không phải là số hợp lệ`
+                });
+            }
+
+            // 3.3 Sĩ số vắng vượt trần lớp học
+            if (absentCount > capacity) {
+                issues.push({
+                    severity: 'error',
+                    category: 'ATTENDANCE',
+                    slotRef: { lop: slot.lop, thu: slot.thu, tiet: slot.tiet, buoi: slot.buoi },
+                    title: 'Số vắng vượt quá sĩ số',
+                    message: `Thứ ${slot.thu} • Tiết ${slot.tiet} • Lớp ${slot.lop}: Báo vắng ${absentCount} em, vượt quá sĩ số tối đa (${capacity} em)`
+                });
+            }
+            // 3.4 Tỷ lệ vắng bất thường (> 50% lớp)
+            else if (absentCount > Math.floor(capacity * 0.5)) {
+                issues.push({
+                    severity: 'warning',
+                    category: 'ATTENDANCE',
+                    slotRef: { lop: slot.lop, thu: slot.thu, tiet: slot.tiet, buoi: slot.buoi },
+                    title: 'Tỷ lệ vắng bất thường',
+                    message: `Thứ ${slot.thu} • Tiết ${slot.tiet} • Lớp ${slot.lop}: Số học sinh vắng cao bất thường (${absentCount}/${capacity} em, >50% sĩ số)`
+                });
+            }
+
+            // 3.5 Chống trùng lặp học sinh vắng trong cùng một tiết
+            if (Array.isArray(slot.hsVangList) && slot.hsVangList.length > 1) {
+                const seenIds = new Set();
+                const seenNames = new Set();
+                for (const h of slot.hsVangList) {
+                    const hId = h.id ? String(h.id) : (h.maHs ? String(h.maHs) : '');
+                    const hName = (h.fullName || h.name || '').trim().toLowerCase();
+                    if ((hId && seenIds.has(hId)) || (hName && seenNames.has(hName))) {
+                        issues.push({
+                            severity: 'warning',
+                            category: 'ATTENDANCE',
+                            slotRef: { lop: slot.lop, thu: slot.thu, tiet: slot.tiet, buoi: slot.buoi },
+                            title: 'Trùng lặp học sinh vắng',
+                            message: `Thứ ${slot.thu} • Tiết ${slot.tiet} • Lớp ${slot.lop}: Học sinh "${h.fullName || hName}" bị trùng lặp trong danh sách vắng`
+                        });
+                        break;
+                    }
+                    if (hId) seenIds.add(hId);
+                    if (hName) seenNames.add(hName);
+                }
+            }
+
+            // 3.6 Thang điểm tiết học
+            const diemNum = Number(slot.diem);
+            if (slot.diem && !isNaN(diemNum) && diemNum > 20) {
+                issues.push({
+                    severity: 'warning',
+                    category: 'SCORE',
+                    slotRef: { lop: slot.lop, thu: slot.thu, tiet: slot.tiet, buoi: slot.buoi },
+                    title: 'Điểm tiết học vượt trần',
+                    message: `Thứ ${slot.thu} • Tiết ${slot.tiet} • Lớp ${slot.lop}: Điểm tiết học (${diemNum}) vượt quá thang điểm chuẩn 20`
+                });
+            }
+        });
+
+        const errorsCount = issues.filter(i => i.severity === 'error').length;
+        const warningsCount = issues.filter(i => i.severity === 'warning').length;
+
+        return {
+            totalIssues: issues.length,
+            errorsCount,
+            warningsCount,
+            issues
+        };
+    }
+
+module.exports = {
         getLatestExcelFile,
         getAvailableWeeks,
         parseWeekSchedule,
@@ -1331,6 +1516,7 @@ function getAvailableWeeks(source = 'vnedu') {
         saveHocSinhVangToVnEdu,
         getClassRoster,
         validateStudentsInClass,
+        auditScheduleSlots,
         getSoDiemDanhNamHoc,
         scanAbsentFromGiamThi,
         CLASS_MAP

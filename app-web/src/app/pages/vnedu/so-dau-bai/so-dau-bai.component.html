@@ -75,20 +75,120 @@
       </button>
     </div>
 
-    <!-- Cụm chọn tuần dạng Pill - Mặc định tuần hiện tại -->
-    <div class="week-pill-control">
-      <button type="button" class="nav-btn" (click)="prevWeek()" [disabled]="currentWeek <= 1" title="Tuần trước">
-        ❮
-      </button>
-      <span class="bullet bullet-dot bg-success me-1"></span>
-      <select class="week-select-pill" [(ngModel)]="currentWeek" (change)="onWeekChange($event)" title="Chọn tuần học">
-        <option *ngFor="let opt of weeksList; trackBy: trackByWeek" [value]="opt.weekNumber">
-          Tuần {{ opt.weekNumber }}{{ opt.weekNumber === 9 ? ' • HK I (Hiện tại)' : '' }}
-        </option>
-      </select>
-      <button type="button" class="nav-btn" (click)="nextWeek()" [disabled]="currentWeek >= 35" title="Tuần sau">
-        ❯
-      </button>
+    <div class="d-flex align-items-center gap-2">
+      <!-- Cụm chọn tuần dạng Pill - Mặc định tuần hiện tại -->
+      <div class="week-pill-control">
+        <button type="button" class="nav-btn" (click)="prevWeek()" [disabled]="currentWeek <= 1" title="Tuần trước">
+          ❮
+        </button>
+        <span class="bullet bullet-dot bg-success me-1"></span>
+        <select class="week-select-pill" [(ngModel)]="currentWeek" (change)="onWeekChange($event)" title="Chọn tuần học">
+          <option *ngFor="let opt of weeksList; trackBy: trackByWeek" [value]="opt.weekNumber">
+            Tuần {{ opt.weekNumber }}{{ opt.weekNumber === 9 ? ' • HK I (Hiện tại)' : '' }}
+          </option>
+        </select>
+        <button type="button" class="nav-btn" (click)="nextWeek()" [disabled]="currentWeek >= 35" title="Tuần sau">
+          ❯
+        </button>
+      </div>
+
+      <!-- CHUÔNG THÔNG BÁO THÔNG MINH (ENTERPRISE NOTIFICATION BELL) -->
+      <div class="position-relative notification-bell-wrap">
+        <button type="button" class="notification-bell-btn shadow-xs"
+                (click)="toggleNotificationDropdown()"
+                [class.has-critical]="hasCriticalErrors"
+                [class.has-unread]="unreadNotificationsCount > 0"
+                title="Trung tâm thông báo & cảnh báo nghiệp vụ SĐB">
+          <span class="bell-icon" [class.bell-ringing]="unreadNotificationsCount > 0">🔔</span>
+          <span *ngIf="unreadNotificationsCount > 0"
+                class="badge-bell-count"
+                [ngClass]="hasCriticalErrors ? 'badge-danger-glow' : 'badge-warning-glow'">
+            {{ unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount }}
+          </span>
+        </button>
+
+        <!-- BACKDROP ĐỂ ĐÓNG DROPDOWN KHI CLICK RA NGOÀI -->
+        <div *ngIf="showNotificationDropdown" class="notification-backdrop" (click)="closeNotificationDropdown()"></div>
+
+        <!-- POPUP DROPDOWN TRUNG TÂM THÔNG BÁO -->
+        <div *ngIf="showNotificationDropdown" class="notification-dropdown-panel shadow-lg rounded-3">
+          <div class="notif-header d-flex align-items-center justify-content-between p-3 border-bottom">
+            <div class="d-flex align-items-center gap-2">
+              <span class="fs-4">🔔</span>
+              <div>
+                <div class="fw-bold fs-7 text-dark">Thông Báo & Cảnh Báo</div>
+                <div class="fs-9 text-muted">{{ unreadNotificationsCount }} thông báo chưa đọc</div>
+              </div>
+            </div>
+            <div class="d-flex align-items-center gap-1">
+              <button type="button" class="btn btn-xs btn-light-primary fs-9 py-1 px-2" (click)="loadAuditNotifications()" title="Kiểm tra lại toàn bộ">
+                🔄 Quét lại
+              </button>
+              <button *ngIf="unreadNotificationsCount > 0" type="button" class="btn btn-xs btn-light fs-9 py-1 px-2" (click)="markAllNotificationsAsRead()" title="Đánh dấu tất cả là đã đọc">
+                ✓ Đã đọc
+              </button>
+            </div>
+          </div>
+
+          <!-- Tabs lọc thông báo -->
+          <div class="notif-tabs d-flex px-3 pt-2 pb-1 border-bottom gap-2">
+            <button class="notif-tab-btn" [class.active]="activeNotificationTab === 'all'" (click)="activeNotificationTab = 'all'">
+              Tất cả ({{ notifications.length }})
+            </button>
+            <button class="notif-tab-btn" [class.active]="activeNotificationTab === 'alerts'" (click)="activeNotificationTab = 'alerts'">
+              ⚠️ Cảnh báo
+            </button>
+            <button class="notif-tab-btn" [class.active]="activeNotificationTab === 'info'" (click)="activeNotificationTab = 'info'">
+              ℹ️ Thông tin
+            </button>
+          </div>
+
+          <!-- Danh sách thông báo -->
+          <div class="notif-list-body">
+            <div *ngIf="filteredNotifications.length === 0" class="p-6 text-center text-muted fs-8">
+              <span class="fs-2 d-block mb-1">🎉</span>
+              Tuyệt vời! Không có cảnh báo nghiệp vụ nào cần xử lý.
+            </div>
+
+            <div *ngFor="let notif of filteredNotifications"
+                 class="notif-item p-3 border-bottom d-flex align-items-start gap-2.5 transition-all"
+                 [class.unread]="!notif.isRead"
+                 [class.border-error]="notif.severity === 'error'"
+                 [class.border-warning]="notif.severity === 'warning'"
+                 [class.border-info]="notif.severity === 'info'"
+                 (click)="navigateToSlotFromNotification(notif)">
+              <div class="notif-icon-badge mt-0.5"
+                   [ngClass]="{
+                     'bg-danger-subtle text-danger': notif.severity === 'error',
+                     'bg-warning-subtle text-warning': notif.severity === 'warning',
+                     'bg-primary-subtle text-primary': notif.severity === 'info',
+                     'bg-success-subtle text-success': notif.severity === 'success'
+                   }">
+                <span *ngIf="notif.severity === 'error'">❌</span>
+                <span *ngIf="notif.severity === 'warning'">⚠️</span>
+                <span *ngIf="notif.severity === 'info'">ℹ️</span>
+                <span *ngIf="notif.severity === 'success'">✓</span>
+              </div>
+              <div class="flex-grow-1 min-w-0">
+                <div class="d-flex align-items-center justify-content-between">
+                  <div class="fw-bold fs-8 text-dark text-truncate">{{ notif.title }}</div>
+                  <span class="fs-9 text-muted ms-1">{{ notif.time }}</span>
+                </div>
+                <div class="fs-8 text-gray-700 mt-0.5 line-clamp-2">{{ notif.message }}</div>
+                <div *ngIf="notif.slotRef" class="mt-1 d-flex align-items-center gap-1.5">
+                  <span class="badge badge-light-primary fs-9 py-0.5 px-1.5">
+                    Thứ {{ notif.slotRef.thu }} • Tiết {{ notif.slotRef.tiet }} • {{ notif.slotRef.lop }}
+                  </span>
+                  <span class="fs-9 text-primary fw-semibold cursor-pointer">Xem tiết 👉</span>
+                </div>
+              </div>
+              <button type="button" class="btn btn-icon btn-xs btn-ghost text-muted ms-auto" (click)="dismissNotification(notif.id, $event)" title="Xóa thông báo">
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1514,6 +1614,70 @@
         </button>
         <button type="button" class="btn btn-sm btn-footer-close fw-bold rounded-pill px-4" (click)="closeScanModal()">
           Đóng
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- HỘP THOẠI XÁC NHẬN KIỂM TRA NGHIỆP VỤ SỔ ĐẦU BÀI (VALIDATION MODAL DIALOG) -->
+<div *ngIf="showValidationModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(15, 23, 42, 0.65); z-index: 1060;">
+  <div class="modal-dialog modal-dialog-centered modal-md">
+    <div class="modal-content rounded-4 border-0 shadow-2xl overflow-hidden">
+      <!-- Header -->
+      <div class="modal-header py-3 px-4" [ngClass]="validationModalErrors.length > 0 ? 'bg-danger text-white' : 'bg-warning text-dark'">
+        <div class="d-flex align-items-center gap-2">
+          <span class="fs-3">{{ validationModalErrors.length > 0 ? '🚫' : '⚠️' }}</span>
+          <h5 class="modal-title fw-bolder mb-0 fs-6" [class.text-white]="validationModalErrors.length > 0">
+            {{ validationModalTitle || 'Kiểm Tra Nghiệp Vụ Sổ Đầu Bài' }}
+          </h5>
+        </div>
+        <button type="button" class="btn-close" [class.btn-close-white]="validationModalErrors.length > 0" (click)="closeValidationModal()"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body p-4 fs-7">
+        <!-- Lỗi chặn bắt buộc sửa -->
+        <div *ngIf="validationModalErrors.length > 0" class="mb-3">
+          <div class="fw-bold text-danger mb-1.5 d-flex align-items-center gap-1.5">
+            <span>❌</span> Các vấn đề bắt buộc phải bổ sung/sửa trước khi lưu:
+          </div>
+          <div class="alert alert-danger p-3 rounded-3 mb-0">
+            <ul class="mb-0 ps-4">
+              <li *ngFor="let err of validationModalErrors" class="mb-1 text-danger fw-semibold">
+                {{ err }}
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Cảnh báo lưu ý (có thể bỏ qua) -->
+        <div *ngIf="validationModalWarnings.length > 0" class="mb-3">
+          <div class="fw-bold text-warning mb-1.5 d-flex align-items-center gap-1.5">
+            <span>⚠️</span> Các cảnh báo lưu ý đối chiếu:
+          </div>
+          <div class="alert alert-warning p-3 rounded-3 mb-0">
+            <ul class="mb-0 ps-4">
+              <li *ngFor="let warn of validationModalWarnings" class="mb-1 text-dark">
+                {{ warn }}
+              </li>
+            </ul>
+          </div>
+          <div class="fs-8 text-muted mt-1.5 italic">
+            Cô có thể bấm "Bỏ qua & Vẫn lưu" nếu nội dung trên đã được thống nhất hoặc là tiết dạy đặc biệt.
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="modal-footer py-2 px-4 bg-light d-flex justify-content-between">
+        <button type="button" class="btn btn-sm btn-secondary" (click)="closeValidationModal()">
+          ✕ Quay lại chỉnh sửa
+        </button>
+
+        <button *ngIf="validationCanProceed" type="button" class="btn btn-sm btn-warning fw-bold shadow-xs" (click)="proceedValidationSave()">
+          ✓ Bỏ qua cảnh báo & Vẫn lưu
         </button>
       </div>
     </div>
