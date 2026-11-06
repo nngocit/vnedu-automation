@@ -876,7 +876,20 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
         if (res.success) {
           slot.isMatched = true;
           slot.sdbSoLuongNghi = absentList.length;
+          slot.giamThiSoLuongNghi = absentList.length;
           slot.sdbDsVang = absentList.map((a: any) => a.fullName + (a.coPhep ? ' (P)' : ' (K)'));
+          slot.giamThiDsVang = absentList;
+
+          const mainSlot = this.slots.find(s => s.lop === slot.lop && s.thu === slot.thu && s.tiet === slot.tiet && s.buoi === slot.buoi);
+          if (mainSlot) {
+            mainSlot.isMatched = true;
+            mainSlot.sdbSoLuongNghi = absentList.length;
+            mainSlot.giamThiSoLuongNghi = absentList.length;
+            mainSlot.sdbDsVang = slot.sdbDsVang;
+            mainSlot.giamThiDsVang = absentList;
+          }
+          this.updateDayGroups();
+
           this.scanMatchedCount = this.scanAbsentSlots.filter((s: any) => s.isMatched).length;
           this.scanMismatchCount = this.scanAbsentSlots.filter((s: any) => !s.isMatched).length;
           if (this.scanMismatchCount === 0) {
@@ -923,9 +936,22 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
         next: () => {
           slot.isMatched = true;
           slot.sdbSoLuongNghi = absentList.length;
+          slot.giamThiSoLuongNghi = absentList.length;
           slot.sdbDsVang = absentList.map((a: any) => a.fullName + (a.coPhep ? ' (P)' : ' (K)'));
+          slot.giamThiDsVang = absentList;
+
+          const mainSlot = this.slots.find(s => s.lop === slot.lop && s.thu === slot.thu && s.tiet === slot.tiet && s.buoi === slot.buoi);
+          if (mainSlot) {
+            mainSlot.isMatched = true;
+            mainSlot.sdbSoLuongNghi = absentList.length;
+            mainSlot.giamThiSoLuongNghi = absentList.length;
+            mainSlot.sdbDsVang = slot.sdbDsVang;
+            mainSlot.giamThiDsVang = absentList;
+          }
+
           completed++;
           if (completed === mismatched.length) {
+            this.updateDayGroups();
             this.isSyncingAllMismatches = false;
             this.scanMatchedCount = this.scanAbsentSlots.filter((s: any) => s.isMatched).length;
             this.scanMismatchCount = 0;
@@ -1518,7 +1544,10 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     }
     // 2. Nếu có dữ liệu từ cả SĐB và Giám thị mà số lượng lệch nhau
     if (slot.sdbSoLuongNghi !== undefined && slot.giamThiSoLuongNghi !== undefined) {
-      return slot.sdbSoLuongNghi !== slot.giamThiSoLuongNghi;
+      if (slot.giamThiSoLuongNghi > 0 && slot.sdbSoLuongNghi !== slot.giamThiSoLuongNghi) {
+        return true;
+      }
+      return false;
     }
     // 3. Nếu giám thị có ghi nhận vắng mà SĐB chưa có ai vắng
     if (slot.giamThiSoLuongNghi && slot.giamThiSoLuongNghi > 0 && (!slot.sdbSoLuongNghi || slot.sdbSoLuongNghi === 0)) {

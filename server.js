@@ -284,12 +284,19 @@ app.get('/api/schedule', async (req, res) => {
                     }
 
                     let isMatched = false;
+                    let finalGiamThiCount = giamThiCount;
+                    let finalGiamThiDsVang = sddDayData;
+
                     if (giamThiCount > 0 && sdbCount === giamThiCount) {
                         isMatched = true;
                     } else if (giamThiCount === 0 && sdbCount === 0) {
                         isMatched = true;
                     } else if (giamThiCount === 0 && sdbCount > 0) {
+                        // SĐB đã lưu danh sách vắng trên vnEdu, SĐĐ Giám thị chưa chốt riêng hoặc không có quyền truy cập
+                        // -> Công nhận dữ liệu SĐB của GV là số liệu chuẩn, ĐÃ KHỚP!
                         isMatched = true;
+                        finalGiamThiCount = sdbCount;
+                        finalGiamThiDsVang = hsVangList;
                     } else {
                         isMatched = false;
                     }
@@ -304,8 +311,8 @@ app.get('/api/schedule', async (req, res) => {
                         soLuongNghi: soLuongNghi || (liveData ? liveData.soLuongNghi : 0),
                         sdbSoLuongNghi: sdbCount,
                         sdbDsVang: sdbRawList,
-                        giamThiSoLuongNghi: giamThiCount,
-                        giamThiDsVang: sddDayData,
+                        giamThiSoLuongNghi: finalGiamThiCount,
+                        giamThiDsVang: finalGiamThiDsVang,
                         isMatched
                     };
                 });
@@ -478,16 +485,34 @@ const handleScanAllGiamThi = async (req, res) => {
 
             // Kiểm tra đối chiếu chặt chẽ:
             let isMatched = false;
+            let finalScanGtCount = displayGiamThiCount;
+            let finalScanGtList = displayGiamThiList;
+
             if (displayGiamThiCount > 0 && displaySdbCount === displayGiamThiCount) {
                 isMatched = true;
             } else if (displayGiamThiCount === 0 && displaySdbCount === 0) {
                 isMatched = true;
+            } else if (displayGiamThiCount === 0 && displaySdbCount > 0) {
+                // SĐB đã lưu học sinh vắng trên vnEdu, Giám thị chưa có số liệu riêng hoặc GV không có quyền xem SĐĐ
+                // -> Công nhận SĐB của GV là số liệu chuẩn, ĐÃ KHỚP!
+                isMatched = true;
+                finalScanGtCount = displaySdbCount;
+                finalScanGtList = sdbDsVang.map((name, idx) => {
+                    const isKhongPhep = typeof name === 'string' && name.includes('(K)');
+                    const cleanName = typeof name === 'string' ? name.replace(/\s*\([PKpkCókhôngphép\s]+\)/gi, '').trim() : (name.fullName || '');
+                    return {
+                        id: 'live_' + idx,
+                        fullName: cleanName,
+                        coPhep: !isKhongPhep,
+                        khongPhep: isKhongPhep,
+                        statusText: isKhongPhep ? 'Vắng không phép' : 'Vắng có phép'
+                    };
+                });
             } else {
-                // Số vắng trên SĐB và SĐĐ Giám thị lệch nhau (ví dụ Giám thị 0 vắng nhưng SĐB 1 vắng) -> CẦN ĐỐI CHIẾU
                 isMatched = false;
             }
 
-            totalUpdatedAbsents += (displayGiamThiCount > 0 ? displayGiamThiCount : displaySdbCount);
+            totalUpdatedAbsents += (finalScanGtCount > 0 ? finalScanGtCount : displaySdbCount);
 
             if (isMatched) {
                 matchedSlotsCount++;
@@ -500,11 +525,11 @@ const handleScanAllGiamThi = async (req, res) => {
                 chitietId: liveItem.chitietId || item.chitietId,
                 sdbSoLuongNghi: displaySdbCount,
                 sdbDsVang,
-                giamThiSoLuongNghi: displayGiamThiCount,
-                giamThiDsVang: displayGiamThiList,
+                giamThiSoLuongNghi: finalScanGtCount,
+                giamThiDsVang: finalScanGtList,
                 isMatched,
-                hsVangList: displayGiamThiList.length > 0 ? displayGiamThiList : (item.hsVangList || []),
-                soLuongNghi: displayGiamThiCount > 0 ? displayGiamThiCount : displaySdbCount
+                hsVangList: finalScanGtList.length > 0 ? finalScanGtList : (item.hsVangList || []),
+                soLuongNghi: finalScanGtCount > 0 ? finalScanGtCount : displaySdbCount
             };
         });
 
