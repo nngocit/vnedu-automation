@@ -99,7 +99,7 @@ function normalizeText(text) {
 }
 
 const GEMINI_CANDIDATE_MODELS = [
-    'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
     'gemini-3.1-flash-lite',
     'gemini-flash-lite-latest',
     'gemini-3.8-flash'
@@ -141,8 +141,8 @@ Nguyên tắc ứng xử và xưng hô bắt buộc:
    - Sổ đầu bài điện tử vnEdu và Sổ điểm danh giám thị được đồng bộ tự động.
 4. Trả lời:
    - Nếu hỏi về mô hình AI: Xác nhận em là Trợ lý AI chính thức sử dụng mô hình Google Gemini AI thế hệ mới kết hợp cùng hệ thống đối soát dữ liệu vnEdu thời gian thực của trường THCS An Lập.
-   - Với các câu hỏi chuyên môn Toán THCS (đại số, hình học, định lý, bài tập, lời giải mẫu), sư phạm, soạn giáo án, nhận xét học sinh, quản lý nề nếp lớp học, hoặc các câu hỏi kiến thức chung: Trả lời sâu sắc, chu đáo, trình bày bằng Markdown đẹp mắt với gạch đầu dòng và in đậm rõ ràng.
-5. Giữ câu trả lời cô đọng, dễ đọc trên giao diện khung chat của giáo viên.`;
+   - Với các câu hỏi chuyên môn Toán THCS (đại số, hình học, định lý, bài tập, lời giải mẫu), sư phạm, soạn giáo án, nhận xét học sinh, quản lý nề nếp lớp học, hoặc các câu hỏi kiến thức chung: Trả lời sâu sắc, chu đáo, ĐẦY ĐỦ TOÀN BỘ Ý, TUYỆT ĐỐI KHÔNG BỊ CẮT NGANG HAY DỪNG GIỮA CHỪNG. Trình bày bằng Markdown đẹp mắt với gạch đầu dòng và in đậm rõ ràng.
+5. Luôn hoàn thiện câu trả lời trọn vẹn, không viết dở dang câu chữ.`;
 
     const userPromptWithSystem = `${systemPrompt}\n\n[Câu hỏi từ Cô Lê Thị Diệu Huyên]: ${message}`;
 
@@ -167,16 +167,34 @@ Nguyên tắc ứng xử và xưng hô bắt buộc:
                 })
             });
 
-            if (!res.ok) continue;
+            if (!res.ok) {
+                const errBody = await res.text().catch(() => '');
+                console.warn(`[Gemini ${model}] HTTP ${res.status}:`, errBody.substring(0, 200));
+                continue;
+            }
             const data = await res.json();
-            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (text && text.trim().length > 0) {
+            const candidate = data.candidates?.[0];
+            const parts = candidate?.content?.parts || [];
+            
+            // Gộp toàn bộ các phần text trong mảng parts để đảm bảo câu trả lời nguyên vẹn 100%, không bị ngắt quãng
+            let fullText = parts
+                .filter(p => !p.thought && p.text)
+                .map(p => p.text)
+                .join('');
+
+            if (!fullText || fullText.trim().length === 0) {
+                fullText = parts.map(p => p.text || '').join('');
+            }
+
+            if (fullText && fullText.trim().length > 0) {
                 return {
                     model,
-                    text: text.trim()
+                    text: fullText.trim(),
+                    finishReason: candidate?.finishReason
                 };
             }
         } catch (err) {
+            console.warn(`[Gemini ${model}] Lỗi gọi API:`, err.message);
             continue;
         }
     }

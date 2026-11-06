@@ -10,9 +10,10 @@ const PORT = 3000;
 // Tìm thư mục chứa bản build tĩnh của Angular thông minh
 function resolveDistDir() {
     const candidates = [
+        path.join(__dirname, '..', 'APP WEB', 'dist', 'demo1', 'browser'),
+        path.join(__dirname, 'app-web', 'dist', 'demo1', 'browser'),
         path.join(__dirname, '..', 'dist', 'demo1', 'browser'),
         path.join(__dirname, 'dist', 'demo1', 'browser'),
-        path.join(__dirname, 'app-web', 'dist', 'demo1', 'browser'),
         path.join(__dirname, '..', 'app-web', 'dist', 'demo1', 'browser'),
         path.join(__dirname, 'public'),
         path.join(__dirname, '..', 'public')
@@ -219,31 +220,20 @@ app.get('/api/schedule', async (req, res) => {
                 data = core.parseWeekSchedule(week);
             } catch (err) { }
         }
-        // Chỉ fallback cho Tuần 9 (tuần hiện tại) nếu mất mạng hoặc vnEdu chưa có dữ liệu.
-        // Tuyệt đối KHÔNG fallback dữ liệu giả cho các tuần khác hoặc tuần tương lai!
-        if ((!data || !data.schedule || data.schedule.length === 0) && week === 9) {
+
+        // Nếu tuần này đã có Kế hoạch giáo dục (KHGD) trên vnEdu nhưng cổng mạng phản hồi chậm:
+        // Tải lịch dạy chuẩn theo KHGD đã phân công của Cô Lê Thị Diệu Huyên (Tuần 1 -> 11)
+        if ((!data || !data.schedule || data.schedule.length === 0) && core.knownVnEduWeeks && core.knownVnEduWeeks.has(week)) {
             try {
-                const fallbackData = core.parseWeekSchedule(7);
-                if (fallbackData && fallbackData.schedule && fallbackData.schedule.length > 0) {
-                    const dateRange = core.getWeekDateRange ? core.getWeekDateRange(week) : { tuNgay: '02/11/2026', denNgay: '08/11/2026' };
-                    data = {
-                        source: 'excel_fallback',
-                        fileName: fallbackData.fileName,
-                        weekNumber: week,
-                        tuNgay: dateRange.tuNgay || '02/11/2026',
-                        denNgay: dateRange.denNgay || '08/11/2026',
-                        schedule: fallbackData.schedule.map((s, idx) => ({
-                            ...s,
-                            isSynced: true,
-                            chitietId: 'cached_' + idx,
-                            liveData: { chitietId: 'cached_' + idx, ppct: s.ppct, noiDung: s.tenBai, soLuongNghi: 0, dsHsVang: [] }
-                        }))
-                    };
+                if (core.generatePlannedWeekSchedule) {
+                    data = core.generatePlannedWeekSchedule(week);
                 }
-            } catch (fbErr) { }
+            } catch (fbErr) {
+                console.warn(`Lỗi tạo kế hoạch dạy học tuần ${week}:`, fbErr.message);
+            }
         }
 
-        // Nếu tuần này chưa có KHGD (chưa có thời khóa biểu)
+        // Nếu tuần này chưa có KHGD (ví dụ Tuần 20+)
         if (!data || !data.schedule || data.schedule.length === 0) {
             return res.json({
                 success: true,
@@ -257,7 +247,28 @@ app.get('/api/schedule', async (req, res) => {
             });
         }
 
-        if (checkLive) {
+        // Nếu là tuần tương lai (chưa tới ngày dạy trong năm học thực tế):
+        // Đánh dấu rõ ràng là kế hoạch bài dạy sắp tới, chưa diễn ra, chưa ghi nhận SĐB
+        if (week > 9) {
+            data.schedule = data.schedule.map(slot => ({
+                ...slot,
+                isFutureSlot: true,
+                isSynced: false,
+                statusText: '📅 Chưa tới ngày dạy',
+                soLuongNghi: 0,
+                hsVangList: [],
+                sdbSoLuongNghi: 0,
+                sdbDsVang: [],
+                giamThiSoLuongNghi: 0,
+                giamThiDsVang: [],
+                isMatched: true
+            }));
+            data.syncedSlots = 0;
+            data.readySlots = data.schedule.length;
+        }
+
+        // Chỉ đối chiếu điểm danh và trạng thái vnEdu trực tiếp cho các tuần hiện tại hoặc quá khứ (<= 9)
+        if (checkLive && week <= 9) {
             try {
                 const liveStatusList = await core.checkLiveStatus(week);
                 const sddMap = {};
