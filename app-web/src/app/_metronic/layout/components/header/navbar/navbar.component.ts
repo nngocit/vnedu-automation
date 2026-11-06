@@ -1,4 +1,5 @@
 import { Component, Input, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { VnEduService, AppNotification } from '../../../../../pages/vnedu/services/vnedu.service';
 
@@ -43,7 +44,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   constructor(
     private vneduService: VnEduService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -103,7 +105,25 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
 
     if (notif.slotRef) {
-      this.vneduService.triggerNavigateToSlot(notif.slotRef);
+      const isAttendanceRelated = notif.category === 'ATTENDANCE' ||
+        Boolean(notif.title && (notif.title.toLowerCase().includes('vắng') || notif.title.toLowerCase().includes('điểm danh') || notif.title.toLowerCase().includes('sĩ số')));
+      const payload: { thu: number; tiet: number; lop: string; category?: string; openModal?: boolean } = {
+        thu: notif.slotRef.thu,
+        tiet: notif.slotRef.tiet,
+        lop: notif.slotRef.lop,
+        category: notif.category,
+        openModal: isAttendanceRelated
+      };
+
+      if (this.router.url.indexOf('/vnedu/so-dau-bai') === -1) {
+        this.router.navigate(['/vnedu/so-dau-bai']).then(() => {
+          setTimeout(() => {
+            this.vneduService.triggerNavigateToSlot(payload);
+          }, 350);
+        });
+      } else {
+        this.vneduService.triggerNavigateToSlot(payload);
+      }
     }
   }
 }

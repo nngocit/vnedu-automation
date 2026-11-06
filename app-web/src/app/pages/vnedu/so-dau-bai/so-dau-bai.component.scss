@@ -4782,13 +4782,31 @@
 
 // Highlight animation when navigating to slot
 @keyframes row-highlight-pulse {
-  0% { background-color: rgba(59, 130, 246, 0.25); }
-  50% { background-color: rgba(59, 130, 246, 0.1); }
-  100% { background-color: transparent; }
+  0% {
+    background-color: rgba(99, 102, 241, 0.25);
+    outline: 2px solid #6366f1;
+    box-shadow: 0 0 16px rgba(99, 102, 241, 0.35);
+  }
+  30% {
+    background-color: rgba(99, 102, 241, 0.18);
+    outline: 2px solid #6366f1;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.25);
+  }
+  70% {
+    background-color: rgba(99, 102, 241, 0.08);
+    outline: 1.5px solid rgba(99, 102, 241, 0.4);
+  }
+  100% {
+    background-color: transparent;
+    outline: none;
+    box-shadow: none;
+  }
 }
 
 .highlight-pulse {
-  animation: row-highlight-pulse 2s ease;
+  animation: row-highlight-pulse 3.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  position: relative;
+  z-index: 5;
 }
 
 // Dark Mode Overrides for Notification Bell

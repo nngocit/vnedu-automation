@@ -109,11 +109,13 @@
           </option>
         </select>
         <button type="button" class="nav-btn" (click)="nextWeek()" [disabled]="currentWeek >= 35" title="Tuần sau">
-          ❯
+          ›
         </button>
       </div>
+    </div>
+  </div>
 
-      <!-- BANNER THÔNG BÁO VÀ THỜI TIẾT ĐỘNG (WEATHER WIDGET & NHẮC NHỞ CÔ GIÁO) -->
+  <!-- BANNER THÔNG BÁO VÀ THỜI TIẾT ĐỘNG (WEATHER WIDGET & NHẮC NHỞ CÔ GIÁO) -->
   <div class="notice-banner d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4"
        [class.banner-today-active]="todayHasSlots">
     <div class="d-flex align-items-center gap-3">

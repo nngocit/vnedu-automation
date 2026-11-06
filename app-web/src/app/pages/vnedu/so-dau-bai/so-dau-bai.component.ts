@@ -598,9 +598,9 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   }
 
   // Điều hướng và làm nổi bật tiết học từ thông báo
-  navigateToSlot(slotRef: { thu: number; tiet: number; lop: string }): void {
+  navigateToSlot(slotRef: { thu: number; tiet: number; lop: string; category?: string; openModal?: boolean }): void {
     const target = this.slots.find(s =>
-      String(s.lop) === String(slotRef.lop) &&
+      String(s.lop).trim().toUpperCase() === String(slotRef.lop).trim().toUpperCase() &&
       Number(s.thu) === Number(slotRef.thu) &&
       Number(s.tiet) === Number(slotRef.tiet)
     );
@@ -620,7 +620,15 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
           el.classList.add('highlight-pulse');
           setTimeout(() => el.classList.remove('highlight-pulse'), 3500);
         }
+
+        if (slotRef.openModal || slotRef.category === 'ATTENDANCE' || target.isMatched === false) {
+          this.openAttendanceModal(target);
+        } else {
+          this.showToast(`🎯 Đã chuyển đến Tiết ${target.tiet} Thứ ${target.thu} • Lớp ${target.lop}`, 'info');
+        }
       }, 200);
+    } else {
+      this.showToast(`Không tìm thấy tiết Thứ ${slotRef.thu} Tiết ${slotRef.tiet} (${slotRef.lop})`, 'danger');
     }
   }
 

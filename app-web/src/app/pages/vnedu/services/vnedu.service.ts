@@ -32,7 +32,7 @@ export class VnEduService {
   public notifications$ = this.notificationsSubject.asObservable();
 
   // Sự kiện cuộn và highlight tiết học khi bấm từ chuông thông báo
-  private navigateSlotSubject = new Subject<{ thu: number; tiet: number; lop: string }>();
+  private navigateSlotSubject = new Subject<{ thu: number; tiet: number; lop: string; category?: string; openModal?: boolean }>();
   public navigateSlot$ = this.navigateSlotSubject.asObservable();
 
   // Sự kiện yêu cầu quét lại từ chuông
@@ -47,7 +47,7 @@ export class VnEduService {
     return this.notificationsSubject.getValue();
   }
 
-  triggerNavigateToSlot(slotRef: { thu: number; tiet: number; lop: string }): void {
+  triggerNavigateToSlot(slotRef: { thu: number; tiet: number; lop: string; category?: string; openModal?: boolean }): void {
     this.navigateSlotSubject.next(slotRef);
   }
 

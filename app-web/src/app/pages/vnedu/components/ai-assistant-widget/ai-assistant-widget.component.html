@@ -15,47 +15,48 @@
   </button>
 </div>
 
-<!-- KHUNG HỘP THOẠI TRỢ LÝ AI (AI CHAT WINDOW) -->
+<!-- KHUNG HỘP THOẠI TRỢ LÝ AI (AI CHAT WINDOW - UI/UX PRO MAX) -->
 <div class="ai-chat-window shadow-2xl" [class.is-open]="isOpen" *ngIf="isOpen">
   <!-- Header của khung Chat -->
   <div class="chat-header d-flex align-items-center justify-content-between px-4 py-3">
-    <div class="d-flex align-items-center gap-2.5">
+    <div class="d-flex align-items-center gap-3">
       <div class="ai-avatar-header position-relative">
         <span class="fs-2">🤖</span>
         <span class="online-status-dot"></span>
       </div>
       <div>
-        <div class="fw-bolder fs-6 text-white lh-1 mb-1">
-          Trợ Lý AI vnEdu
+        <div class="fw-bolder fs-6 text-white lh-1 mb-1 d-flex align-items-center gap-1.5">
+          <span>Trợ Lý AI vnEdu</span>
+          <span class="badge-ai-version">Pro</span>
         </div>
-        <div class="fs-8 text-white-50 lh-1">
+        <div class="fs-8 text-white text-opacity-75 lh-1">
           Cô Lê Thị Diệu Huyên • THCS An Lập
         </div>
       </div>
     </div>
 
     <!-- Nút thao tác trên header -->
-    <div class="d-flex align-items-center gap-1">
+    <div class="d-flex align-items-center gap-1.5">
       <button type="button" 
               class="btn-header-action" 
               (click)="clearHistory()" 
-              title="Xóa cuộc trò chuyện và bắt đầu lại">
+              title="Làm mới cuộc trò chuyện">
         🔄
       </button>
       <button type="button" 
               class="btn-header-action" 
               (click)="closeChat()" 
-              title="Thu nhỏ trợ lý AI">
+              title="Đóng / Thu nhỏ Trợ lý AI">
         ✕
       </button>
     </div>
   </div>
 
   <!-- Thân hộp thoại (Cuộn tin nhắn) -->
-  <div class="chat-body p-3" #scrollContainer>
+  <div class="chat-body p-3.5" #scrollContainer>
     <div *ngFor="let msg of messages" class="chat-message-row" [ngClass]="msg.role === 'user' ? 'msg-user' : 'msg-ai'">
       <!-- Avatar cho AI -->
-      <div *ngIf="msg.role === 'ai'" class="msg-avatar">
+      <div *ngIf="msg.role === 'ai'" class="msg-avatar shadow-xs">
         <span>🤖</span>
       </div>
 
@@ -64,7 +65,8 @@
         <div class="msg-text" [innerHTML]="formatMarkdown(msg.text)"></div>
 
         <!-- Các nút thao tác nhanh (Quick Action buttons đính kèm câu trả lời) -->
-        <div *ngIf="msg.quickActions && msg.quickActions.length > 0" class="quick-actions-strip mt-2.5 pt-2 border-top border-light border-opacity-25 d-flex flex-wrap gap-1.5">
+        <div *ngIf="msg.quickActions && msg.quickActions.length > 0" 
+             class="quick-actions-strip mt-2.5 pt-2 border-top border-light border-opacity-50 d-flex flex-wrap gap-1.5">
           <button *ngFor="let act of msg.quickActions"
                   type="button"
                   class="btn-action-slot shadow-xs"
@@ -81,7 +83,7 @@
 
     <!-- Hiệu ứng đang gõ (Typing indicator) -->
     <div *ngIf="isLoading" class="chat-message-row msg-ai">
-      <div class="msg-avatar">
+      <div class="msg-avatar shadow-xs">
         <span>🤖</span>
       </div>
       <div class="msg-bubble typing-bubble shadow-xs">
@@ -96,9 +98,12 @@
   </div>
 
   <!-- Dải gợi ý câu hỏi nhanh (Suggestion chips) -->
-  <div class="suggestions-bar px-3 py-2 border-top border-light">
-    <div class="fs-9 text-muted fw-semibold mb-1">Gợi ý nhanh cho Cô:</div>
-    <div class="suggestions-chips-wrapper d-flex gap-1.5 overflow-x-auto pb-1">
+  <div class="suggestions-bar px-3.5 py-2 border-top border-light">
+    <div class="fs-9 text-muted fw-bold mb-1.5 d-flex align-items-center gap-1">
+      <span>💡</span>
+      <span>Gợi ý nhanh cho Cô:</span>
+    </div>
+    <div class="suggestions-chips-wrapper d-flex gap-2 overflow-x-auto pb-1">
       <button *ngFor="let sug of suggestions"
               type="button"
               class="chip-suggestion"
@@ -109,21 +114,23 @@
     </div>
   </div>
 
-  <!-- Thanh nhập liệu phía dưới (Input Box) -->
-  <div class="chat-footer p-2.5 border-top d-flex align-items-center gap-2">
-    <input type="text"
-           class="form-control form-control-solid chat-input-field fs-7 py-2 px-3 rounded-pill"
-           placeholder="Hỏi trợ lý AI (ví dụ: hôm nay dạy mấy tiết, tiết nào chưa lưu...)..."
-           [(ngModel)]="userInput"
-           [disabled]="isLoading"
-           (keydown.enter)="sendMessage()" />
+  <!-- Thanh nhập liệu phía dưới (Input Box - Clean UI/UX Pro Max) -->
+  <div class="chat-footer px-3 py-2.5 border-top d-flex align-items-center gap-2">
+    <div class="input-wrap flex-grow-1 position-relative">
+      <input type="text"
+             class="form-control chat-input-field fs-7 py-2 ps-3.5 pe-3 rounded-pill"
+             placeholder="Hỏi trợ lý AI (ví dụ: điểm danh hôm nay có ai vắng, tiết nào chưa lưu...)..."
+             [(ngModel)]="userInput"
+             [disabled]="isLoading"
+             (keydown.enter)="sendMessage()" />
+    </div>
 
     <button type="button"
-            class="btn btn-primary btn-send-message rounded-circle shadow-xs"
+            class="btn-send-message shadow-sm"
             [disabled]="isLoading || !userInput.trim()"
             (click)="sendMessage()"
             title="Gửi câu hỏi">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
         <line x1="22" y1="2" x2="11" y2="13"></line>
         <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
       </svg>
