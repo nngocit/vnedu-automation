@@ -39,6 +39,14 @@ export class VnEduService {
   private reauditSubject = new Subject<number>();
   public reaudit$ = this.reauditSubject.asObservable();
 
+  // Sự kiện tự động mở / đóng hòm thư (Notification Dropdown) từ xa
+  private openNotificationDropdownSubject = new Subject<boolean>();
+  public openNotificationDropdown$ = this.openNotificationDropdownSubject.asObservable();
+
+  triggerOpenNotificationDropdown(open: boolean = true): void {
+    this.openNotificationDropdownSubject.next(open);
+  }
+
   setNotifications(list: AppNotification[]): void {
     this.notificationsSubject.next(list);
   }

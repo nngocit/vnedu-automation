@@ -210,15 +210,35 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
         this.weatherTimer = setInterval(() => {
           this.fetchWeather();
         }, 60000);
+
+        // Tự động quét kiểm tra SĐĐ Giám thị định kỳ mỗi 3 phút (180,000ms)
+        this.giamThiPollingTimer = setInterval(() => {
+          this.autoScanSupervisorQuietly();
+        }, 180000);
+
+        // Khi Cô chuyển tab quay lại, tự động thăm dò xem Giám thị có nhập mới không
+        this.focusListener = () => {
+          this.autoScanSupervisorQuietly();
+        };
+        window.addEventListener('focus', this.focusListener);
       }
     } catch (_) {}
   }
 
   private weatherTimer: any;
+  private giamThiPollingTimer: any;
+  private focusListener: any;
+  private hasAutoOpenedMailbox: boolean = false;
 
   ngOnDestroy(): void {
     if (this.weatherTimer) {
       clearInterval(this.weatherTimer);
+    }
+    if (this.giamThiPollingTimer) {
+      clearInterval(this.giamThiPollingTimer);
+    }
+    if (this.focusListener && typeof window !== 'undefined') {
+      window.removeEventListener('focus', this.focusListener);
     }
   }
 
@@ -572,6 +592,15 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
           this.notifications = newNotifs;
           this.vneduService.setNotifications(newNotifs);
           this.cdr.detectChanges();
+
+          // TỰ ĐỘNG BUNG HÒM THƯ RA SẴN KHI PHÁT HIỆN CẢNH BÁO / LỆCH ĐIỂM DANH
+          const hasUnreadAlerts = newNotifs.some(n => (n.severity === 'error' || n.severity === 'warning') && !n.isRead);
+          if (hasUnreadAlerts && !this.hasAutoOpenedMailbox) {
+            this.hasAutoOpenedMailbox = true;
+            setTimeout(() => {
+              this.vneduService.triggerOpenNotificationDropdown(true);
+            }, 600);
+          }
         }
       },
       error: () => {}
@@ -1974,6 +2003,11 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
           if (mismatched > 0) {
             this.autoScanStatusText = `⚠️ Có ${mismatched} tiết cần đối chiếu`;
             this.autoScanStatusClass = 'status-warning';
+            this.loadAuditNotifications();
+            // TỰ ĐỘNG BUNG HÒM THƯ RA SẴN NGAY LẬP TỨC CHO CÔ
+            setTimeout(() => {
+              this.vneduService.triggerOpenNotificationDropdown(true);
+            }, 500);
           } else {
             this.autoScanStatusText = `🛡️ SĐĐ Giám thị: Khớp 100% (${matchedWithAbsents} tiết có HS vắng)`;
             this.autoScanStatusClass = 'status-success';

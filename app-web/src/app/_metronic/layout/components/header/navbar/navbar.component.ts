@@ -55,6 +55,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       })
     );
+
+    // Tự động mở hòm thư thông báo khi có yêu cầu (ví dụ phát hiện cảnh báo SĐĐ Giám thị mới)
+    this.sub.add(
+      this.vneduService.openNotificationDropdown$.subscribe(open => {
+        this.showNotificationDropdown = open;
+        this.cdr.detectChanges();
+      })
+    );
   }
 
   ngOnDestroy(): void {
