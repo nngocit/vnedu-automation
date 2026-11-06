@@ -1975,7 +1975,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
             this.autoScanStatusText = `⚠️ Có ${mismatched} tiết cần đối chiếu`;
             this.autoScanStatusClass = 'status-warning';
           } else {
-            this.autoScanStatusText = `🛡️ SĐĐ Giám thị: Khớp 100% (${matchedWithAbsents} tiết vắng)`;
+            this.autoScanStatusText = `🛡️ SĐĐ Giám thị: Khớp 100% (${matchedWithAbsents} tiết có HS vắng)`;
             this.autoScanStatusClass = 'status-success';
           }
         } else {
