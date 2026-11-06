@@ -567,8 +567,8 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
             mismatchedSlots.forEach(s => {
               newNotifs.push({
                 id: `gt_mismatch_${s.thu}_${s.tiet}_${s.lop}`,
-                title: `Lệch điểm danh: Lớp ${s.lop} (Thứ ${s.thu} • Tiết ${s.tiet})`,
-                message: `SĐB ghi ${s.sdbSoLuongNghi || 0} vắng, SĐĐ Giám thị ghi ${s.giamThiSoLuongNghi || 0} vắng`,
+                title: `Giám thị vừa nhập vắng: Lớp ${s.lop} (Thứ ${s.thu} • Tiết ${s.tiet})`,
+                message: `Giám thị ghi nhận ${s.giamThiSoLuongNghi || 0} em vắng, SĐB hiện ghi ${s.sdbSoLuongNghi || 0} em (chưa cập nhật)`,
                 category: 'ATTENDANCE',
                 severity: 'warning',
                 time: nowStr,
@@ -1487,6 +1487,10 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     return Math.round((this.syncedSlotsCount / this.totalSlotsCount) * 100);
   }
 
+  get isWeekCompleted(): boolean {
+    return this.totalSlotsCount > 0 && this.readySlotsCount === 0;
+  }
+
   // Điểm danh UI helpers
   get filteredStudents(): AbsentStudent[] {
     if (!this.attendanceSearchText) return this.attendanceStudents;
@@ -1748,6 +1752,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     thuText: string;
     ngay: string;
     isToday: boolean;
+    isCompleted: boolean;
     pendingCount: number;
     syncedCount: number;
     slots: VnEduSlot[];
@@ -1779,7 +1784,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
       8: 'Chủ Nhật'
     };
 
-    const groups: { [key: string]: { thu: number; thuText: string; ngay: string; isToday: boolean; pendingCount: number; syncedCount: number; slots: VnEduSlot[] } } = {};
+    const groups: { [key: string]: { thu: number; thuText: string; ngay: string; isToday: boolean; isCompleted: boolean; pendingCount: number; syncedCount: number; slots: VnEduSlot[] } } = {};
     filtered.forEach(slot => {
       const key = `${slot.thu}_${slot.ngay}`;
       if (!groups[key]) {
@@ -1788,6 +1793,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
           thuText: thuMap[slot.thu] || `Thứ ${slot.thu}`,
           ngay: slot.ngay,
           isToday: slot.ngay === this.todayStr,
+          isCompleted: false,
           pendingCount: 0,
           syncedCount: 0,
           slots: []
@@ -1799,6 +1805,10 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
       } else {
         groups[key].pendingCount++;
       }
+    });
+
+    Object.values(groups).forEach(g => {
+      g.isCompleted = g.slots.length > 0 && g.pendingCount === 0;
     });
 
     this.dayGroups = Object.values(groups).sort((a, b) => a.thu - b.thu);

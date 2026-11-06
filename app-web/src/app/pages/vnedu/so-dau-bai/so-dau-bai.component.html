@@ -606,9 +606,32 @@
 
   <!-- DANH SÁCH BẢNG THEO TỪNG THỨ TRONG TUẦN (CARD PER DAY - TOÀN BỘ CÓ TOOLTIP) -->
   <div *ngIf="!isLoading">
+    <!-- BANNER HOÀN TẤT 100% TUẦN HỌC (XANH LÁ SANG TRỌNG, TINH TẾ) -->
+    <div *ngIf="isWeekCompleted" class="week-completed-banner mb-4">
+      <div class="banner-inner d-flex align-items-center justify-content-between p-3.5 px-4 flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="banner-icon-celebration">🎉</div>
+          <div>
+            <div class="banner-title d-flex align-items-center gap-2 flex-wrap">
+              <span>Sổ Đầu Bài Tuần {{ currentWeek }} Đã Hoàn Tất 100%!</span>
+              <span class="badge-week-status">✓ Đạt chuẩn 100% vnEdu</span>
+            </div>
+            <div class="banner-desc mt-1">
+              Tất cả {{ totalSlotsCount }}/{{ totalSlotsCount }} tiết dạy trong tuần đã được lưu và đối soát đầy đủ. Chúc Cô Lê Thị Diệu Huyên có tuần làm việc thật nhẹ nhàng & nhiều niềm vui! 🌸
+            </div>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <span class="pill-green-check">✓ 100% Đã lưu SĐB</span>
+          <span class="pill-green-shield">🛡️ SĐĐ Giám thị: Khớp</span>
+        </div>
+      </div>
+    </div>
+
     <div *ngFor="let group of dayGroups; trackBy: trackByThu"
          class="day-card"
          [class.is-today]="group.isToday"
+         [class.is-completed]="group.isCompleted"
          [attr.id]="group.isToday ? 'day-card-today' : null">
       <!-- Header từng ngày -->
       <div class="day-card-header">
@@ -628,6 +651,11 @@
         </div>
 
         <div class="d-flex align-items-center gap-2">
+          <!-- Huy hiệu ĐÃ HOÀN THÀNH nếu ngày này tất cả tiết đã lưu -->
+          <span *ngIf="group.isCompleted" class="badge-day-completed" title="Tất cả {{ group.slots.length }} tiết dạy trong ngày {{ group.thuText }} đã lưu vnEdu hoàn tất">
+            <span class="check-icon">✓</span> Đã hoàn thành
+          </span>
+
           <!-- Nút hành động nhanh cho ngày hôm nay -->
           <button *ngIf="group.isToday && group.pendingCount > 0"
                   type="button"
@@ -704,10 +732,10 @@
                     <!-- TH1: Cần đối chiếu (viền đỏ nét đứt) -->
                     <ng-container *ngIf="isCanDoiChieu(slot)">
                       <span *ngIf="slot.sdbSoLuongNghi !== undefined && slot.giamThiSoLuongNghi !== undefined && slot.sdbSoLuongNghi !== slot.giamThiSoLuongNghi">
-                        ⚠️ SĐB: {{ slot.sdbSoLuongNghi }} • SĐĐ: {{ slot.giamThiSoLuongNghi }} [Cần đối chiếu]
+                        ⚠️ Giám thị ghi {{ slot.giamThiSoLuongNghi }} vắng (SĐB chưa cập nhật)
                       </span>
                       <span *ngIf="slot.sdbSoLuongNghi === undefined || slot.giamThiSoLuongNghi === undefined || slot.sdbSoLuongNghi === slot.giamThiSoLuongNghi">
-                        ⚠️ SĐB: {{ getDisplayAbsentCount(slot) }} vắng [Đối chiếu]
+                        ⚠️ Giám thị vừa nhập vắng (SĐB chưa cập nhật)
                       </span>
                     </ng-container>
 
@@ -732,19 +760,19 @@
                       <div class="tooltip-body">
                         <!-- Trường hợp Cần đối chiếu -->
                         <ng-container *ngIf="isCanDoiChieu(slot)">
-                          <div class="text-danger fw-bold fs-8 mb-1 d-flex align-items-center">
-                            <span class="pulse-dot-mini me-1"></span> Cảnh báo lệch sĩ số vắng!
-                          </div>
-                          <div class="tooltip-detail-row">
-                            <span>Sổ đầu bài GV ghi:</span>
-                            <strong class="text-danger">{{ slot.sdbSoLuongNghi !== undefined ? slot.sdbSoLuongNghi : getDisplayAbsentCount(slot) }} em vắng</strong>
+                          <div class="text-warning fw-bold fs-8 mb-1 d-flex align-items-center">
+                            <span class="pulse-dot-mini me-1"></span> Giám thị vừa cập nhật vắng mới!
                           </div>
                           <div class="tooltip-detail-row">
                             <span>SĐĐ Giám thị ghi:</span>
                             <strong class="text-primary">{{ slot.giamThiSoLuongNghi !== undefined ? slot.giamThiSoLuongNghi : 0 }} em vắng</strong>
                           </div>
+                          <div class="tooltip-detail-row">
+                            <span>SĐB của Cô hiện ghi:</span>
+                            <strong class="text-warning">{{ slot.sdbSoLuongNghi !== undefined ? slot.sdbSoLuongNghi : getDisplayAbsentCount(slot) }} em vắng</strong>
+                          </div>
                           <div class="tooltip-detail-note mt-1">
-                            Số lượng vắng giữa SĐB và SĐĐ Giám thị chưa khớp nhau.
+                            Giám thị vừa nhập học sinh vắng trên vnEdu, Sổ Đầu Bài chưa ghi nhận đủ. Bấm vào đây để cập nhật ngay.
                           </div>
                         </ng-container>
 
@@ -1615,4 +1643,4 @@
 
 
 <!-- TRỢ LÝ AI VNEDU (AI ASSISTANT CHATBOT WIDGET) -->
-<app-ai-assistant-widget [currentWeek]="currentWeek"></app-ai-assistant-widget>
+<app-ai-assistant-widget [currentWeek]="currentWeek" [slots]="slots"></app-ai-assistant-widget>

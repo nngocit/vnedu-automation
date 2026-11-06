@@ -31,6 +31,7 @@ export interface ChatMessage {
 })
 export class AiAssistantWidgetComponent implements OnInit, OnDestroy, AfterViewChecked {
   @Input() currentWeek: number = 9;
+  @Input() slots: any[] = [];
   @ViewChild('scrollContainer') private scrollContainer?: ElementRef;
 
   isOpen = false;
@@ -150,7 +151,7 @@ export class AiAssistantWidgetComponent implements OnInit, OnDestroy, AfterViewC
     this.cdr.detectChanges();
 
     // Gửi lên server
-    this.vneduService.sendAiChat(textToSend, this.currentWeek, this.messages).subscribe({
+    this.vneduService.sendAiChat(textToSend, this.currentWeek, this.messages, this.slots).subscribe({
       next: (res) => {
         this.isLoading = false;
         const aiTime = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });

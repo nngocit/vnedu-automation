@@ -75,8 +75,8 @@ export class VnEduService {
     }
   }
 
-  sendAiChat(message: string, currentWeek: number = 9, history: any[] = []): Observable<any> {
-    return this.http.post<any>('/api/ai/chat', { message, currentWeek, history });
+  sendAiChat(message: string, currentWeek: number = 9, history: any[] = [], slots: any[] = []): Observable<any> {
+    return this.http.post<any>('/api/ai/chat', { message, currentWeek, history, slots });
   }
 
   getAiSummary(week: number = 9): Observable<any> {

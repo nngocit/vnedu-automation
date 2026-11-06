@@ -5,7 +5,13 @@ const xlsx = require('xlsx');
 const SESSION_CACHE_FILE = path.join(__dirname, 'session_cache.json');
 
 // USER_DATA no longer required (Playwright removed)
-const DOWNLOADS_DIR = 'C:\\Users\\DIEU HUYEN\\Downloads';
+// Tự động tìm thư mục Downloads của người dùng hiện tại
+const DOWNLOADS_DIR = (() => {
+    const userDownloads = path.join(process.env.USERPROFILE || 'C:\\Users\\xuann', 'Downloads');
+    if (fs.existsSync(userDownloads)) return userDownloads;
+    if (fs.existsSync('C:\\Users\\DIEU HUYEN\\Downloads')) return 'C:\\Users\\DIEU HUYEN\\Downloads';
+    return userDownloads;
+})();
 
 const CLASS_MAP = {
     '7A2AL': { id: '5004582066', cap: '2', khoi: '7', sodaubaiId: '8130546' },
