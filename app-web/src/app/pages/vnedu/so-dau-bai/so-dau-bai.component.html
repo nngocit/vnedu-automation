@@ -264,15 +264,22 @@
         📍 Cuộn tới Hôm nay
       </button>
 
-      <span class="banner-stat-pill stat-amber">
-        ⚡ Cần nhập: {{ readySlotsCount }}
-      </span>
-      <span class="banner-stat-pill stat-neutral">
-        🕒 Chưa tới ngày: 0
-      </span>
-      <span class="banner-stat-pill stat-blue">
-        ✓ {{ completionRate }}% Tiến độ
-      </span>
+      <ng-container *ngIf="!isFutureWeek">
+        <span class="banner-stat-pill stat-amber">
+          ⚡ Cần nhập: {{ readySlotsCount }}
+        </span>
+        <span class="banner-stat-pill stat-blue">
+          ✓ {{ completionRate }}% Tiến độ Tuần
+        </span>
+      </ng-container>
+      <ng-container *ngIf="isFutureWeek">
+        <span class="banner-stat-pill stat-neutral">
+          📅 Kế hoạch: {{ totalSlotsCount }} tiết
+        </span>
+        <span class="banner-stat-pill stat-amber">
+          ⏳ Chưa tới ngày dạy (Chưa hoàn tất)
+        </span>
+      </ng-container>
     </div>
   </div>
 
@@ -318,17 +325,23 @@
           <div class="lieflat-metric-card h-100">
             <div class="d-flex justify-content-between align-items-center mb-1">
               <span class="lieflat-card-label">
-                Tiến Độ {{ selectedClassFilter !== 'all' ? ('(' + selectedClassFilter + ')') : 'Tuần' }}
+                {{ isFutureWeek ? ('Kế Hoạch Tuần ' + currentWeek + ' (Chưa tới ngày)') : ('Tiến Độ ' + (selectedClassFilter !== 'all' ? ('(' + selectedClassFilter + ')') : 'Tuần')) }}
               </span>
-              <span class="lieflat-rate-badge" [class.rate-high]="completionRate >= 80" [class.rate-mid]="completionRate < 80">
-                {{ completionRate }}%
+              <span class="lieflat-rate-badge" [class.rate-high]="completionRate >= 80" [class.rate-mid]="completionRate < 80" [class.rate-future]="isFutureWeek">
+                {{ isFutureWeek ? 'Chưa dạy' : (completionRate + '%') }}
               </span>
             </div>
             <div class="lieflat-big-metric mb-2">
-              <span class="metric-val">{{ syncedSlotsCount }}</span>
-              <span class="metric-divider">/</span>
-              <span class="metric-total">{{ totalSlotsCount }}</span>
-              <span class="metric-unit">tiết đã lưu vnEdu</span>
+              <ng-container *ngIf="!isFutureWeek">
+                <span class="metric-val">{{ syncedSlotsCount }}</span>
+                <span class="metric-divider">/</span>
+                <span class="metric-total">{{ totalSlotsCount }}</span>
+                <span class="metric-unit">tiết đã lưu vnEdu</span>
+              </ng-container>
+              <ng-container *ngIf="isFutureWeek">
+                <span class="metric-val">{{ totalSlotsCount }}</span>
+                <span class="metric-unit">tiết theo KHGD (Chưa tới ngày dạy)</span>
+              </ng-container>
             </div>
 
             <!-- Stacked Progress Bar (SVG) -->
@@ -628,6 +641,28 @@
       </div>
     </div>
 
+    <!-- BANNER KẾ HOẠCH BÀI DẠY (KHI ĐANG XEM TUẦN TƯƠNG LAI CÓ DỮ LIỆU KHGD TỪ VNEDU) -->
+    <div *ngIf="isFutureWeek && slots && slots.length > 0" class="week-future-banner mb-4">
+      <div class="banner-inner d-flex align-items-center justify-content-between p-3.5 px-4 flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="banner-icon-future">📅</div>
+          <div>
+            <div class="banner-title d-flex align-items-center gap-2 flex-wrap">
+              <span>Kế Hoạch Giáo Dục Tuần {{ currentWeek }} (Chưa tới ngày dạy)</span>
+              <span class="badge-future-status">Chưa tới ngày dạy • Chưa hoàn tất</span>
+            </div>
+            <div class="banner-desc mt-1">
+              Các tiết học thuộc Tuần {{ currentWeek }} chưa diễn ra nên chưa được ghi nhận hoàn tất vào Sổ Đầu Bài. Cô có thể xem trước kế hoạch bài dạy và phân phối chương trình tại đây ạ. 🌸
+            </div>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <span class="pill-future-info">📅 {{ totalSlotsCount }} tiết KHGD đã sẵn sàng</span>
+          <span class="pill-future-pending">⏳ Chờ đến ngày dạy để ghi SĐB</span>
+        </div>
+      </div>
+    </div>
+
     <div *ngFor="let group of dayGroups; trackBy: trackByThu"
          class="day-card"
          [class.is-today]="group.isToday"
@@ -651,8 +686,13 @@
         </div>
 
         <div class="d-flex align-items-center gap-2">
-          <!-- Huy hiệu ĐÃ HOÀN THÀNH nếu ngày này tất cả tiết đã lưu -->
-          <span *ngIf="group.isCompleted" class="badge-day-completed" title="Tất cả {{ group.slots.length }} tiết dạy trong ngày {{ group.thuText }} đã lưu vnEdu hoàn tất">
+          <!-- Huy hiệu KẾ HOẠCH BÀI DẠY (CHƯA TỚI NGÀY) nếu là tuần tương lai -->
+          <span *ngIf="isFutureWeek || group.isFutureDay" class="badge-day-future" title="Các tiết dạy trong ngày này thuộc kế hoạch bài dạy sắp tới (chưa tới ngày dạy)">
+            <span>📅</span> Chưa tới ngày dạy
+          </span>
+
+          <!-- Huy hiệu ĐÃ HOÀN THÀNH nếu ngày này tất cả tiết đã lưu (chỉ cho đúng tuần hiện tại) -->
+          <span *ngIf="!isFutureWeek && group.isCompleted" class="badge-day-completed" title="Tất cả {{ group.slots.length }} tiết dạy trong ngày {{ group.thuText }} đã lưu vnEdu hoàn tất">
             <span class="check-icon">✓</span> Đã hoàn thành
           </span>
 
@@ -729,8 +769,13 @@
                        [ngClass]="getAttendanceChipClass(slot)"
                        (click)="openAttendanceModal(slot)"
                        [title]="getAttendanceChipTooltip(slot)">
+                    <!-- TH TƯƠNG LAI: Chưa tới ngày dạy -->
+                    <ng-container *ngIf="isFutureWeek || slot.isFutureSlot">
+                      <span class="text-future-plan">📅 Chưa tới ngày dạy</span>
+                    </ng-container>
+
                     <!-- TH1: Cần đối chiếu (viền đỏ nét đứt) -->
-                    <ng-container *ngIf="isCanDoiChieu(slot)">
+                    <ng-container *ngIf="!isFutureWeek && !slot.isFutureSlot && isCanDoiChieu(slot)">
                       <span *ngIf="slot.sdbSoLuongNghi !== undefined && slot.giamThiSoLuongNghi !== undefined && slot.sdbSoLuongNghi !== slot.giamThiSoLuongNghi">
                         ⚠️ Giám thị ghi {{ slot.giamThiSoLuongNghi }} vắng (SĐB chưa cập nhật)
                       </span>
@@ -740,12 +785,12 @@
                     </ng-container>
 
                     <!-- TH2: Đã khớp hoàn toàn (có học sinh vắng, màu vàng cam peach, viền nhẹ) -->
-                    <ng-container *ngIf="!isCanDoiChieu(slot) && getDisplayAbsentCount(slot) > 0">
+                    <ng-container *ngIf="!isFutureWeek && !slot.isFutureSlot && !isCanDoiChieu(slot) && getDisplayAbsentCount(slot) > 0">
                       <span>✓ {{ getDisplayAbsentCount(slot) }} vắng (Đã khớp)</span>
                     </ng-container>
 
                     <!-- TH3: Cả lớp đi học đủ (0 vắng, màu xanh mint) -->
-                    <ng-container *ngIf="!isCanDoiChieu(slot) && getDisplayAbsentCount(slot) === 0">
+                    <ng-container *ngIf="!isFutureWeek && !slot.isFutureSlot && !isCanDoiChieu(slot) && getDisplayAbsentCount(slot) === 0">
                       <span>👥 ✓ Đủ (0 vắng)</span>
                     </ng-container>
 
@@ -897,12 +942,17 @@
               <!-- TRẠNG THÁI VNEDU -->
               <td class="text-center custom-tooltip-cell">
                 <div class="interactive-tooltip-wrapper">
-                  <span *ngIf="slot.isSynced"
+                  <span *ngIf="isFutureWeek || slot.isFutureSlot"
+                        class="status-badge-vnedu future"
+                        title="📅 Tiết dạy thuộc Kế hoạch bài dạy Tuần {{ currentWeek }}. Chưa tới ngày diễn ra nên chưa lưu vào Sổ Đầu Bài.">
+                    📅 Kế hoạch bài dạy
+                  </span>
+                  <span *ngIf="!isFutureWeek && !slot.isFutureSlot && slot.isSynced"
                         class="status-badge-vnedu synced"
                         title="✓ Tiết học này đã được lưu thành công vào Sổ Đầu Bài điện tử vnEdu">
                     ✓ Đã lưu vnEdu
                   </span>
-                  <span *ngIf="!slot.isSynced"
+                  <span *ngIf="!isFutureWeek && !slot.isFutureSlot && !slot.isSynced"
                         class="status-badge-vnedu pending"
                         title="⏰ Tiết học này chưa lưu lên vnEdu. Bấm 'Sửa / Lưu lại' để đồng bộ ngay">
                     ⏰ Cần nhập bài
@@ -917,24 +967,31 @@
                       <span class="tooltip-meta">Hệ Thống vnEdu</span>
                     </div>
                     <div class="tooltip-body">
-                      <div *ngIf="slot.isSynced" class="text-success fw-bold fs-8 mb-1">
+                      <div *ngIf="isFutureWeek || slot.isFutureSlot" class="text-primary fw-bold fs-8 mb-1">
+                        📅 Kế hoạch bài dạy sắp tới
+                      </div>
+                      <div *ngIf="!isFutureWeek && !slot.isFutureSlot && slot.isSynced" class="text-success fw-bold fs-8 mb-1">
                         ✓ Đã lưu Sổ đầu bài thành công
                       </div>
-                      <div *ngIf="!slot.isSynced" class="text-warning fw-bold fs-8 mb-1">
+                      <div *ngIf="!isFutureWeek && !slot.isFutureSlot && !slot.isSynced" class="text-warning fw-bold fs-8 mb-1">
                         ⏰ Tiết dạy chưa lưu vnEdu
                       </div>
                       <div class="tooltip-detail-note">
-                        <span *ngIf="slot.isSynced">
+                        <span *ngIf="isFutureWeek || slot.isFutureSlot">
+                          Tiết học này thuộc Kế hoạch bài dạy Tuần {{ currentWeek }} trên vnEdu. Tiết học chưa tới ngày diễn ra nên chưa được ghi nhận hoàn tất vào Sổ Đầu Bài.
+                        </span>
+                        <span *ngIf="!isFutureWeek && !slot.isFutureSlot && slot.isSynced">
                           Bài dạy, tiết PPCT, nhận xét và điểm danh đã được đồng bộ chuẩn xác lên cổng vnEdu của trường.
                         </span>
-                        <span *ngIf="!slot.isSynced">
+                        <span *ngIf="!isFutureWeek && !slot.isFutureSlot && !slot.isSynced">
                           Tiết học chưa được ghi nhận trên vnEdu. Bấm 'Sửa / Lưu lại' để đẩy dữ liệu lên ngay.
                         </span>
                       </div>
                     </div>
                     <div class="tooltip-footer">
-                      <span *ngIf="slot.isSynced">✓ Dữ liệu an toàn & đã đối chiếu</span>
-                      <span *ngIf="!slot.isSynced">⚡ Bấm 'Sửa / Lưu lại' để cập nhật</span>
+                      <span *ngIf="isFutureWeek || slot.isFutureSlot">📅 Chưa tới ngày dạy • Sẵn sàng KHGD</span>
+                      <span *ngIf="!isFutureWeek && !slot.isFutureSlot && slot.isSynced">✓ Dữ liệu an toàn & đã đối chiếu</span>
+                      <span *ngIf="!isFutureWeek && !slot.isFutureSlot && !slot.isSynced">⚡ Bấm 'Sửa / Lưu lại' để cập nhật</span>
                     </div>
                     <div class="tooltip-arrow"></div>
                   </div>
@@ -945,11 +1002,12 @@
               <td class="text-end pe-4 custom-tooltip-cell">
                 <div class="interactive-tooltip-wrapper">
                   <button class="btn-action-link"
+                          [class.btn-future-plan]="isFutureWeek || slot.isFutureSlot"
                           [disabled]="slot.isSaving"
                           (click)="syncSingle(slot)"
-                          [title]="slot.isSynced ? 'Cập nhật lại thông tin bài dạy, nhận xét và điểm danh lên vnEdu' : 'Lưu tiết học này vào Sổ Đầu Bài vnEdu'">
+                          [title]="(isFutureWeek || slot.isFutureSlot) ? 'Xem và chuẩn bị kế hoạch bài dạy cho tiết học này' : (slot.isSynced ? 'Cập nhật lại thông tin bài dạy, nhận xét và điểm danh lên vnEdu' : 'Lưu tiết học này vào Sổ Đầu Bài vnEdu')">
                     <span *ngIf="slot.isSaving" class="spinner-border spinner-border-sm me-1" role="status"></span>
-                    Sửa / Lưu lại
+                    {{ (isFutureWeek || slot.isFutureSlot) ? 'Chuẩn bị KHGD' : 'Sửa / Lưu lại' }}
                   </button>
 
                   <!-- Rich Tooltip cho Thao tác -->

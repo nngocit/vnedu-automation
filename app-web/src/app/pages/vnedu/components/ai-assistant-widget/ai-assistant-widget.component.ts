@@ -229,9 +229,9 @@ export class AiAssistantWidgetComponent implements OnInit, OnDestroy, AfterViewC
       .replace(/>/g, '&gt;');
 
     // Headers ### Title
-    formatted = formatted.replace(/^### (.*?)$/gm, '<h6 class="fw-bold text-primary mt-2 mb-1">$1</h6>');
-    formatted = formatted.replace(/^## (.*?)$/gm, '<h5 class="fw-bold text-dark mt-2.5 mb-1.5">$1</h5>');
-    formatted = formatted.replace(/^# (.*?)$/gm, '<h4 class="fw-bolder text-dark mt-3 mb-2">$1</h4>');
+    formatted = formatted.replace(/^### (.*?)$/gm, '<h6 class="fw-bold text-primary mt-2.5 mb-1.5">$1</h6>');
+    formatted = formatted.replace(/^## (.*?)$/gm, '<h5 class="fw-bold text-dark mt-3 mb-2">$1</h5>');
+    formatted = formatted.replace(/^# (.*?)$/gm, '<h4 class="fw-bolder text-dark mt-3.5 mb-2.5">$1</h4>');
 
     // Horizontal rule ---
     formatted = formatted.replace(/^---$/gm, '<hr class="my-2 border-secondary border-opacity-25"/>');
@@ -242,8 +242,27 @@ export class AiAssistantWidgetComponent implements OnInit, OnDestroy, AfterViewC
     // Italic *text*
     formatted = formatted.replace(/(?<!\*)\*([^\*\n]+?)\*(?!\*)/g, '<em>$1</em>');
 
-    // Bullet points * item hoặc - item
-    formatted = formatted.replace(/^[*-] (.+)$/gm, '• $1');
+    // Inline code `code`
+    formatted = formatted.replace(/`([^`\n]+)`/g, '<code class="bg-light px-1.5 py-0.5 rounded text-indigo fw-semibold">$1</code>');
+
+    // Toán học & Ký hiệu hình học phổ biến cho GV Toán
+    formatted = formatted
+      .replace(/\\Delta/g, 'Δ')
+      .replace(/\\triangle/g, '△')
+      .replace(/\\approx/g, '≈')
+      .replace(/\\neq/g, '≠')
+      .replace(/\\le(?:q)?\b/g, '≤')
+      .replace(/\\ge(?:q)?\b/g, '≥')
+      .replace(/\\times/g, '×')
+      .replace(/\\pm/g, '±')
+      .replace(/\\circ/g, '°')
+      .replace(/\$([^\$\n]+)\$/g, '<span class="fw-semibold text-primary">$1</span>');
+
+    // Bullet points * item hoặc - item (hỗ trợ cả lùi đầu dòng)
+    formatted = formatted.replace(/^(\s*)[*-] (.+)$/gm, (match, spaces, content) => {
+      const indent = spaces.length > 2 ? '&nbsp;&nbsp;&nbsp;&nbsp;◦ ' : '• ';
+      return indent + content;
+    });
 
     // Line breaks
     formatted = formatted.replace(/\n/g, '<br/>');

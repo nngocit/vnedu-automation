@@ -1489,15 +1489,26 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     return this.currentVisibleSlots.reduce((sum, s) => sum + this.getDisplayAbsentCount(s), 0);
   }
 
+  get isFutureWeek(): boolean {
+    return this.currentWeek > this.realCurrentWeek;
+  }
+
+  get isCurrentRealWeek(): boolean {
+    return this.currentWeek === this.realCurrentWeek;
+  }
+
   get completionRate(): number {
+    // Chỉ tính hoàn tất bao nhiêu % theo đúng tuần hiện tại thực tế
+    if (this.isFutureWeek) {
+      return 0; // Tuần tương lai chưa tới ngày dạy, chưa được hoàn tất
+    }
     if (this.totalSlotsCount === 0) return 0;
     return Math.round((this.syncedSlotsCount / this.totalSlotsCount) * 100);
   }
 
   get isWeekCompleted(): boolean {
-    // Chỉ tính hoàn tất cho tuần hiện tại và các tuần trước đó (quá khứ).
-    // Các tuần sau tuần hiện tại (tuần tương lai) hoặc tuần chưa có KHGD thì không thể coi là hoàn tất SĐB.
-    if (this.currentWeek > this.realCurrentWeek) {
+    // Chỉ tính hoàn tất cho đúng tuần hiện tại thực tế
+    if (!this.isCurrentRealWeek) {
       return false;
     }
     return this.totalSlotsCount > 0 && this.readySlotsCount === 0;
@@ -1765,6 +1776,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     ngay: string;
     isToday: boolean;
     isCompleted: boolean;
+    isFutureDay?: boolean;
     pendingCount: number;
     syncedCount: number;
     slots: VnEduSlot[];
@@ -1796,7 +1808,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
       8: 'Chủ Nhật'
     };
 
-    const groups: { [key: string]: { thu: number; thuText: string; ngay: string; isToday: boolean; isCompleted: boolean; pendingCount: number; syncedCount: number; slots: VnEduSlot[] } } = {};
+    const groups: { [key: string]: { thu: number; thuText: string; ngay: string; isToday: boolean; isCompleted: boolean; isFutureDay?: boolean; pendingCount: number; syncedCount: number; slots: VnEduSlot[] } } = {};
     filtered.forEach(slot => {
       const key = `${slot.thu}_${slot.ngay}`;
       if (!groups[key]) {
@@ -1820,9 +1832,10 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     });
 
     Object.values(groups).forEach(g => {
-      // Chỉ đánh dấu hoàn thành xanh nếu tuần đang xem là tuần hiện tại hoặc quá khứ
-      const isPastOrCurrentWeek = this.currentWeek <= this.realCurrentWeek;
-      g.isCompleted = isPastOrCurrentWeek && g.slots.length > 0 && g.pendingCount === 0;
+      // Chỉ đánh dấu hoàn thành khung xanh nếu là đúng tuần hiện tại thực tế và tất cả tiết đã lưu
+      const isCurrentRealWeek = this.currentWeek === this.realCurrentWeek;
+      g.isCompleted = isCurrentRealWeek && g.slots.length > 0 && g.pendingCount === 0;
+      (g as any).isFutureDay = this.currentWeek > this.realCurrentWeek;
     });
 
     this.dayGroups = Object.values(groups).sort((a, b) => a.thu - b.thu);
@@ -1931,6 +1944,10 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   // Helper tính toán trạng thái và số lượng điểm danh đối chiếu
   isCanDoiChieu(slot: any): boolean {
     if (!slot) return false;
+    // Nếu là tuần tương lai (chưa tới ngày dạy) thì KHÔNG báo lệch điểm danh
+    if (this.isFutureWeek || slot.isFutureSlot) {
+      return false;
+    }
     // 1. Nếu slot đã được quét và có cờ isMatched
     if (slot.isMatched !== undefined && slot.isMatched !== null) {
       return !slot.isMatched;
@@ -1951,6 +1968,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
 
   getDisplayAbsentCount(slot: any): number {
     if (!slot) return 0;
+    if (this.isFutureWeek || slot.isFutureSlot) return 0;
     if (slot.sdbSoLuongNghi !== undefined && slot.sdbSoLuongNghi !== null) {
       return slot.sdbSoLuongNghi;
     }
@@ -1967,6 +1985,9 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   }
 
   getAttendanceChipClass(slot: any): string {
+    if (this.isFutureWeek || slot.isFutureSlot) {
+      return 'chip-future-slot';
+    }
     if (this.isCanDoiChieu(slot)) {
       return 'chip-mismatched has-absent pending';
     }
@@ -1978,6 +1999,9 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   }
 
   getAttendanceChipTooltip(slot: any): string {
+    if (this.isFutureWeek || slot.isFutureSlot) {
+      return 'Tiết dạy thuộc kế hoạch bài dạy Tuần ' + this.currentWeek + ' (Chưa tới ngày dạy). Tiết học chưa diễn ra nên chưa điểm danh.';
+    }
     const count = this.getDisplayAbsentCount(slot);
     if (count === 0) {
       return 'Cả lớp đi học đầy đủ. Bấm để xem và sửa điểm danh.';
