@@ -1320,7 +1320,7 @@ function getAvailableWeeks(source = 'vnedu') {
     }
 
     // Quét đối chiếu danh sách vắng từ Sổ Điểm Danh của Giám thị / Nhà trường cho 1 tiết học
-    async function scanAbsentFromGiamThi(lopName, dateStr, tietNumber, forceRefresh = false) {
+    async function scanAbsentFromGiamThi(lopName, dateStr, tietNumber, forceRefresh = false, buoi = null) {
         if (!lopName) return { success: false, msg: 'Thiếu tên lớp', absentList: [], count: 0 };
 
         let dayNum = null;
@@ -1340,7 +1340,11 @@ function getAvailableWeeks(source = 'vnedu') {
         }
 
         const tiet = parseInt(tietNumber) || 1;
-        const sessionKey = tiet <= 5 ? 'morning' : 'afternoon';
+        const sessionKey = (buoi === 2 || String(buoi).toLowerCase().includes('chiều'))
+            ? 'afternoon'
+            : (buoi === 1 || String(buoi).toLowerCase().includes('sáng'))
+                ? 'morning'
+                : (tiet <= 5 ? 'morning' : 'afternoon');
 
         const sddRes = await getSoDiemDanhNamHoc(lopName, thangNam, '2026', forceRefresh);
         if (!sddRes || !sddRes.success) {

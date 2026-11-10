@@ -377,7 +377,7 @@ app.get('/api/schedule', async (req, res) => {
 
             const [dStr] = (item.ngay || '').split('/');
             const dayNum = parseInt(dStr);
-            const sessionKey = item.buoi === 1 ? 'morning' : 'afternoon';
+            const sessionKey = (item.buoi === 2 || String(item.buoi).toLowerCase().includes('chiều')) ? 'afternoon' : 'morning';
             const sddDayData = sddMap[item.lop]?.[dayNum]?.[sessionKey] || [];
 
             let hsVangList = [];
@@ -514,9 +514,10 @@ const handleScanGiamThi = async (req, res) => {
         const dateStr = req.query.date || req.query.ngay || req.body?.date || req.body?.ngay || '';
         const tiet = req.query.tiet || req.body?.tiet || req.body?.slot || 1;
         const forceRefresh = req.query.forceRefresh || req.body?.forceRefresh;
+        const buoi = req.query.buoi || req.body?.buoi;
         const isForce = forceRefresh === 'true' || forceRefresh === true || forceRefresh === '1';
 
-        const result = await core.scanAbsentFromGiamThi(lop, dateStr, tiet, isForce);
+        const result = await core.scanAbsentFromGiamThi(lop, dateStr, tiet, isForce, buoi);
         res.json(result);
     } catch (e) {
         res.status(500).json({ success: false, error: e.message });
@@ -611,7 +612,11 @@ const handleScanAllGiamThi = async (req, res) => {
                 const [dStr] = item.ngay.split('/');
                 dayNum = parseInt(dStr);
             }
-            const sessionKey = (item.buoi === 1 || (item.tiet && item.tiet <= 5)) ? 'morning' : 'afternoon';
+            // Phân biệt chính xác Buổi Sáng (morning) và Buổi Chiều (afternoon)
+            // THCS An Lập: Buổi chiều cũng đánh số Tiết 1..4, do đó PHẢI ưu tiên kiểm tra item.buoi === 2 trước
+            const sessionKey = (item.buoi === 2 || String(item.buoi).toLowerCase().includes('chiều'))
+                ? 'afternoon'
+                : 'morning';
             const sddDayData = (dayNum && sddMap[item.lop]?.[dayNum]?.[sessionKey]) || [];
 
             // Tìm dữ liệu tương ứng trên SĐB
