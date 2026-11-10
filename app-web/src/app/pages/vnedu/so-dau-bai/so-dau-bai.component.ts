@@ -2005,8 +2005,8 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   // Helper tính toán trạng thái và số lượng điểm danh đối chiếu
   isCanDoiChieu(slot: any): boolean {
     if (!slot) return false;
-    // Nếu là tuần tương lai (chưa tới ngày dạy) thì KHÔNG báo lệch điểm danh
-    if (this.isFutureWeek || slot.isFutureSlot) {
+    // Nếu là tuần tương lai (chưa tới ngày dạy) thì KHÔNG báo lệch điểm danh, trừ khi tiết đó đã có dữ liệu thực tế trên vnEdu
+    if ((this.isFutureWeek || slot.isFutureSlot) && !slot.isSynced) {
       return false;
     }
     // 1. Nếu slot đã được quét và có cờ isMatched
@@ -2029,7 +2029,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
 
   getDisplayAbsentCount(slot: any): number {
     if (!slot) return 0;
-    if (this.isFutureWeek || slot.isFutureSlot) return 0;
+    if ((this.isFutureWeek || slot.isFutureSlot) && !slot.isSynced) return 0;
     if (slot.sdbSoLuongNghi !== undefined && slot.sdbSoLuongNghi !== null) {
       return slot.sdbSoLuongNghi;
     }
@@ -2046,7 +2046,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   }
 
   getAttendanceChipClass(slot: any): string {
-    if (this.isFutureWeek || slot.isFutureSlot) {
+    if ((this.isFutureWeek || slot.isFutureSlot) && !slot.isSynced) {
       return 'chip-future-slot';
     }
     if (this.isCanDoiChieu(slot)) {
@@ -2060,7 +2060,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   }
 
   getAttendanceChipTooltip(slot: any): string {
-    if (this.isFutureWeek || slot.isFutureSlot) {
+    if ((this.isFutureWeek || slot.isFutureSlot) && !slot.isSynced) {
       return 'Tiết dạy thuộc kế hoạch bài dạy Tuần ' + this.currentWeek + ' (Chưa tới ngày dạy). Tiết học chưa diễn ra nên chưa điểm danh.';
     }
     const count = this.getDisplayAbsentCount(slot);
