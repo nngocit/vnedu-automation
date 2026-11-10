@@ -119,11 +119,13 @@
     <div class="d-none d-md-flex flex-column text-end me-1" *ngIf="user$ | async as currentUser; else defaultUserNav">
       <span class="text-gray-900 fw-bolder fs-7 lh-1">{{ currentUser.fullname || 'Cô Diệu Huyên' }}</span>
       <span class="text-gray-500 fs-9 mt-1">{{ currentUser.companyName || 'THCS An Lập' }}</span>
+      <span class="badge badge-light-primary fw-bold fs-10 px-1.5 py-0.5 mt-0.5 align-self-end">v2.5.0</span>
     </div>
     <ng-template #defaultUserNav>
       <div class="d-none d-md-flex flex-column text-end me-1">
         <span class="text-gray-900 fw-bolder fs-7 lh-1">Cô Diệu Huyên</span>
         <span class="text-gray-500 fs-9 mt-1">THCS An Lập</span>
+        <span class="badge badge-light-primary fw-bold fs-10 px-1.5 py-0.5 mt-0.5 align-self-end">v2.5.0</span>
       </div>
     </ng-template>
     <div class="symbol symbol-35px symbol-circle" *ngIf="user$ | async as currentUser; else defaultAvatar">
