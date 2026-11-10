@@ -165,6 +165,13 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     return (this.info?.teacher as any)?.school || 'Trường THCS An Lập';
   }
 
+  getTeacherInitial(name?: string): string {
+    if (!name) return 'H';
+    const parts = name.trim().split(/\s+/);
+    const lastName = parts[parts.length - 1];
+    return (lastName ? lastName.charAt(0) : 'H').toUpperCase();
+  }
+
   openTeacherSwitcherModal(): void {
     this.showTeacherSwitcherModal = true;
     this.authService.getSavedTeachers().subscribe({

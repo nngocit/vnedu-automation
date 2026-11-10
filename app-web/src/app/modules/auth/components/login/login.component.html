@@ -54,7 +54,7 @@
             <div class="d-flex align-items-center">
               <div class="symbol symbol-38px symbol-circle me-3">
                 <span class="symbol-label bg-primary text-white fw-bolder fs-6">
-                  {{ t.name ? t.name.trim().charAt(t.name.trim().length - 1) : (t.title ? t.title.charAt(t.title.length - 1) : 'G') }}
+                  {{ getTeacherInitial(t.name || t.title) }}
                 </span>
               </div>
               <div>
@@ -68,7 +68,7 @@
                 </div>
               </div>
             </div>
-            <button type="button" class="btn btn-sm btn-light-primary rounded-pill px-3 py-1.5 fs-8 fw-bold">
+            <button type="button" class="btn btn-sm btn-light-primary rounded-pill px-3 py-1.5 fs-8 fw-bold" (click)="quickSwitch(t); $event.stopPropagation();">
               ⚡ Chọn
             </button>
           </div>

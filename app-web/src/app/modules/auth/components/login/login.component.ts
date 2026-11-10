@@ -44,13 +44,15 @@ export class LoginComponent implements OnInit, OnDestroy {
   ) {
     this.isLoading$ = this.authService.isLoading$;
 
-    // Kiểm tra query parameter mode=new khi mở từ popup đổi tài khoản
+    // Kiểm tra query parameter mode=new hoặc mode=switch khi mở từ menu đổi tài khoản
     const mode = this.route.snapshot.queryParams['mode'];
     if (mode === 'new') {
       this.isNewTeacherMode = true;
       this.authService.logoutWithoutRedirect();
+    } else if (mode === 'switch') {
+      // Chế độ đổi tài khoản: ở lại màn hình đăng nhập để chọn hồ sơ hoặc thêm mới
     } else if (this.authService.currentUserValue) {
-      // Nếu đã đăng nhập và không phải thêm mới thì điều hướng thẳng vào trang Sổ đầu bài
+      // Nếu đã đăng nhập và không phải chuyển đổi/thêm mới thì điều hướng thẳng vào trang Sổ đầu bài
       this.router.navigate(['/vnedu/so-dau-bai']);
     }
   }
@@ -124,6 +126,29 @@ export class LoginComponent implements OnInit, OnDestroy {
         }
       },
       error: () => {}
+    });
+  }
+
+  getTeacherInitial(name?: string): string {
+    if (!name) return 'H';
+    const parts = name.trim().split(/\s+/);
+    const lastName = parts[parts.length - 1];
+    return (lastName ? lastName.charAt(0) : 'H').toUpperCase();
+  }
+
+  quickSwitch(t: any): void {
+    if (!t || !t.username) return;
+    this.authService.switchTeacher(t.username).subscribe({
+      next: (res) => {
+        if (res && res.success) {
+          this.router.navigate([this.returnUrl]);
+        } else {
+          this.selectTeacher(t);
+        }
+      },
+      error: () => {
+        this.selectTeacher(t);
+      }
     });
   }
 

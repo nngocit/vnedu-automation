@@ -80,8 +80,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   getTeacherInitial(name?: string): string {
     if (!name) return 'H';
-    const trimmed = name.trim();
-    return trimmed.charAt(trimmed.length - 1).toUpperCase();
+    const parts = name.trim().split(/\s+/);
+    const lastName = parts[parts.length - 1];
+    return (lastName ? lastName.charAt(0) : 'H').toUpperCase();
   }
 
   openAiChat(): void {

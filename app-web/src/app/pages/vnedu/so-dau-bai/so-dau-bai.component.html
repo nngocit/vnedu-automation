@@ -1747,7 +1747,7 @@
                   <div class="symbol symbol-45px symbol-circle">
                     <span class="symbol-label fw-bold fs-5 text-white shadow-xs"
                           [style.background]="t.active ? 'linear-gradient(135deg, #4f46e5, #7c3aed)' : '#6b7280'">
-                      {{ t.name ? t.name.trim().charAt(t.name.trim().length - 1) : 'G' }}
+                      {{ getTeacherInitial(t.name || t.title) }}
                     </span>
                   </div>
                   <div>

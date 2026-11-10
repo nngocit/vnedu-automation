@@ -1,23 +1,28 @@
 <ng-container *ngIf="user$ | async as _user">
   <!-- Header User Info -->
   <div class="menu-item px-3">
-    <div class="menu-content d-flex align-items-center px-3 py-2">
-      <!-- Avatar Giáo viên -->
-      <div class="symbol symbol-50px me-4">
-        <div class="symbol-label bg-light-primary text-primary fw-bolder fs-3 rounded-circle border border-primary border-opacity-25" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+    <div class="menu-content d-flex align-items-center px-3 py-3">
+      <!-- Avatar Giáo viên (Chữ H viết tắt cho Cô Diệu Huyên) -->
+      <div class="symbol symbol-45px symbol-circle me-3 flex-shrink-0">
+        <div class="symbol-label bg-primary text-white fw-bolder fs-4 shadow-xs" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
           {{ getTeacherInitial(_user.fullname) }}
         </div>
       </div>
 
-      <div class="d-flex flex-column">
-        <div class="fw-bolder d-flex align-items-center fs-6 text-gray-900">
-          {{ _user.fullname || 'Giáo viên vnEdu' }}
+      <div class="d-flex flex-column min-w-0 flex-grow-1">
+        <!-- Tên Giáo viên -->
+        <div class="fw-bolder fs-6 text-gray-900 text-truncate" [title]="_user.fullname || 'Cô Lê Thị Diệu Huyên'">
+          {{ _user.fullname || 'Cô Lê Thị Diệu Huyên' }}
         </div>
-        <span class="badge badge-light-primary fw-bold fs-9 mt-1 align-self-start">
-          {{ _user.companyName || 'THCS An Lập' }} • {{ _user.occupation || 'Giáo viên' }} • v2.5.0
-        </span>
-        <div class="text-gray-500 fs-8 mt-1">
-          vnEdu: <strong>{{ _user.phone || _user.username || '051197003685' }}</strong>
+        <!-- Môn học giảng dạy -->
+        <div class="d-flex align-items-center gap-1.5 mt-1">
+          <span class="badge badge-light-primary fw-bolder fs-8 px-2.5 py-1 text-truncate">
+            {{ _user.occupation || 'Giáo viên Toán & HĐTN' }}
+          </span>
+        </div>
+        <!-- Trường & Mã vnEdu -->
+        <div class="text-gray-500 fs-8 mt-1.5 text-truncate">
+          {{ _user.companyName || 'THCS An Lập' }} • <strong class="text-gray-700">{{ _user.phone || _user.username || '051197003685' }}</strong>
         </div>
       </div>
     </div>
@@ -60,7 +65,7 @@
 
   <!-- Nút Chuyển Đổi Giáo Viên / Đồng Nghiệp -->
   <div class="menu-item px-4 my-1">
-    <a routerLink="/auth/login" class="menu-link px-4 py-3 text-primary text-hover-primary bg-hover-light-primary rounded-2 cursor-pointer">
+    <a [routerLink]="['/auth/login']" [queryParams]="{ mode: 'switch' }" class="menu-link px-4 py-3 text-primary text-hover-primary bg-hover-light-primary rounded-2 cursor-pointer">
       <span class="menu-icon me-3">
         <app-keenicon name="switch" class="fs-3 text-primary"></app-keenicon>
       </span>
