@@ -36,6 +36,12 @@ export class UserInnerComponent implements OnInit, OnDestroy {
     return (lastName ? lastName.charAt(0) : 'H').toUpperCase();
   }
 
+  isAdmin(user?: UserType | null): boolean {
+    if (!user) return false;
+    const phone = user.phone || user.username;
+    return phone === '051197003685';
+  }
+
   logout() {
     this.auth.logout();
   }

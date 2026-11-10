@@ -50,7 +50,18 @@
     </a>
   </div>
 
-  <!-- Menu 3: Cổng vnEdu trực tuyến -->
+  <!-- Menu 3: Quản Trị Hệ Thống (Dành riêng cho Cô Lê Thị Diệu Huyên) -->
+  <div class="menu-item px-4" *ngIf="isAdmin(_user)">
+    <a routerLink="/vnedu/admin" class="menu-link px-4 py-3 text-gray-800 text-hover-danger bg-hover-light-danger rounded-2">
+      <span class="menu-icon me-3">
+        <app-keenicon name="shield-tick" class="fs-3 text-danger"></app-keenicon>
+      </span>
+      <span class="menu-title fw-bold fs-7 text-danger">🛡️ Quản Trị Hệ Thống</span>
+      <span class="badge badge-light-danger fs-9 ms-auto fw-bolder">Full Giáp</span>
+    </a>
+  </div>
+
+  <!-- Menu 4: Cổng vnEdu trực tuyến -->
   <div class="menu-item px-4">
     <a href="https://uaevcmanmsgdbinhduong.vnedu.vn" target="_blank" class="menu-link px-4 py-3 text-gray-800 text-hover-primary">
       <span class="menu-icon me-3">

@@ -1,4 +1,7 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { AuthService } from '../../../../../modules/auth/services/auth.service';
 
 @Component({
     selector: 'app-sidebar-menu',
@@ -8,8 +11,16 @@ import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
     standalone: false
 })
 export class SidebarMenuComponent implements OnInit {
+  isAdmin$: Observable<boolean>;
 
-  constructor() { }
+  constructor(private authService: AuthService) {
+    this.isAdmin$ = this.authService.currentUser$.pipe(
+      map(u => {
+        const phone = u?.phone || u?.username;
+        return phone === '051197003685';
+      })
+    );
+  }
 
   ngOnInit(): void {
   }

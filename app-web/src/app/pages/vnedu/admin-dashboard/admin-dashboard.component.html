@@ -1,0 +1,760 @@
+<div class="admin-dashboard-container d-flex flex-column gap-6 p-4 p-lg-6">
+
+  <!-- ======================================================== -->
+  <!-- HERO HEADER: TRUNG TÂM QUẢN TRỊ TỐI CAO "FULL GIÁP"       -->
+  <!-- ======================================================== -->
+  <div class="card admin-hero-card border-0 rounded-4 shadow-sm overflow-hidden text-white">
+    <div class="card-body p-6 p-lg-8 position-relative z-index-2">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-4">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+            <span class="badge badge-light-danger fw-bolder fs-8 px-3 py-1.5 rounded-pill text-uppercase letter-spacing-1">
+              🛡️ TRUNG TÂM ĐIỀU HÀNH & QUẢN TRỊ TỐI CAO
+            </span>
+            <span class="badge badge-light-primary fw-bolder fs-8 px-3 py-1.5 rounded-pill">
+              THCS An Lập • Phiên bản v2.5.0
+            </span>
+            <span class="badge badge-success fw-bolder fs-9 px-2.5 py-1 rounded-pill">
+              ● Server Online
+            </span>
+          </div>
+
+          <h1 class="fw-bolder fs-2x text-white mb-2 d-flex align-items-center gap-2">
+            <span>Bảng Điều Khiển Quản Trị Hệ Thống</span>
+            <span class="badge bg-warning text-dark fs-8 px-2 py-0.5 rounded-2">Super Admin</span>
+          </h1>
+
+          <p class="text-white text-opacity-85 fs-7 mb-0 max-w-700px">
+            Dành riêng cho <strong>Cô Lê Thị Diệu Huyên</strong>. Quản trị toàn diện: máy chủ ngầm, tài khoản đồng nghiệp, cấu hình tự động điền SĐB, đối chiếu Giám thị và bản quyền hệ thống.
+          </p>
+        </div>
+
+        <!-- Cụm nút hành động nhanh trên Hero -->
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <button type="button" class="btn btn-sm btn-light-primary rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-1.5 shadow-sm" (click)="onPingVnEdu()" [disabled]="isPinging">
+            <span class="spinner-border spinner-border-sm" *ngIf="isPinging"></span>
+            <span *ngIf="!isPinging">⚡</span>
+            <span>Ping vnEdu</span>
+          </button>
+
+          <button type="button" class="btn btn-sm btn-light-warning rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-1.5 shadow-sm" (click)="onClearCache()">
+            <span>🧹</span>
+            <span>Dọn Cache ({{ stats?.storage?.cacheKB || 0 }} KB)</span>
+          </button>
+
+          <button type="button" class="btn btn-sm btn-light-success rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-1.5 shadow-sm" (click)="onDownloadBackup()">
+            <span>📥</span>
+            <span>Sao Lưu Hệ Thống</span>
+          </button>
+
+          <button type="button" class="btn btn-sm btn-light rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-1.5 shadow-sm" (click)="loadAdminData()" [disabled]="isLoading">
+            <span>🔄</span>
+            <span>Tải Lại</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- 4 THẺ CHỈ SỐ KPI VẬN HÀNH (SYSTEM HEALTH METRICS)          -->
+  <!-- ======================================================== -->
+  <div class="row g-4">
+    <!-- Card 1: Máy chủ Node.js -->
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card h-100 border-0 rounded-3 shadow-xs p-5 bg-white border-top border-4 border-primary">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <div class="symbol symbol-45px symbol-circle bg-light-primary text-primary d-flex align-items-center justify-content-center">
+            <span class="fs-2">🖥️</span>
+          </div>
+          <span class="badge badge-light-success fw-bold fs-9">Cổng {{ stats?.server?.port || 3000 }}</span>
+        </div>
+        <div class="fs-3 fw-bolder text-gray-900 mb-1">
+          {{ stats?.server?.nodeVersion || 'v25.4.0' }}
+        </div>
+        <div class="text-muted fs-8 mb-2">Máy chủ ngầm Node.js (Windows)</div>
+        <div class="d-flex align-items-center justify-content-between text-gray-600 fs-9 pt-2 border-top">
+          <span>Thời gian chạy:</span>
+          <strong class="text-primary">{{ stats?.server?.uptime || 'Đang đo...' }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Kết nối vnEdu -->
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card h-100 border-0 rounded-3 shadow-xs p-5 bg-white border-top border-4 border-success">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <div class="symbol symbol-45px symbol-circle bg-light-success text-success d-flex align-items-center justify-content-center">
+            <span class="fs-2">⚡</span>
+          </div>
+          <span class="badge fw-bold fs-9" [ngClass]="stats?.vnedu?.connected ? 'badge-success' : 'badge-light-danger'">
+            {{ stats?.vnedu?.connected ? 'Live Session' : 'Chưa có Token' }}
+          </span>
+        </div>
+        <div class="fs-3 fw-bolder text-gray-900 mb-1">
+          THCS An Lập
+        </div>
+        <div class="text-muted fs-8 mb-2">vnEdu Sở GD&ĐT Bình Dương</div>
+        <div class="d-flex align-items-center justify-content-between text-gray-600 fs-9 pt-2 border-top">
+          <span>Mã phiên Token:</span>
+          <strong class="text-dark">{{ stats?.vnedu?.tokenPreview || 'None' }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3: Hồ sơ giáo viên đã lưu -->
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card h-100 border-0 rounded-3 shadow-xs p-5 bg-white border-top border-4 border-info">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <div class="symbol symbol-45px symbol-circle bg-light-info text-info d-flex align-items-center justify-content-center">
+            <span class="fs-2">👥</span>
+          </div>
+          <span class="badge badge-light-primary fw-bold fs-9">{{ stats?.teachers?.total || 1 }} Giáo viên</span>
+        </div>
+        <div class="fs-3 fw-bolder text-gray-900 mb-1">
+          {{ stats?.teachers?.active?.shortName || 'Cô Diệu Huyên' }}
+        </div>
+        <div class="text-muted fs-8 mb-2">Đang là tài khoản làm việc chính</div>
+        <div class="d-flex align-items-center justify-content-between text-gray-600 fs-9 pt-2 border-top">
+          <span>Quyền hạn:</span>
+          <strong class="text-danger">Super Admin (Toán & HĐTN)</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4: RAM & Hiệu năng -->
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card h-100 border-0 rounded-3 shadow-xs p-5 bg-white border-top border-4 border-warning">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <div class="symbol symbol-45px symbol-circle bg-light-warning text-warning d-flex align-items-center justify-content-center">
+            <span class="fs-2">🚀</span>
+          </div>
+          <span class="badge badge-light-warning fw-bold fs-9">RAM Tối Ưu</span>
+        </div>
+        <div class="fs-3 fw-bolder text-gray-900 mb-1">
+          {{ stats?.server?.memory?.heapUsedMB || 0 }} MB / {{ stats?.server?.memory?.rssMB || 0 }} MB
+        </div>
+        <div class="text-muted fs-8 mb-2">Bộ nhớ Heap / RSS tiến trình</div>
+        <div class="d-flex align-items-center justify-content-between text-gray-600 fs-9 pt-2 border-top">
+          <span>Bộ nhớ đệm:</span>
+          <strong class="text-success">{{ stats?.storage?.cacheKB || 0 }} KB</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- HỆ THỐNG TABS QUẢN TRỊ                                     -->
+  <!-- ======================================================== -->
+  <div class="card border-0 rounded-4 shadow-sm bg-white overflow-hidden">
+    <!-- Header Tabs -->
+    <div class="card-header border-bottom p-0 px-4 px-lg-6 d-flex align-items-center justify-content-between">
+      <ul class="nav nav-stretch nav-line-tabs nav-line-tabs-2x border-transparent fs-6 fw-bold flex-nowrap overflow-auto mb-0">
+        <li class="nav-item">
+          <a class="nav-link text-active-primary py-4 cursor-pointer" [class.active]="activeTab === 'overview'" (click)="setTab('overview')">
+            📊 Tổng Quan & Sức Khỏe
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-active-primary py-4 cursor-pointer" [class.active]="activeTab === 'teachers'" (click)="setTab('teachers')">
+            👥 Quản Lý Giáo Viên ({{ teachersList.length }})
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-active-primary py-4 cursor-pointer" [class.active]="activeTab === 'automation'" (click)="setTab('automation')">
+            ⚙️ Cấu Hình Tự Động Hóa
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-active-primary py-4 cursor-pointer" [class.active]="activeTab === 'session'" (click)="setTab('session')">
+            🌐 Phiên vnEdu & Hiệu Năng
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-active-primary py-4 cursor-pointer" [class.active]="activeTab === 'backup'" (click)="setTab('backup')">
+            🛡️ Sao Lưu & Khôi Phục
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-active-primary py-4 cursor-pointer" [class.active]="activeTab === 'logs'" (click)="setTab('logs')">
+            📜 Nhật Ký Hoạt Động
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Body Tabs -->
+    <div class="card-body p-6">
+
+      <!-- ============================================== -->
+      <!-- TAB 1: TỔNG QUAN HỆ THỐNG                      -->
+      <!-- ============================================== -->
+      <div *ngIf="activeTab === 'overview'" class="d-flex flex-column gap-6">
+        <div class="row g-4">
+          <div class="col-12 col-lg-7">
+            <div class="card border p-5 rounded-3 bg-light-subtle h-100">
+              <h4 class="fw-bolder text-gray-900 fs-5 mb-4 d-flex align-items-center gap-2">
+                <span>🛡️ Đặc Quyền Quản Trị Hệ Thống Của Cô Diệu Huyên</span>
+              </h4>
+              <div class="d-flex flex-column gap-3 fs-7 text-gray-700">
+                <div class="d-flex align-items-start gap-2.5">
+                  <span class="badge badge-success p-1 rounded-circle mt-1">✓</span>
+                  <div>
+                    <strong>Chủ quyền tuyệt đối trên máy tính này:</strong> Hệ thống lưu dữ liệu độc quyền trên thư mục cục bộ của máy, không rò rỉ ra ngoài trường.
+                  </div>
+                </div>
+                <div class="d-flex align-items-start gap-2.5">
+                  <span class="badge badge-success p-1 rounded-circle mt-1">✓</span>
+                  <div>
+                    <strong>Hỗ trợ đồng nghiệp đa tài khoản:</strong> Cô có thể cho phép đồng nghiệp bộ môn khác đăng nhập và sử dụng, hệ thống tự tách biệt thời khóa biểu và PPCT.
+                  </div>
+                </div>
+                <div class="d-flex align-items-start gap-2.5">
+                  <span class="badge badge-success p-1 rounded-circle mt-1">✓</span>
+                  <div>
+                    <strong>Chống đè sĩ số buổi sáng vào buổi chiều:</strong> Thuật toán ưu tiên <code>buoi === 2</code> xử lý chính xác học sinh vắng cho các tiết chiều.
+                  </div>
+                </div>
+                <div class="d-flex align-items-start gap-2.5">
+                  <span class="badge badge-success p-1 rounded-circle mt-1">✓</span>
+                  <div>
+                    <strong>Khử mã toán thô LaTeX trực quan:</strong> Mọi công thức Toán (độ, góc, lũy thừa, phân số) được chuyển tự động sang chuẩn SGK Tiếng Việt.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-5">
+            <div class="card border p-5 rounded-3 bg-white h-100">
+              <h4 class="fw-bolder text-gray-900 fs-5 mb-4 d-flex align-items-center gap-2">
+                <span>⚡ Thao Tác Quản Trị Nhanh</span>
+              </h4>
+              <div class="d-flex flex-column gap-2.5">
+                <button type="button" class="btn btn-light-primary text-start fw-bold py-3 px-4 rounded-3 d-flex align-items-center justify-content-between" (click)="setTab('teachers')">
+                  <span class="d-flex align-items-center gap-2">
+                    <span>👥</span>
+                    <span>Quản lý danh sách giáo viên</span>
+                  </span>
+                  <span class="badge badge-light-primary">{{ teachersList.length }}</span>
+                </button>
+
+                <button type="button" class="btn btn-light-success text-start fw-bold py-3 px-4 rounded-3 d-flex align-items-center justify-content-between" (click)="setTab('automation')">
+                  <span class="d-flex align-items-center gap-2">
+                    <span>⚙️</span>
+                    <span>Cấu hình tự động điền SĐB</span>
+                  </span>
+                  <span class="badge badge-light-success">Đang bật</span>
+                </button>
+
+                <button type="button" class="btn btn-light-warning text-start fw-bold py-3 px-4 rounded-3 d-flex align-items-center justify-content-between" (click)="onClearCache()">
+                  <span class="d-flex align-items-center gap-2">
+                    <span>🧹</span>
+                    <span>Làm sạch dữ liệu đệm (Cache)</span>
+                  </span>
+                  <span class="badge badge-light-warning">Khuyên dùng</span>
+                </button>
+
+                <button type="button" class="btn btn-light-danger text-start fw-bold py-3 px-4 rounded-3 d-flex align-items-center justify-content-between" (click)="setTab('backup')">
+                  <span class="d-flex align-items-center gap-2">
+                    <span>🛡️</span>
+                    <span>Xuất file sao lưu bảo vệ</span>
+                  </span>
+                  <span class="badge badge-danger">An toàn</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 2: QUẢN LÝ DANH SÁCH GIÁO VIÊN              -->
+      <!-- ============================================== -->
+      <div *ngIf="activeTab === 'teachers'" class="d-flex flex-column gap-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+          <div>
+            <h3 class="fw-bolder text-gray-900 fs-4 mb-1">Danh Sách Giáo Viên Đã Lưu Trong Hệ Thống</h3>
+            <p class="text-muted fs-8 mb-0">Hệ thống hỗ trợ chuyển đổi siêu tốc 1 cú nhấp giữa các Thầy/Cô trường THCS An Lập</p>
+          </div>
+          <button type="button" class="btn btn-primary rounded-pill px-4 py-2 fs-7 fw-bold" (click)="onOpenAddTeacher()">
+            ➕ Thêm Hồ Sơ Giáo Viên Mới
+          </button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle table-row-dashed fs-7 gy-4">
+            <thead>
+              <tr class="text-start text-gray-500 fw-bolder fs-8 text-uppercase gs-0 bg-light">
+                <th class="ps-4 rounded-start">Giáo viên</th>
+                <th>Tài khoản vnEdu</th>
+                <th>Môn giảng dạy</th>
+                <th>Đơn vị trường</th>
+                <th>Vai trò</th>
+                <th>Trạng thái</th>
+                <th class="text-end pe-4 rounded-end">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let t of teachersList" [class.bg-light-primary]="t.isCurrent">
+                <!-- Avatar & Tên -->
+                <td class="ps-4">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="symbol symbol-40px symbol-circle">
+                      <span class="symbol-label fw-bolder fs-6 text-white" [style.background]="t.username === '051197003685' ? 'linear-gradient(135deg, #0d6efd, #6610f2)' : '#6c757d'">
+                        {{ getTeacherInitial(t.name || t.title) }}
+                      </span>
+                    </div>
+                    <div>
+                      <div class="fw-bolder text-gray-900 fs-7">
+                        {{ t.title || t.name }}
+                      </div>
+                      <div class="text-gray-500 fs-9">{{ t.gender === 'male' ? 'Thầy giáo' : 'Cô giáo' }}</div>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Username -->
+                <td>
+                  <span class="badge badge-light fw-bold fs-8 font-monospace">{{ t.username }}</span>
+                </td>
+
+                <!-- Subject -->
+                <td>
+                  <span class="badge badge-light-primary fw-semibold fs-8">{{ t.subject || 'Giảng dạy THCS' }}</span>
+                </td>
+
+                <!-- School -->
+                <td class="text-gray-700 fs-8">
+                  {{ t.school || 'THCS An Lập' }}
+                </td>
+
+                <!-- Role -->
+                <td>
+                  <span *ngIf="t.username === '051197003685'" class="badge badge-danger fw-bolder fs-9">
+                    👑 Super Admin
+                  </span>
+                  <span *ngIf="t.username !== '051197003685'" class="badge badge-light-dark fw-bold fs-9">
+                    Giáo viên bộ môn
+                  </span>
+                </td>
+
+                <!-- Status -->
+                <td>
+                  <span *ngIf="t.isCurrent" class="badge badge-success fw-bold fs-9">
+                    ● Đang sử dụng
+                  </span>
+                  <span *ngIf="!t.isCurrent" class="badge badge-light text-muted fs-9">
+                    Sẵn sàng
+                  </span>
+                </td>
+
+                <!-- Actions -->
+                <td class="text-end pe-4">
+                  <div class="d-inline-flex align-items-center gap-1.5">
+                    <button *ngIf="!t.isCurrent" type="button" class="btn btn-xs btn-light-primary rounded-pill px-2.5 py-1 fw-bold" (click)="onSwitchTeacher(t.username)" title="Chuyển sang tài khoản này">
+                      ⚡ Chọn
+                    </button>
+                    <button type="button" class="btn btn-xs btn-light rounded-pill px-2.5 py-1 fw-semibold" (click)="onOpenEditTeacher(t)" title="Sửa thông tin">
+                      ✏️ Sửa
+                    </button>
+                    <button *ngIf="t.username !== '051197003685'" type="button" class="btn btn-xs btn-light-danger rounded-pill px-2.5 py-1 fw-semibold" (click)="onDeleteTeacher(t)" title="Xóa tài khoản này">
+                      🗑️ Xóa
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 3: CẤU HÌNH TỰ ĐỘNG HÓA                     -->
+      <!-- ============================================== -->
+      <div *ngIf="activeTab === 'automation'" class="d-flex flex-column gap-5">
+        <div>
+          <h3 class="fw-bolder text-gray-900 fs-4 mb-1">Cấu Hình Quy Tắc Vận Hành & Tự Động Hóa</h3>
+          <p class="text-muted fs-8 mb-0">Thiết lập các tham số xử lý Sổ đầu bài, kiểm tra giám thị và hỗ trợ sư phạm của AI</p>
+        </div>
+
+        <div class="row g-4">
+          <!-- Nhóm 1: Tự động hóa Sổ đầu bài -->
+          <div class="col-12 col-lg-6">
+            <div class="card border p-5 rounded-3 bg-white h-100">
+              <h4 class="fw-bolder text-gray-900 fs-6 mb-3 d-flex align-items-center gap-2">
+                <span>📖 Tự Động Điền Sổ Đầu Bài & Lịch Tuần</span>
+              </h4>
+
+              <div class="d-flex flex-column gap-3.5">
+                <div class="d-flex align-items-center justify-content-between p-3 rounded-2 bg-light">
+                  <div>
+                    <div class="fw-bold fs-7 text-gray-800">Tự động nạp bài dạy từ PPCT</div>
+                    <div class="text-muted fs-8">Tra cứu chính xác bài dạy Toán, HĐTN theo đúng tuần học</div>
+                  </div>
+                  <div class="form-check form-switch form-check-custom form-check-solid">
+                    <input class="form-check-input h-20px w-35px" type="checkbox" [(ngModel)]="settings.autoFillPpct" />
+                  </div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between p-3 rounded-2 bg-light">
+                  <div>
+                    <div class="fw-bold fs-7 text-gray-800">Đối chiếu điểm danh Giám thị tự động</div>
+                    <div class="text-muted fs-8">Quét phát hiện vắng có phép / không phép từ sổ giám thị</div>
+                  </div>
+                  <div class="form-check form-switch form-check-custom form-check-solid">
+                    <input class="form-check-input h-20px w-35px" type="checkbox" [(ngModel)]="settings.autoMatchAttendance" />
+                  </div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between p-3 rounded-2 bg-light">
+                  <div>
+                    <div class="fw-bold fs-7 text-gray-800">Ưu tiên đối chiếu buổi chiều (Buổi 2)</div>
+                    <div class="text-muted fs-8">Khóa không cho dữ liệu vắng buổi sáng đè nhầm vào buổi chiều</div>
+                  </div>
+                  <div class="form-check form-switch form-check-custom form-check-solid">
+                    <input class="form-check-input h-20px w-35px" type="checkbox" [(ngModel)]="settings.strictAfternoon" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nhóm 2: Trợ lý AI & Bộ lọc toán -->
+          <div class="col-12 col-lg-6">
+            <div class="card border p-5 rounded-3 bg-white h-100">
+              <h4 class="fw-bolder text-gray-900 fs-6 mb-3 d-flex align-items-center gap-2">
+                <span>🤖 Trợ Lý Trí Tuệ Nhân Tạo & Bộ Lọc SGK</span>
+              </h4>
+
+              <div class="d-flex flex-column gap-3.5">
+                <div class="d-flex align-items-center justify-content-between p-3 rounded-2 bg-light">
+                  <div>
+                    <div class="fw-bold fs-7 text-gray-800">Bộ lọc khử LaTeX toán học thô</div>
+                    <div class="text-muted fs-8">Tự động làm sạch các mã dạng $60^\circ$ thành 60° chuẩn SGK</div>
+                  </div>
+                  <div class="form-check form-switch form-check-custom form-check-solid">
+                    <input class="form-check-input h-20px w-35px" type="checkbox" [(ngModel)]="settings.aiMathCleanFilter" />
+                  </div>
+                </div>
+
+                <div class="p-3 rounded-2 bg-light">
+                  <label class="form-label fw-bold fs-7 text-gray-800 mb-1">Phong cách phản hồi của Trợ lý AI</label>
+                  <select class="form-select form-select-solid fs-7 py-2 px-3 rounded-2" [(ngModel)]="settings.aiTone">
+                    <option value="pedagogical">Chuẩn Sư Phạm (Tận tâm, chi tiết, bám sát SGK Toán THCS)</option>
+                    <option value="concise">Súc Tích (Ngắn gọn, giải quyết thẳng vào trọng tâm)</option>
+                    <option value="friendly">Thân Thiện (Đồng hành, nhiệt tình hỗ trợ Thầy/Cô)</option>
+                  </select>
+                </div>
+
+                <div class="row g-2">
+                  <div class="col-7">
+                    <label class="form-label fw-bold fs-8 text-gray-700 mb-1">Tên trường mặc định</label>
+                    <input class="form-control form-control-solid fs-7 py-2 px-3 rounded-2" [(ngModel)]="settings.schoolName" />
+                  </div>
+                  <div class="col-5">
+                    <label class="form-label fw-bold fs-8 text-gray-700 mb-1">Năm học</label>
+                    <input class="form-control form-control-solid fs-7 py-2 px-3 rounded-2" [(ngModel)]="settings.academicYear" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end pt-3">
+          <button type="button" class="btn btn-primary rounded-pill px-5 py-2.5 fw-bold shadow-sm" (click)="onSaveSettings()" [disabled]="isSaving">
+            <span class="spinner-border spinner-border-sm me-2" *ngIf="isSaving"></span>
+            <span>💾 Lưu Toàn Bộ Cấu Hình Hệ Thống</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 4: PHIÊN VNEDU & HIỆU NĂNG MÁY CHỦ         -->
+      <!-- ============================================== -->
+      <div *ngIf="activeTab === 'session'" class="d-flex flex-column gap-5">
+        <div>
+          <h3 class="fw-bolder text-gray-900 fs-4 mb-1">Quản Trị Phiên Kết Nối & Hiệu Năng Máy Chủ</h3>
+          <p class="text-muted fs-8 mb-0">Theo dõi tài nguyên bộ nhớ Node.js và tình trạng kết nối vnEdu Sở GD&ĐT</p>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-12 col-lg-6">
+            <div class="card border p-5 rounded-3 bg-white">
+              <h4 class="fw-bold fs-6 text-gray-900 mb-3">Thông Số Phiên Làm Việc vnEdu</h4>
+              <div class="d-flex flex-column gap-2.5 fs-7">
+                <div class="d-flex justify-content-between p-2.5 bg-light rounded-2">
+                  <span class="text-muted">Trạng thái kết nối:</span>
+                  <strong [class.text-success]="stats?.vnedu?.connected" [class.text-danger]="!stats?.vnedu?.connected">
+                    {{ stats?.vnedu?.connected ? 'Đang hoạt động (Connected)' : 'Chưa có phiên' }}
+                  </strong>
+                </div>
+                <div class="d-flex justify-content-between p-2.5 bg-light rounded-2">
+                  <span class="text-muted">Auth Token vnEdu:</span>
+                  <span class="font-monospace fs-8">{{ stats?.vnedu?.tokenPreview || 'None' }}</span>
+                </div>
+                <div class="d-flex justify-content-between p-2.5 bg-light rounded-2">
+                  <span class="text-muted">Cookies vnEdu:</span>
+                  <span>{{ stats?.vnedu?.cookiesAvailable ? 'Đã lưu trữ an toàn' : 'Trống' }}</span>
+                </div>
+                <div class="d-flex justify-content-between p-2.5 bg-light rounded-2">
+                  <span class="text-muted">Máy chủ kết nối:</span>
+                  <strong>uaevcmanmsgdbinhduong.vnedu.vn</strong>
+                </div>
+              </div>
+              <div class="d-flex gap-2 mt-4">
+                <button type="button" class="btn btn-sm btn-light-primary rounded-pill px-4 fw-bold" (click)="onPingVnEdu()" [disabled]="isPinging">
+                  ⚡ Kiểm tra kết nối vnEdu
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="card border p-5 rounded-3 bg-white">
+              <h4 class="fw-bold fs-6 text-gray-900 mb-3">Hiệu Năng & Tài Nguyên Máy Cục Bộ</h4>
+              <div class="d-flex flex-column gap-2.5 fs-7">
+                <div class="d-flex justify-content-between p-2.5 bg-light rounded-2">
+                  <span class="text-muted">Hệ điều hành / Nền tảng:</span>
+                  <strong>{{ stats?.server?.platform }} ({{ stats?.server?.arch }})</strong>
+                </div>
+                <div class="d-flex justify-content-between p-2.5 bg-light rounded-2">
+                  <span class="text-muted">Phiên bản Node.js:</span>
+                  <strong class="text-primary">{{ stats?.server?.nodeVersion }}</strong>
+                </div>
+                <div class="d-flex justify-content-between p-2.5 bg-light rounded-2">
+                  <span class="text-muted">Bộ nhớ RAM Node.js:</span>
+                  <strong>{{ stats?.server?.memory?.heapUsedMB }} MB / {{ stats?.server?.memory?.rssMB }} MB (RSS)</strong>
+                </div>
+                <div class="d-flex justify-content-between p-2.5 bg-light rounded-2">
+                  <span class="text-muted">RAM trống hệ thống:</span>
+                  <strong>{{ stats?.server?.memory?.osFreeMemoryMB }} MB / {{ stats?.server?.memory?.osTotalMemoryMB }} MB</strong>
+                </div>
+              </div>
+              <div class="d-flex gap-2 mt-4">
+                <button type="button" class="btn btn-sm btn-light-warning rounded-pill px-4 fw-bold" (click)="onClearCache()">
+                  🧹 Xóa bộ nhớ đệm (Clear Cache)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 5: SAO LƯU & KHÔI PHỤC BẢO VỆ               -->
+      <!-- ============================================== -->
+      <div *ngIf="activeTab === 'backup'" class="d-flex flex-column gap-5">
+        <div>
+          <h3 class="fw-bolder text-gray-900 fs-4 mb-1">Sao Lưu Toàn Bộ Hệ Thống & Khôi Phục Dữ Liệu</h3>
+          <p class="text-muted fs-8 mb-0">Đảm bảo an toàn 100% dữ liệu giáo viên, PPCT và lịch sử điểm danh khi đổi máy hoặc cài lại Win</p>
+        </div>
+
+        <div class="row g-4">
+          <!-- Xuất sao lưu -->
+          <div class="col-12 col-lg-6">
+            <div class="card border border-primary border-dashed p-6 rounded-3 bg-light-primary text-center">
+              <div class="fs-1 mb-2">📥</div>
+              <h4 class="fw-bolder text-gray-900 fs-5 mb-1">Xuất Gói Sao Lưu (.JSON)</h4>
+              <p class="text-gray-600 fs-8 mb-4">
+                Tải về 1 file sao lưu duy nhất chứa toàn bộ: Danh sách giáo viên, cấu hình PPCT Toán/HĐTN, quy tắc tự động hóa và lịch sử điểm danh.
+              </p>
+              <button type="button" class="btn btn-primary rounded-pill px-5 py-2.5 fw-bold shadow-sm" (click)="onDownloadBackup()">
+                Tải Về File Sao Lưu Toàn Diện
+              </button>
+            </div>
+          </div>
+
+          <!-- Nhập khôi phục -->
+          <div class="col-12 col-lg-6">
+            <div class="card border border-success border-dashed p-6 rounded-3 bg-light-success text-center">
+              <div class="fs-1 mb-2">📤</div>
+              <h4 class="fw-bolder text-gray-900 fs-5 mb-1">Khôi Phục Từ File Sao Lưu</h4>
+              <p class="text-gray-600 fs-8 mb-4">
+                Chọn file backup <code>.json</code> đã lưu trước đó để khôi phục nguyên trạng hệ thống trong 1 cú nhấp chuột.
+              </p>
+              <label class="btn btn-success rounded-pill px-5 py-2.5 fw-bold shadow-sm cursor-pointer mb-0">
+                Chọn File Backup Để Khôi Phục
+                <input type="file" accept=".json" class="d-none" (change)="onUploadBackup($event)" />
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 6: NHẬT KÝ HOẠT ĐỘNG (AUDIT LOGS)          -->
+      <!-- ============================================== -->
+      <div *ngIf="activeTab === 'logs'" class="d-flex flex-column gap-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <div>
+            <h3 class="fw-bolder text-gray-900 fs-4 mb-1">Nhật Ký Thao Tác Hệ Thống (Audit Logs)</h3>
+            <p class="text-muted fs-8 mb-0">Ghi nhận minh bạch mọi hành vi đăng nhập, chuyển giáo viên, đối chiếu và lưu SĐB</p>
+          </div>
+
+          <div class="d-flex align-items-center gap-2">
+            <select class="form-select form-select-sm form-select-solid rounded-pill px-3 py-1.5 fs-8" [(ngModel)]="logFilter">
+              <option value="all">Tất cả nhật ký</option>
+              <option value="success">Thành công</option>
+              <option value="warn">Cảnh báo</option>
+              <option value="info">Thông tin</option>
+            </select>
+            <button type="button" class="btn btn-sm btn-light rounded-pill px-3 py-1.5 fs-8 fw-bold" (click)="loadLogs()">
+              🔄 Cập nhật
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle table-row-dashed fs-8 gy-3">
+            <thead>
+              <tr class="text-start text-gray-500 fw-bold fs-9 text-uppercase bg-light">
+                <th class="ps-3 rounded-start">Thời gian</th>
+                <th>Thao tác</th>
+                <th>Người thực hiện</th>
+                <th>Chi tiết hoạt động</th>
+                <th class="text-end pe-3 rounded-end">Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let log of filteredLogs">
+                <td class="ps-3 text-muted font-monospace fs-9">
+                  {{ log.timestamp | date:'dd/MM/yyyy HH:mm:ss' }}
+                </td>
+                <td class="fw-bolder text-gray-900">
+                  {{ log.action }}
+                </td>
+                <td class="text-primary fw-semibold">
+                  {{ log.user }}
+                </td>
+                <td class="text-gray-700">
+                  {{ log.details }}
+                </td>
+                <td class="text-end pe-3">
+                  <span class="badge fs-9 py-0.5 px-2 rounded-pill"
+                        [ngClass]="{
+                          'badge-light-success text-success': log.type === 'success',
+                          'badge-light-warning text-warning': log.type === 'warn',
+                          'badge-light-primary text-primary': log.type === 'info',
+                          'badge-light-danger text-danger': log.type === 'danger'
+                        }">
+                    {{ log.type | uppercase }}
+                  </span>
+                </td>
+              </tr>
+              <tr *ngIf="filteredLogs.length === 0">
+                <td colspan="5" class="text-center py-6 text-muted fs-8">
+                  Không tìm thấy dòng nhật ký nào phù hợp.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: THÊM / CHỈNH SỬA HỒ SƠ GIÁO VIÊN                   -->
+  <!-- ======================================================== -->
+  <div class="modal fade show d-block" *ngIf="showTeacherModal" tabindex="-1" style="background: rgba(0,0,0,0.5); z-index: 1055;">
+    <div class="modal-dialog modal-dialog-centered mw-550px">
+      <div class="modal-content rounded-4 border-0 shadow-lg">
+        <div class="modal-header bg-primary text-white py-4 px-6 rounded-top-4">
+          <h5 class="modal-title fw-bolder fs-5 text-white d-flex align-items-center gap-2">
+            <span>{{ isEditingTeacher ? '✏️ Chỉnh Sửa Hồ Sơ Giáo Viên' : '➕ Thêm Giáo Viên / Đồng Nghiệp Mới' }}</span>
+          </h5>
+          <button type="button" class="btn btn-icon btn-sm btn-color-white text-hover-white" (click)="onCloseTeacherModal()">
+            ✕
+          </button>
+        </div>
+
+        <div class="modal-body p-6">
+          <form class="d-flex flex-column gap-3.5">
+            <!-- Username -->
+            <div>
+              <label class="form-label fs-7 fw-bold required mb-1">Tài khoản vnEdu / SĐT</label>
+              <input type="text" class="form-control form-control-solid fs-7 py-2.5 px-3 rounded-2"
+                     [(ngModel)]="teacherForm.username" name="username"
+                     [disabled]="isEditingTeacher && teacherForm.username === '051197003685'"
+                     placeholder="VD: 051197003685 hoặc SĐT..." />
+              <div class="text-muted fs-9 mt-1">Số điện thoại hoặc mã định danh đăng nhập trên vnEdu</div>
+            </div>
+
+            <!-- Họ & Tên -->
+            <div>
+              <label class="form-label fs-7 fw-bold required mb-1">Họ & Tên Giáo viên</label>
+              <input type="text" class="form-control form-control-solid fs-7 py-2.5 px-3 rounded-2"
+                     [(ngModel)]="teacherForm.name" name="name"
+                     placeholder="VD: Lê Thị Diệu Huyên hoặc Nguyễn Văn Nam..." />
+            </div>
+
+            <!-- Danh xưng & Giới tính -->
+            <div class="row g-2">
+              <div class="col-6">
+                <label class="form-label fs-7 fw-bold mb-1">Danh xưng</label>
+                <select class="form-select form-select-solid fs-7 py-2.5 px-3 rounded-2" [(ngModel)]="teacherForm.gender" name="gender">
+                  <option value="female">Cô giáo (Cô)</option>
+                  <option value="male">Thầy giáo (Thầy)</option>
+                  <option value="unknown">Tự động</option>
+                </select>
+              </div>
+
+              <div class="col-6">
+                <label class="form-label fs-7 fw-bold mb-1">Môn giảng dạy</label>
+                <input type="text" class="form-control form-control-solid fs-7 py-2.5 px-3 rounded-2"
+                       [(ngModel)]="teacherForm.subject" name="subject"
+                       placeholder="VD: Toán, Ngữ văn, HĐTN..." />
+              </div>
+            </div>
+
+            <!-- Trường & Phân hiệu -->
+            <div class="row g-2">
+              <div class="col-7">
+                <label class="form-label fs-7 fw-bold mb-1">Trường</label>
+                <input type="text" class="form-control form-control-solid fs-7 py-2.5 px-3 rounded-2"
+                       [(ngModel)]="teacherForm.school" name="school" />
+              </div>
+              <div class="col-5">
+                <label class="form-label fs-7 fw-bold mb-1">Phân hiệu</label>
+                <input type="text" class="form-control form-control-solid fs-7 py-2.5 px-3 rounded-2"
+                       [(ngModel)]="teacherForm.branch" name="branch" />
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="modal-footer bg-light py-3 px-6 rounded-bottom-4 d-flex justify-content-end gap-2">
+          <button type="button" class="btn btn-sm btn-light rounded-pill px-4" (click)="onCloseTeacherModal()">
+            Hủy Bỏ
+          </button>
+          <button type="button" class="btn btn-sm btn-primary rounded-pill px-5 fw-bold" (click)="onSaveTeacher()" [disabled]="isSaving">
+            <span class="spinner-border spinner-border-sm me-1" *ngIf="isSaving"></span>
+            <span>Lưu Hồ Sơ</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION FLOATING -->
+  <div *ngIf="toast" class="position-fixed bottom-0 end-0 p-4 z-index-3">
+    <div class="toast show align-items-center border-0 shadow-lg p-3 rounded-3"
+         [ngClass]="{
+           'bg-success text-white': toast.type === 'success',
+           'bg-danger text-white': toast.type === 'danger',
+           'bg-warning text-dark': toast.type === 'warning',
+           'bg-primary text-white': toast.type === 'info'
+         }">
+      <div class="d-flex align-items-center justify-content-between">
+        <div class="toast-body fw-bold fs-7 py-1">
+          {{ toast.text }}
+        </div>
+        <button type="button" class="btn-close btn-close-white ms-2" (click)="toast = null"></button>
+      </div>
+    </div>
+  </div>
+
+</div>

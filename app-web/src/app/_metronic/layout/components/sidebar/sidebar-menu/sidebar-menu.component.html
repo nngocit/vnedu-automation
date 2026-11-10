@@ -34,6 +34,17 @@
       </a>
     </div>
 
+    <!-- Trung Tâm Quản Trị Hệ Thống (Dành riêng cho Cô Lê Thị Diệu Huyên) -->
+    <div class="menu-item" *ngIf="isAdmin$ | async">
+      <a class="menu-link without-sub" routerLink="/vnedu/admin" routerLinkActive="active">
+        <span class="menu-icon">
+          <app-keenicon name="shield-tick" class="fs-2 text-danger"></app-keenicon>
+        </span>
+        <span class="menu-title fw-bold text-danger">🛡️ Trung Tâm Quản Trị</span>
+        <span class="badge badge-light-danger fs-9 ms-auto fw-bolder">Full Giáp</span>
+      </a>
+    </div>
+
     <!-- Separator -->
     <div class="menu-item">
       <div class="menu-content pt-6 pb-2">

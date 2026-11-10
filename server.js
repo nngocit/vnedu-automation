@@ -4,6 +4,7 @@ const fs = require('fs');
 const core = require('./sync-core');
 const localDb = require('./local_attendance_db');
 const teacherProfileManager = require('./teacher-profile-manager');
+const adminManager = require('./admin-manager');
 
 const app = express();
 const PORT = 3000;
@@ -134,7 +135,88 @@ app.post('/api/teachers/delete', (req, res) => {
     try {
         const { username } = req.body;
         const result = teacherProfileManager.deleteProfile(username);
+        adminManager.logAction('Xóa hồ sơ giáo viên', 'Cô Lê Thị Diệu Huyên', `Đã xóa hồ sơ ${username}`, 'warn');
         res.json(result);
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+// ========================================================
+// API: TRUNG TÂM QUẢN TRỊ HỆ THỐNG TOÀN DIỆN (ADMIN ARMOR)
+// DÀNH RIÊNG CHO QUẢN TRỊ VIÊN CÔ LÊ THỊ DIỆU HUYÊN
+// ========================================================
+app.get('/api/admin/overview', (req, res) => {
+    try {
+        const stats = adminManager.getSystemStats(core);
+        res.json({ success: true, ...stats });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+app.get('/api/admin/settings', (req, res) => {
+    try {
+        const settings = adminManager.getSettings();
+        res.json({ success: true, settings });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+app.post('/api/admin/settings', (req, res) => {
+    try {
+        const result = adminManager.saveSettings(req.body);
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+app.get('/api/admin/logs', (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 50;
+        const logs = adminManager.getAuditLogs(limit);
+        res.json({ success: true, logs });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+app.post('/api/admin/cache/clear', (req, res) => {
+    try {
+        const result = adminManager.clearCache();
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+app.get('/api/admin/backup', (req, res) => {
+    try {
+        const backup = adminManager.generateBackup();
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename="backup_vnedu_thcs_an_lap_${Date.now()}.json"`);
+        res.json(backup);
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+app.post('/api/admin/restore', (req, res) => {
+    try {
+        const result = adminManager.restoreBackup(req.body);
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+app.post('/api/admin/teachers/save', (req, res) => {
+    try {
+        const profile = teacherProfileManager.upsertProfile(req.body);
+        adminManager.logAction('Lưu hồ sơ giáo viên', 'Cô Lê Thị Diệu Huyên', `Cập nhật hồ sơ ${profile.name} (${profile.username})`, 'success');
+        res.json({ success: true, teacher: profile, teachers: teacherProfileManager.getProfiles() });
     } catch (e) {
         res.status(500).json({ success: false, error: e.message });
     }

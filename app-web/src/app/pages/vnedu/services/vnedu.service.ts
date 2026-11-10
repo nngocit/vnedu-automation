@@ -201,4 +201,55 @@ export class VnEduService {
       headers: this.getHeaders()
     });
   }
+
+  // ========================================================
+  // TRUNG TÂM QUẢN TRỊ HỆ THỐNG (ADMIN ARMOR APIs)
+  // ========================================================
+  getAdminOverview(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/admin/overview`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  getAdminSettings(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/admin/settings`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  saveAdminSettings(settings: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/admin/settings`, settings, {
+      headers: this.getHeaders()
+    });
+  }
+
+  getAdminLogs(limit: number = 50): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/admin/logs?limit=${limit}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  clearAdminCache(): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/admin/cache/clear`, {}, {
+      headers: this.getHeaders()
+    });
+  }
+
+  restoreAdminBackup(backupData: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/admin/restore`, backupData, {
+      headers: this.getHeaders()
+    });
+  }
+
+  saveAdminTeacher(teacherData: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/admin/teachers/save`, teacherData, {
+      headers: this.getHeaders()
+    });
+  }
+
+  deleteTeacher(username: string): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/teachers/delete`, { username }, {
+      headers: this.getHeaders()
+    });
+  }
 }

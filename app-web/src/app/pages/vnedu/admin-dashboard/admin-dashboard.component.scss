@@ -1,0 +1,80 @@
+.admin-dashboard-container {
+  min-height: 100vh;
+}
+
+.admin-hero-card {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4338ca 80%, #6366f1 100%);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(129, 140, 248, 0.25) 0%, rgba(99, 102, 241, 0) 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+}
+
+.letter-spacing-1 {
+  letter-spacing: 1px;
+}
+
+.max-w-700px {
+  max-width: 700px;
+}
+
+.mw-550px {
+  max-width: 550px;
+}
+
+.nav-line-tabs .nav-link {
+  font-weight: 600;
+  color: #64748b;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: #4338ca;
+  }
+
+  &.active {
+    color: #4338ca;
+    border-bottom-color: #4338ca;
+  }
+}
+
+.badge-light-danger {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.badge-light-primary {
+  background-color: rgba(99, 102, 241, 0.15);
+  color: #6366f1;
+}
+
+.badge-light-warning {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.badge-light-success {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.table th {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+}
