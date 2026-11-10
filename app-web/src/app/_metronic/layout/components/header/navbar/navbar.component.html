@@ -118,14 +118,14 @@
   <div class="cursor-pointer d-flex align-items-center gap-2" data-kt-menu-trigger="{default: 'click'}" data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end">
     <div class="d-none d-md-flex flex-column text-end me-1" *ngIf="user$ | async as currentUser; else defaultUserNav">
       <span class="text-gray-900 fw-bolder fs-7 lh-1">{{ currentUser.fullname || 'Cô Diệu Huyên' }}</span>
-      <span class="text-gray-500 fs-9 mt-1">{{ currentUser.companyName || 'THCS An Lập' }}</span>
-      <span class="badge badge-light-primary fw-bold fs-10 px-1.5 py-0.5 mt-0.5 align-self-end">v2.5.0</span>
+      <span class="text-gray-600 fs-8 mt-1 fw-semibold">{{ currentUser.companyName || 'THCS An Lập' }}</span>
+      <span class="badge badge-light-primary fw-bolder fs-8 px-2.5 py-1 mt-1 align-self-end border border-primary border-opacity-25 shadow-xs">Phiên bản v2.5.0</span>
     </div>
     <ng-template #defaultUserNav>
       <div class="d-none d-md-flex flex-column text-end me-1">
         <span class="text-gray-900 fw-bolder fs-7 lh-1">Cô Diệu Huyên</span>
-        <span class="text-gray-500 fs-9 mt-1">THCS An Lập</span>
-        <span class="badge badge-light-primary fw-bold fs-10 px-1.5 py-0.5 mt-0.5 align-self-end">v2.5.0</span>
+        <span class="text-gray-600 fs-8 mt-1 fw-semibold">THCS An Lập</span>
+        <span class="badge badge-light-primary fw-bolder fs-8 px-2.5 py-1 mt-1 align-self-end border border-primary border-opacity-25 shadow-xs">Phiên bản v2.5.0</span>
       </div>
     </ng-template>
     <div class="symbol symbol-35px symbol-circle" *ngIf="user$ | async as currentUser; else defaultAvatar">
