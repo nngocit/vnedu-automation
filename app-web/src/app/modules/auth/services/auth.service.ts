@@ -54,11 +54,19 @@ export class AuthService implements OnDestroy {
    * Đăng nhập vnEdu chính thức qua API Node.js server
    * @param username Số điện thoại hoặc mã GV vnEdu (vd: 051197003685)
    * @param password Mật khẩu tài khoản vnEdu
+   * @param teacherExtra Thông tin bổ sung cho giáo viên mới (họ tên, bộ môn, giới tính)
    */
-  login(username: string, password: string): Observable<UserModel> {
+  login(username: string, password: string, teacherExtra?: { teacherName?: string; gender?: string; subject?: string }): Observable<UserModel> {
     this.isLoadingSubject.next(true);
 
-    return this.http.post<VnEduLoginResponse>('/api/vnedu/login', { username, password }).pipe(
+    const payload: any = { username, password };
+    if (teacherExtra) {
+      if (teacherExtra.teacherName) payload.teacherName = teacherExtra.teacherName;
+      if (teacherExtra.gender) payload.gender = teacherExtra.gender;
+      if (teacherExtra.subject) payload.subject = teacherExtra.subject;
+    }
+
+    return this.http.post<VnEduLoginResponse>('/api/vnedu/login', payload).pipe(
       map((res) => {
         if (!res || !res.success) {
           throw new Error(res?.msg || 'Đăng nhập vnEdu không thành công. Vui lòng kiểm tra lại tài khoản hoặc mật khẩu.');
@@ -68,7 +76,7 @@ export class AuthService implements OnDestroy {
         user.id = 1;
         user.username = username;
         const teacherProfile = res.teacher || {};
-        user.fullname = teacherProfile.name || teacherProfile.title || 'Lê Thị Diệu Huyên';
+        user.fullname = teacherProfile.name || teacherProfile.title || (username === '051197003685' ? 'Lê Thị Diệu Huyên' : `Giáo viên ${username}`);
         user.email = `${username}@vnedu.vn`;
         user.phone = username;
         user.occupation = teacherProfile.subject ? `Giáo viên ${teacherProfile.subject}` : 'Giáo viên THCS';
@@ -132,11 +140,18 @@ export class AuthService implements OnDestroy {
   }
 
   logout() {
+    this.logoutWithoutRedirect();
+    this.router.navigate(['/auth/login'], { queryParams: {} });
+  }
+
+  /**
+   * Đăng xuất xóa phiên làm việc nhưng không điều hướng router (dành cho chế độ thêm đồng nghiệp mới)
+   */
+  logoutWithoutRedirect() {
     localStorage.removeItem(this.authLocalStorageToken);
     localStorage.removeItem('vnedu_token');
     localStorage.removeItem('vnedu_cookies');
     this.currentUserSubject.next(undefined);
-    this.router.navigate(['/auth/login'], { queryParams: {} });
 
     // Gửi yêu cầu xóa phiên lên backend
     this.http.post('/api/vnedu/logout', {}).subscribe({

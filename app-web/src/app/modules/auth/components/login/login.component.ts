@@ -24,6 +24,7 @@ export class LoginComponent implements OnInit, OnDestroy {
 
   savedTeachers: any[] = [];
   currentTeacher: any = null;
+  isNewTeacherMode: boolean = false;
 
   loginForm: FormGroup;
   hasError = false;
@@ -43,13 +44,23 @@ export class LoginComponent implements OnInit, OnDestroy {
   ) {
     this.isLoading$ = this.authService.isLoading$;
 
-    // Nếu đã đăng nhập thì điều hướng thẳng vào trang Sổ đầu bài
-    if (this.authService.currentUserValue) {
+    // Kiểm tra query parameter mode=new khi mở từ popup đổi tài khoản
+    const mode = this.route.snapshot.queryParams['mode'];
+    if (mode === 'new') {
+      this.isNewTeacherMode = true;
+      this.authService.logoutWithoutRedirect();
+    } else if (this.authService.currentUserValue) {
+      // Nếu đã đăng nhập và không phải thêm mới thì điều hướng thẳng vào trang Sổ đầu bài
       this.router.navigate(['/vnedu/so-dau-bai']);
     }
   }
 
   ngOnInit(): void {
+    const mode = this.route.snapshot.queryParams['mode'];
+    if (mode === 'new') {
+      this.isNewTeacherMode = true;
+      this.authService.logoutWithoutRedirect();
+    }
     this.initForm();
     this.loadSavedTeachers();
     const queryReturnUrl = this.route.snapshot.queryParams['returnUrl'];
@@ -67,7 +78,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   initForm() {
     this.loginForm = this.fb.group({
       username: [
-        this.defaultVnEdu.username,
+        this.isNewTeacherMode ? '' : this.defaultVnEdu.username,
         Validators.compose([
           Validators.required,
           Validators.minLength(6),
@@ -75,14 +86,28 @@ export class LoginComponent implements OnInit, OnDestroy {
         ]),
       ],
       password: [
-        this.defaultVnEdu.password,
+        this.isNewTeacherMode ? '' : this.defaultVnEdu.password,
         Validators.compose([
           Validators.required,
           Validators.minLength(4),
           Validators.maxLength(100),
         ]),
       ],
+      teacherName: [''],
+      subject: [''],
+      gender: ['unknown']
     });
+  }
+
+  cancelNewTeacherMode() {
+    this.isNewTeacherMode = false;
+    this.initForm();
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { mode: null },
+      queryParamsHandling: 'merge'
+    });
+    this.cd.detectChanges();
   }
 
   togglePassword() {
@@ -133,9 +158,18 @@ export class LoginComponent implements OnInit, OnDestroy {
 
     const username = this.f.username.value?.trim();
     const password = this.f.password.value;
+    const teacherName = this.f.teacherName?.value?.trim();
+    const subject = this.f.subject?.value?.trim();
+    const gender = this.f.gender?.value;
+
+    const teacherExtra = (this.isNewTeacherMode || teacherName || subject) ? {
+      teacherName,
+      subject,
+      gender
+    } : undefined;
 
     const loginSubscr = this.authService
-      .login(username, password)
+      .login(username, password, teacherExtra)
       .pipe(first())
       .subscribe({
         next: (user: UserModel) => {

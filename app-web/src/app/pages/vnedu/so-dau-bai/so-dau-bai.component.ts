@@ -206,6 +206,12 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     });
   }
 
+  onAddNewColleague(): void {
+    this.closeTeacherSwitcherModal();
+    this.authService.logoutWithoutRedirect();
+    this.router.navigate(['/auth/login'], { queryParams: { mode: 'new' } });
+  }
+
   // Danh sách tuần từ 1 đến 35 luôn sẵn sàng
   weeksList: Array<{ weekNumber: number; title: string; isCurrentRealWeek: boolean }> = Array.from({ length: 35 }, (_, i) => ({
     weekNumber: i + 1,
