@@ -16,12 +16,21 @@ export class AdminGuard implements CanActivate {
   canActivate(): Observable<boolean | UrlTree> {
     return this.authService.currentUser$.pipe(
       map(user => {
-        // Đặc quyền tối cao dành riêng cho Cô Lê Thị Diệu Huyên
-        const phone = user?.phone || user?.username;
-        if (phone === '051197003685' || user?.username === '051197003685') {
+        // Quyền quản trị hệ thống dành cho Super Admin (xuanngocit@gmail.com) và Cô Lê Thị Diệu Huyên (051197003685)
+        const identifier = user?.phone || user?.username || user?.email;
+        if (
+          identifier === 'xuanngocit@gmail.com' ||
+          identifier === '051197003685' ||
+          user?.username === '051197003685' ||
+          user?.username === 'xuanngocit@gmail.com' ||
+          user?.email === 'xuanngocit@gmail.com' ||
+          user?.roles?.includes(99) ||
+          (user as any)?.isSuperAdmin === true ||
+          (user as any)?.role === 'SUPER_ADMIN'
+        ) {
           return true;
         }
-        // Các tài khoản khác sẽ bị chuyển hướng về Sổ đầu bài
+        // Các tài khoản không có quyền sẽ bị chuyển hướng về Sổ đầu bài
         return this.router.parseUrl('/vnedu/so-dau-bai');
       })
     );

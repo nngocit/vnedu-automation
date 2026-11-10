@@ -15,6 +15,8 @@ export interface VnEduLoginResponse {
   userId?: string;
   msg?: string;
   teacher?: any;
+  isSuperAdmin?: boolean;
+  [key: string]: any;
 }
 
 @Injectable({
@@ -73,15 +75,16 @@ export class AuthService implements OnDestroy {
         }
 
         const user = new UserModel();
-        user.id = 1;
+        user.id = res.isSuperAdmin ? 99 : 1;
         user.username = username;
         const teacherProfile = res.teacher || {};
-        user.fullname = teacherProfile.name || teacherProfile.title || (username === '051197003685' ? 'Lê Thị Diệu Huyên' : `Giáo viên ${username}`);
-        user.email = `${username}@vnedu.vn`;
+        user.fullname = teacherProfile.name || teacherProfile.title || (username === '051197003685' ? 'Lê Thị Diệu Huyên' : (res.isSuperAdmin ? 'Xuân Ngọc' : `Giáo viên ${username}`));
+        user.email = res.isSuperAdmin ? username : `${username}@vnedu.vn`;
         user.phone = username;
-        user.occupation = teacherProfile.subject ? `Giáo viên ${teacherProfile.subject}` : 'Giáo viên THCS';
-        user.companyName = teacherProfile.school || 'Trường THCS An Lập';
-        user.roles = [1];
+        user.occupation = res.isSuperAdmin ? '🛡️ Super Admin Hệ Thống' : (teacherProfile.subject ? `Giáo viên ${teacherProfile.subject}` : 'Giáo viên THCS');
+        user.companyName = res.isSuperAdmin ? 'Hệ thống vnEdu Automation' : (teacherProfile.school || 'Trường THCS An Lập');
+        user.roles = res.isSuperAdmin ? [99] : [1];
+        (user as any).isSuperAdmin = !!res.isSuperAdmin;
         user.authToken = res.token || ('vnedu_auth_' + Date.now());
         user.pic = teacherProfile.avatar || './assets/media/avatars/300-1.jpg';
 

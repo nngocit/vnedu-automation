@@ -1,29 +1,18 @@
-const fs = require('fs');
+const { DatabaseSync } = require('node:sqlite');
 const path = require('path');
 const crypto = require('crypto');
+const fs = require('fs');
 
-const DB_DIR = path.join(__dirname, 'user_data');
-const DB_FILE = path.join(DB_DIR, 'system_database.json');
+const DB_FILE = path.join(__dirname, 'data.db');
 
-// Super Admin mặc định của hệ thống
-const DEFAULT_SUPER_ADMIN = {
-    id: 'admin_root_01',
-    username: 'xuanngocit@gmail.com',
-    email: 'xuanngocit@gmail.com',
-    fullname: 'Xuân Ngọc',
-    role: 'SUPER_ADMIN',
-    title: 'Super Admin Tối Cao',
-    isRoot: true,
-    permissions: ['*'],
-    notes: 'Quản trị viên tối cao của toàn bộ hệ thống vnEdu Automation'
-};
+let dbInstance = null;
 
-function ensureDir() {
-    if (!fs.existsSync(DB_DIR)) {
-        try {
-            fs.mkdirSync(DB_DIR, { recursive: true });
-        } catch (e) {}
+function getDb() {
+    if (!dbInstance) {
+        dbInstance = new DatabaseSync(DB_FILE);
+        initSchema(dbInstance);
     }
+    return dbInstance;
 }
 
 function hashPassword(password, salt) {
@@ -34,235 +23,288 @@ function hashPassword(password, salt) {
     return { hash, salt };
 }
 
-function getInitialDb() {
-    const { hash, salt } = hashPassword('Joungmin@961');
-    return {
-        meta: {
-            name: 'vnEdu Automation Local Database',
-            version: '2.5.0',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        },
-        admins: [
-            {
-                ...DEFAULT_SUPER_ADMIN,
-                passwordHash: hash,
-                salt: salt,
-                createdAt: new Date().toISOString(),
-                lastLogin: null
-            }
-        ],
-        attendance_ledger: {}, // key: "w{week}_t{thu}_s{tiet}_{lop}"
-        acknowledged_conflicts: {}, // key: "w{week}_t{thu}_s{tiet}_{lop}" => true
-        locked_weeks: {}, // key: "week_{weekNum}" => { locked: true, at: ... }
-        settings: {
-            autoScanOnlyCurrentWeek: true,
-            strictAfternoon: true,
-            autoFillPpct: true
-        }
-    };
-}
+function initSchema(db) {
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS admins (
+            id TEXT PRIMARY KEY,
+            username TEXT UNIQUE NOT NULL,
+            email TEXT,
+            fullname TEXT,
+            password_hash TEXT,
+            salt TEXT,
+            role TEXT DEFAULT 'ADMIN',
+            permissions TEXT DEFAULT '["*"]',
+            created_at TEXT,
+            last_login TEXT
+        );
 
-function readDb() {
-    ensureDir();
-    if (!fs.existsSync(DB_FILE)) {
-        const init = getInitialDb();
-        writeDb(init);
-        return init;
-    }
-    try {
-        const raw = fs.readFileSync(DB_FILE, 'utf8');
-        const data = JSON.parse(raw);
-        if (!data.admins || !data.attendance_ledger) {
-            const init = getInitialDb();
-            writeDb(init);
-            return init;
-        }
-        return data;
-    } catch (e) {
-        console.error('[SystemDB] Lỗi đọc DB, tạo mới an toàn:', e.message);
-        const init = getInitialDb();
-        writeDb(init);
-        return init;
-    }
-}
+        CREATE TABLE IF NOT EXISTS attendance_ledger (
+            slot_key TEXT PRIMARY KEY,
+            week INTEGER,
+            thu INTEGER,
+            tiet INTEGER,
+            lop TEXT,
+            ngay TEXT,
+            sdb_absents INTEGER,
+            sdb_absent_list TEXT,
+            giamthi_absents INTEGER,
+            giamthi_absent_list TEXT,
+            is_matched INTEGER,
+            updated_at TEXT
+        );
 
-function writeDb(data) {
-    ensureDir();
-    try {
-        data.meta = data.meta || {};
-        data.meta.updatedAt = new Date().toISOString();
-        const tempPath = DB_FILE + '.tmp';
-        fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), 'utf8');
-        fs.renameSync(tempPath, DB_FILE);
-        return true;
-    } catch (e) {
-        console.error('[SystemDB] Lỗi ghi DB:', e.message);
-        return false;
-    }
-}
+        CREATE TABLE IF NOT EXISTS acknowledged_conflicts (
+            slot_key TEXT PRIMARY KEY,
+            week INTEGER,
+            thu INTEGER,
+            tiet INTEGER,
+            lop TEXT,
+            acknowledged_at TEXT,
+            acknowledged_by TEXT
+        );
 
-// ========================================================
-// 1. QUẢN LÝ SUPER ADMIN (xuanngocit@gmail.com / Joungmin@961)
-// ========================================================
-function verifyAdmin(identifier, password) {
-    if (!identifier || !password) return null;
-    const cleanId = identifier.trim().toLowerCase();
-    const db = readDb();
+        CREATE TABLE IF NOT EXISTS locked_weeks (
+            week INTEGER PRIMARY KEY,
+            locked INTEGER DEFAULT 1,
+            locked_at TEXT,
+            notes TEXT
+        );
 
-    // Kiểm tra trực tiếp tài khoản root
-    if ((cleanId === 'xuanngocit@gmail.com' || cleanId === 'xuanngocit') && password === 'Joungmin@961') {
-        const root = db.admins.find(a => a.username.toLowerCase() === 'xuanngocit@gmail.com');
-        if (root) {
-            root.lastLogin = new Date().toISOString();
-            writeDb(db);
-            const { passwordHash, salt, ...safe } = root;
-            return safe;
-        }
-        return { ...DEFAULT_SUPER_ADMIN, lastLogin: new Date().toISOString() };
+        CREATE TABLE IF NOT EXISTS system_settings (
+            key TEXT PRIMARY KEY,
+            value TEXT,
+            updated_at TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS audit_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            action TEXT,
+            actor TEXT,
+            details TEXT,
+            status TEXT,
+            created_at TEXT
+        );
+    `);
+
+    // Khởi tạo Super Admin mặc định: xuanngocit@gmail.com / Joungmin@961
+    const checkAdmin = db.prepare('SELECT id FROM admins WHERE username = ?').get('xuanngocit@gmail.com');
+    if (!checkAdmin) {
+        const { hash, salt } = hashPassword('Joungmin@961');
+        const insertAdmin = db.prepare(`
+            INSERT INTO admins (id, username, email, fullname, password_hash, salt, role, permissions, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        insertAdmin.run(
+            'admin_root_01',
+            'xuanngocit@gmail.com',
+            'xuanngocit@gmail.com',
+            'Xuân Ngọc',
+            hash,
+            salt,
+            'SUPER_ADMIN',
+            JSON.stringify(['*']),
+            new Date().toISOString()
+        );
+        console.log('[SystemDB SQLite] Đã khởi tạo Super Admin xuanngocit@gmail.com vào file data.db thành công!');
     }
 
-    // Kiểm tra hash
-    const admin = db.admins.find(a =>
-        a.username.toLowerCase() === cleanId ||
-        (a.email && a.email.toLowerCase() === cleanId)
-    );
-    if (!admin) return null;
-
-    if (admin.salt && admin.passwordHash) {
-        const testHash = crypto.pbkdf2Sync(password, admin.salt, 1000, 64, 'sha512').toString('hex');
-        if (testHash === admin.passwordHash) {
-            admin.lastLogin = new Date().toISOString();
-            writeDb(db);
-            const { passwordHash, salt, ...safe } = admin;
-            return safe;
-        }
+    // Khởi tạo tài khoản quản trị cho Cô Lê Thị Diệu Huyên (051197003685)
+    const checkHuyen = db.prepare('SELECT id FROM admins WHERE username = ?').get('051197003685');
+    if (!checkHuyen) {
+        const { hash, salt } = hashPassword('Huyen0907@');
+        const insertAdmin = db.prepare(`
+            INSERT INTO admins (id, username, email, fullname, password_hash, salt, role, permissions, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        insertAdmin.run(
+            'admin_teacher_huyen',
+            '051197003685',
+            '051197003685@vnedu.vn',
+            'Cô Lê Thị Diệu Huyên',
+            hash,
+            salt,
+            'TEACHER_ADMIN',
+            JSON.stringify(['*']),
+            new Date().toISOString()
+        );
     }
-    return null;
 }
 
-function getSuperAdmin() {
-    const db = readDb();
-    const root = db.admins.find(a => a.isRoot || a.username.toLowerCase() === 'xuanngocit@gmail.com');
-    if (!root) return DEFAULT_SUPER_ADMIN;
-    const { passwordHash, salt, ...safe } = root;
-    return safe;
-}
-
-// ========================================================
-// 2. CƠ SỞ DỮ LIỆU ĐIỂM DANH & CHỐT ĐỐI CHIẾU
-// ========================================================
-function makeAttendanceKey(week, thu, tiet, lop) {
-    const cleanLop = String(lop || '').replace(/[^a-zA-Z0-9]/g, '');
-    return `w${week}_t${thu}_s${tiet}_${cleanLop}`;
-}
-
-/**
- * Đọc toàn bộ trạng thái điểm danh của 1 tuần từ CSDL
- */
-function getWeekAttendanceLedger(week) {
-    const db = readDb();
-    const result = {};
-    const prefix = `w${week}_`;
-    Object.keys(db.attendance_ledger || {}).forEach(k => {
-        if (k.startsWith(prefix)) {
-            result[k] = db.attendance_ledger[k];
-        }
-    });
-    return result;
-}
-
-/**
- * Lưu hoặc cập nhật trạng thái đối chiếu của 1 tiết vào CSDL
- */
-function recordAttendance(week, thu, tiet, lop, record) {
-    const db = readDb();
-    const key = makeAttendanceKey(week, thu, tiet, lop);
-    db.attendance_ledger = db.attendance_ledger || {};
-    
-    db.attendance_ledger[key] = {
-        key,
-        week: Number(week),
-        thu: Number(thu),
-        tiet: Number(tiet),
-        lop,
-        ngay: record.ngay || '',
-        sdbAbsentCount: record.sdbAbsentCount !== undefined ? record.sdbAbsentCount : (record.sdbSoLuongNghi || 0),
-        sdbAbsentList: record.sdbAbsentList || record.sdbDsVang || [],
-        giamThiAbsentCount: record.giamThiAbsentCount !== undefined ? record.giamThiAbsentCount : (record.giamThiSoLuongNghi || 0),
-        giamThiAbsentList: record.giamThiAbsentList || record.giamThiDsVang || [],
-        isMatched: record.isMatched !== undefined ? record.isMatched : true,
-        isAcknowledged: record.isAcknowledged === true || (db.acknowledged_conflicts && db.acknowledged_conflicts[key] === true),
-        updatedAt: new Date().toISOString()
-    };
-    writeDb(db);
-    return db.attendance_ledger[key];
-}
-
-/**
- * Đánh dấu đã xác nhận / bỏ qua cảnh báo lệch (Khóa vĩnh viễn không cảnh báo lại nữa)
- */
-function acknowledgeConflict(week, thu, tiet, lop) {
-    const db = readDb();
-    const key = makeAttendanceKey(week, thu, tiet, lop);
-    db.acknowledged_conflicts = db.acknowledged_conflicts || {};
-    db.acknowledged_conflicts[key] = true;
-
-    if (db.attendance_ledger && db.attendance_ledger[key]) {
-        db.attendance_ledger[key].isAcknowledged = true;
-        db.attendance_ledger[key].isMatched = true; // Xem như đã khớp theo ý giáo viên
-    }
-    writeDb(db);
-    return { success: true, key };
-}
-
-/**
- * Kiểm tra xem 1 tiết đã được xác nhận hoặc đã chốt trong DB chưa
- */
-function isSlotAcknowledged(week, thu, tiet, lop) {
-    const db = readDb();
-    const key = makeAttendanceKey(week, thu, tiet, lop);
-    if (db.acknowledged_conflicts && db.acknowledged_conflicts[key]) {
-        return true;
-    }
-    if (db.attendance_ledger && db.attendance_ledger[key]) {
-        return db.attendance_ledger[key].isAcknowledged === true;
-    }
-    return false;
-}
-
-/**
- * Chốt toàn bộ 1 tuần quá khứ vào CSDL (không bao giờ quét lại hay báo lỗi nữa)
- */
-function finalizePastWeek(week) {
-    const db = readDb();
-    db.locked_weeks = db.locked_weeks || {};
-    db.locked_weeks[`week_${week}`] = {
-        locked: true,
-        finalizedAt: new Date().toISOString()
-    };
-    writeDb(db);
-    return true;
-}
-
-function isWeekLocked(week) {
-    const db = readDb();
-    return !!(db.locked_weeks && db.locked_weeks[`week_${week}`]?.locked);
-}
-
-// Khởi tạo
-readDb();
+// Khởi tạo ngay lập tức khi file được nạp
+getDb();
 
 module.exports = {
-    readDb,
-    writeDb,
-    verifyAdmin,
-    getSuperAdmin,
-    makeAttendanceKey,
-    getWeekAttendanceLedger,
-    recordAttendance,
-    acknowledgeConflict,
-    isSlotAcknowledged,
-    finalizePastWeek,
-    isWeekLocked
+    DB_FILE,
+
+    verifyAdmin(username, password) {
+        try {
+            const db = getDb();
+            const admin = db.prepare('SELECT * FROM admins WHERE username = ? OR email = ?').get(username, username);
+            if (!admin) return null;
+
+            const { hash } = hashPassword(password, admin.salt);
+            if (hash === admin.password_hash) {
+                // Cập nhật last_login
+                const now = new Date().toISOString();
+                db.prepare('UPDATE admins SET last_login = ? WHERE id = ?').run(now, admin.id);
+                return {
+                    id: admin.id,
+                    username: admin.username,
+                    email: admin.email,
+                    fullname: admin.fullname,
+                    role: admin.role,
+                    isSuperAdmin: admin.role === 'SUPER_ADMIN',
+                    permissions: JSON.parse(admin.permissions || '["*"]')
+                };
+            }
+            return null;
+        } catch (e) {
+            console.error('[SystemDB] verifyAdmin error:', e.message);
+            return null;
+        }
+    },
+
+    getSuperAdmin() {
+        try {
+            const db = getDb();
+            const admin = db.prepare('SELECT id, username, email, fullname, role, created_at, last_login FROM admins WHERE role = ?').get('SUPER_ADMIN');
+            return admin || null;
+        } catch (e) {
+            return null;
+        }
+    },
+
+    recordAttendance(week, thu, tiet, lop, data) {
+        try {
+            const db = getDb();
+            const key = `w${week}_t${thu}_s${tiet}_${lop}`;
+            const sdbList = JSON.stringify(data.sdbAbsentList || []);
+            const gtList = JSON.stringify(data.giamThiAbsentList || []);
+            const isMatched = data.isMatched ? 1 : 0;
+            const now = new Date().toISOString();
+
+            const stmt = db.prepare(`
+                INSERT INTO attendance_ledger (slot_key, week, thu, tiet, lop, ngay, sdb_absents, sdb_absent_list, giamthi_absents, giamthi_absent_list, is_matched, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(slot_key) DO UPDATE SET
+                    ngay = excluded.ngay,
+                    sdb_absents = excluded.sdb_absents,
+                    sdb_absent_list = excluded.sdb_absent_list,
+                    giamthi_absents = excluded.giamthi_absents,
+                    giamthi_absent_list = excluded.giamthi_absent_list,
+                    is_matched = excluded.is_matched,
+                    updated_at = excluded.updated_at
+            `);
+            stmt.run(key, Number(week), Number(thu), Number(tiet), lop, data.ngay || '', Number(data.sdbAbsentCount || 0), sdbList, Number(data.giamThiAbsentCount || 0), gtList, isMatched, now);
+            return true;
+        } catch (e) {
+            console.error('[SystemDB] recordAttendance error:', e.message);
+            return false;
+        }
+    },
+
+    acknowledgeConflict(week, thu, tiet, lop, actor = 'Super Admin') {
+        try {
+            const db = getDb();
+            const key = `w${week}_t${thu}_s${tiet}_${lop}`;
+            const now = new Date().toISOString();
+
+            const stmt = db.prepare(`
+                INSERT INTO acknowledged_conflicts (slot_key, week, thu, tiet, lop, acknowledged_at, acknowledged_by)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(slot_key) DO UPDATE SET
+                    acknowledged_at = excluded.acknowledged_at,
+                    acknowledged_by = excluded.acknowledged_by
+            `);
+            stmt.run(key, Number(week), Number(thu), Number(tiet), lop, now, actor);
+
+            // Cập nhật luôn ledger thành is_matched = 1
+            db.prepare('UPDATE attendance_ledger SET is_matched = 1, updated_at = ? WHERE slot_key = ?').run(now, key);
+
+            return { success: true, key, acknowledged_at: now };
+        } catch (e) {
+            console.error('[SystemDB] acknowledgeConflict error:', e.message);
+            return { success: false, error: e.message };
+        }
+    },
+
+    isSlotAcknowledged(week, thu, tiet, lop) {
+        try {
+            const db = getDb();
+            const key = `w${week}_t${thu}_s${tiet}_${lop}`;
+            const row = db.prepare('SELECT slot_key FROM acknowledged_conflicts WHERE slot_key = ?').get(key);
+            return !!row;
+        } catch (e) {
+            return false;
+        }
+    },
+
+    getWeekAttendanceLedger(week) {
+        try {
+            const db = getDb();
+            const rows = db.prepare('SELECT * FROM attendance_ledger WHERE week = ?').all(Number(week));
+            const result = {};
+            for (const r of rows) {
+                result[r.slot_key] = {
+                    ...r,
+                    is_matched: !!r.is_matched,
+                    sdbAbsentList: JSON.parse(r.sdb_absent_list || '[]'),
+                    giamThiAbsentList: JSON.parse(r.giamthi_absent_list || '[]')
+                };
+            }
+            return result;
+        } catch (e) {
+            return {};
+        }
+    },
+
+    finalizePastWeek(week) {
+        try {
+            const db = getDb();
+            const now = new Date().toISOString();
+            const stmt = db.prepare(`
+                INSERT INTO locked_weeks (week, locked, locked_at, notes)
+                VALUES (?, 1, ?, 'Đã chốt sổ tuần quá khứ an toàn')
+                ON CONFLICT(week) DO UPDATE SET locked_at = excluded.locked_at
+            `);
+            stmt.run(Number(week), now);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    },
+
+    isWeekLocked(week, currentRealWeek) {
+        if (Number(week) < Number(currentRealWeek)) {
+            return true;
+        }
+        try {
+            const db = getDb();
+            const row = db.prepare('SELECT locked FROM locked_weeks WHERE week = ?').get(Number(week));
+            return !!(row && row.locked);
+        } catch (e) {
+            return Number(week) < Number(currentRealWeek);
+        }
+    },
+
+    logAudit(action, actor, details, status = 'success') {
+        try {
+            const db = getDb();
+            const now = new Date().toISOString();
+            db.prepare('INSERT INTO audit_logs (action, actor, details, status, created_at) VALUES (?, ?, ?, ?, ?)')
+              .run(action, actor, String(details), status, now);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    },
+
+    getAuditLogs(limit = 50) {
+        try {
+            const db = getDb();
+            return db.prepare('SELECT * FROM audit_logs ORDER BY id DESC LIMIT ?').all(Number(limit));
+        } catch (e) {
+            return [];
+        }
+    }
 };
