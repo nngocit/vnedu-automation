@@ -29,6 +29,12 @@ export class UserInnerComponent implements OnInit, OnDestroy {
     this.setLanguage(this.translationService.getSelectedLanguage());
   }
 
+  getTeacherInitial(name?: string): string {
+    if (!name) return 'H';
+    const trimmed = name.trim();
+    return trimmed.charAt(trimmed.length - 1).toUpperCase();
+  }
+
   logout() {
     this.auth.logout();
   }

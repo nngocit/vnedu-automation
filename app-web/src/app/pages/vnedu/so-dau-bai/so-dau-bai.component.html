@@ -22,10 +22,14 @@
       <div class="d-flex align-items-center gap-2 mb-2">
         <span class="hero-tag-pill">✨ Kế hoạch tuần {{ currentWeek }} • Học kỳ I</span>
       </div>
-      <h2 class="hero-title mb-1">Chào mừng Cô Lê Thị Diệu Huyên!</h2>
-      <p class="hero-subtitle mb-0">Chúc cô một ngày giảng dạy tràn ngập niềm vui và năng lượng tích cực tại THCS An Lập.</p>
+      <h2 class="hero-title mb-1">Chào mừng {{ teacherTitle }}!</h2>
+      <p class="hero-subtitle mb-0">Chúc {{ teacherPronoun }} một ngày giảng dạy tràn ngập niềm vui và năng lượng tích cực tại {{ teacherSchool }}.</p>
     </div>
     <div class="hero-stats-group position-relative z-index-2 d-flex align-items-center gap-2 flex-wrap">
+      <button type="button" class="btn btn-sm btn-light-primary rounded-pill px-3 py-1.5 fw-bold d-flex align-items-center gap-1.5 shadow-xs" (click)="openTeacherSwitcherModal()">
+        <span>🔄</span>
+        <span>Đổi giáo viên</span>
+      </button>
       <div class="hero-stat-pill">
         <span class="hero-stat-icon">🛡️</span>
         <span>SĐĐ đối soát khớp 100%</span>
@@ -1704,6 +1708,104 @@
   </div>
 </div>
 
+
+<!-- MODAL: CHUYỂN ĐỔI HỒ SƠ GIÁO VIÊN (MULTI-TEACHER SWITCHER) -->
+<div *ngIf="showTeacherSwitcherModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.55); z-index: 1060;">
+  <div class="modal-dialog modal-dialog-centered modal-md">
+    <div class="modal-content shadow-lg border-0 rounded-4 overflow-hidden">
+      <!-- Modal Header -->
+      <div class="modal-header py-3 px-4 bg-gradient-primary text-white border-0 d-flex justify-content-between align-items-center"
+           style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">
+        <div class="d-flex align-items-center gap-2">
+          <span class="fs-3">👥</span>
+          <div>
+            <h5 class="modal-title text-white fw-bold fs-6 mb-0">Hồ Sơ Giáo Viên • THCS An Lập</h5>
+            <div class="text-white text-opacity-75 fs-8">Chuyển đổi tài khoản nhanh để đồng nghiệp sử dụng</div>
+          </div>
+        </div>
+        <button type="button" class="btn btn-sm btn-icon btn-white text-white btn-active-light-primary" (click)="closeTeacherSwitcherModal()">
+          ✕
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body p-4 bg-light">
+        <div class="mb-3">
+          <div class="text-gray-600 fs-7 mb-3">
+            Hệ thống hỗ trợ lưu thông tin nhiều Thầy/Cô trên cùng máy. Nhấp vào hồ sơ để chuyển ngay:
+          </div>
+
+          <div class="d-flex flex-column gap-2.5">
+            <div *ngFor="let t of savedTeachersList"
+                 class="card p-3 rounded-3 border transition-all cursor-pointer shadow-xs"
+                 [class.border-primary]="t.active"
+                 [class.bg-white]="!t.active"
+                 [class.bg-light-primary]="t.active"
+                 (click)="onSwitchTeacher(t.username)">
+              <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="symbol symbol-45px symbol-circle">
+                    <span class="symbol-label fw-bold fs-5 text-white shadow-xs"
+                          [style.background]="t.active ? 'linear-gradient(135deg, #4f46e5, #7c3aed)' : '#6b7280'">
+                      {{ t.name ? t.name.trim().charAt(t.name.trim().length - 1) : 'G' }}
+                    </span>
+                  </div>
+                  <div>
+                    <div class="fw-bolder text-gray-900 fs-6 d-flex align-items-center gap-2">
+                      {{ t.title || t.name }}
+                      <span *ngIf="t.active" class="badge badge-success fs-9 py-1 px-2 rounded-pill">
+                        ✓ Đang hoạt động
+                      </span>
+                    </div>
+                    <div class="text-gray-500 fs-8 mt-0.5">
+                      {{ t.school || 'THCS An Lập' }} • <span class="fw-semibold">{{ t.username }}</span>
+                      <span *ngIf="t.subject" class="text-primary fw-medium ms-1">• {{ t.subject }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <button *ngIf="!t.active"
+                          type="button"
+                          class="btn btn-sm btn-light-primary rounded-pill px-3 py-1.5 fs-8 fw-bold"
+                          [disabled]="isSwitchingTeacher">
+                    🔄 Chọn
+                  </button>
+                  <span *ngIf="t.active" class="text-primary fw-bold fs-7">
+                    Đang chọn
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="separator my-3"></div>
+
+        <!-- Thêm tài khoản GV mới -->
+        <div class="d-flex align-items-center justify-content-between p-3 rounded-3 bg-white border border-dashed border-primary">
+          <div class="d-flex align-items-center gap-2">
+            <span class="fs-4">➕</span>
+            <div>
+              <div class="fw-bold text-gray-800 fs-7">Đăng nhập tài khoản đồng nghiệp mới</div>
+              <div class="text-muted fs-8">Nhập tài khoản vnEdu để hệ thống tự động ghi nhớ hồ sơ</div>
+            </div>
+          </div>
+          <a routerLink="/auth/login" (click)="closeTeacherSwitcherModal()" class="btn btn-sm btn-primary rounded-pill px-3 py-1.5 fs-8 fw-bold">
+            Đăng nhập mới
+          </a>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer py-2 px-4 bg-white d-flex justify-content-end border-0">
+        <button type="button" class="btn btn-sm btn-light rounded-pill px-4" (click)="closeTeacherSwitcherModal()">
+          Đóng
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- TRỢ LÝ AI VNEDU (AI ASSISTANT CHATBOT WIDGET) -->
 <app-ai-assistant-widget [currentWeek]="currentWeek" [slots]="slots"></app-ai-assistant-widget>

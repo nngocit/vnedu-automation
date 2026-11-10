@@ -22,6 +22,9 @@ export class LoginComponent implements OnInit, OnDestroy {
     school: 'Trường THCS An Lập'
   };
 
+  savedTeachers: any[] = [];
+  currentTeacher: any = null;
+
   loginForm: FormGroup;
   hasError = false;
   errorMessage = '';
@@ -48,6 +51,7 @@ export class LoginComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.initForm();
+    this.loadSavedTeachers();
     const queryReturnUrl = this.route.snapshot.queryParams['returnUrl'];
     if (queryReturnUrl && queryReturnUrl !== '/' && !queryReturnUrl.includes('login')) {
       this.returnUrl = queryReturnUrl;
@@ -83,6 +87,29 @@ export class LoginComponent implements OnInit, OnDestroy {
 
   togglePassword() {
     this.showPassword = !this.showPassword;
+  }
+
+  loadSavedTeachers(): void {
+    this.authService.getSavedTeachers().subscribe({
+      next: (res) => {
+        if (res && res.success && Array.isArray(res.teachers) && res.teachers.length > 0) {
+          this.savedTeachers = res.teachers;
+          this.currentTeacher = res.current || res.teachers[0];
+          this.cd.detectChanges();
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  selectTeacher(t: any): void {
+    this.loginForm.patchValue({
+      username: t.username,
+      password: t.username === '051197003685' ? 'Huyen0907@' : ''
+    });
+    this.hasError = false;
+    this.errorMessage = '';
+    this.cd.detectChanges();
   }
 
   fillQuickCredentials() {

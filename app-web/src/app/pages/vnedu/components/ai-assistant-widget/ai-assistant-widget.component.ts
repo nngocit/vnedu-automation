@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { VnEduService } from '../../services/vnedu.service';
+import { AuthService } from '../../../../modules/auth';
 
 export interface ChatMessage {
   id: string;
@@ -57,8 +58,24 @@ export class AiAssistantWidgetComponent implements OnInit, OnDestroy, AfterViewC
 
   constructor(
     private vneduService: VnEduService,
+    private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {}
+
+  get teacherTitle(): string {
+    const user = this.authService.currentUserValue;
+    return user?.fullname || 'Cô Lê Thị Diệu Huyên';
+  }
+
+  get teacherSchool(): string {
+    const user = this.authService.currentUserValue;
+    return user?.companyName || 'THCS An Lập';
+  }
+
+  get teacherPronoun(): string {
+    const name = this.teacherTitle.toLowerCase();
+    return name.includes('thầy') ? 'Thầy' : 'Cô';
+  }
 
   ngOnInit(): void {
     // Lắng nghe trạng thái mở/đóng từ service (Ví dụ bấm từ Navbar)
@@ -115,11 +132,11 @@ export class AiAssistantWidgetComponent implements OnInit, OnDestroy, AfterViewC
     const synced = this.summaryData ? this.summaryData.syncedSlots : 14;
 
     const welcomeText =
-      `Dạ em chào **Cô Lê Thị Diệu Huyên**! Em là **Trợ lý AI vnEdu** sẵn sàng đồng hành cùng Cô tại trường THCS An Lập. 🌸\n\n` +
+      `Dạ em chào **${this.teacherTitle}**! Em là **Trợ lý AI vnEdu** sẵn sàng đồng hành cùng ${this.teacherPronoun} tại ${this.teacherSchool}. 🌸\n\n` +
       `📌 **Điểm tin Tuần ${this.currentWeek}:**\n` +
       `• Đã lưu vnEdu: **${synced}/${total}** tiết\n` +
       `• Còn cần lưu: **${unsynced}** tiết\n\n` +
-      `Cô có thể bấm vào các gợi ý nhanh bên dưới hoặc gõ câu hỏi bất kỳ để em tra cứu và nhắc việc cho Cô nhé!`;
+      `${this.teacherPronoun} có thể bấm vào các gợi ý nhanh bên dưới hoặc gõ câu hỏi bất kỳ để em tra cứu và nhắc việc cho ${this.teacherPronoun} nhé!`;
 
     this.messages = [
       {

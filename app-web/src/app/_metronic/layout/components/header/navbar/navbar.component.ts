@@ -1,7 +1,8 @@
 import { Component, Input, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, Observable } from 'rxjs';
 import { VnEduService, AppNotification } from '../../../../../pages/vnedu/services/vnedu.service';
+import { AuthService, UserType } from '../../../../../modules/auth';
 
 @Component({
   selector: 'app-navbar',
@@ -22,6 +23,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   notifications: AppNotification[] = [];
   showNotificationDropdown: boolean = false;
   activeNotificationTab: 'all' | 'alerts' | 'info' = 'all';
+  user$: Observable<UserType>;
   private sub: Subscription = new Subscription();
 
   get unreadNotificationsCount(): number {
@@ -44,11 +46,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   constructor(
     private vneduService: VnEduService,
+    private authService: AuthService,
     private cdr: ChangeDetectorRef,
     private router: Router
   ) {}
 
   ngOnInit(): void {
+    this.user$ = this.authService.currentUserSubject.asObservable();
     this.sub.add(
       this.vneduService.notifications$.subscribe(list => {
         this.notifications = list || [];
@@ -72,6 +76,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
   toggleNotificationDropdown(): void {
     this.showNotificationDropdown = !this.showNotificationDropdown;
     this.cdr.detectChanges();
+  }
+
+  getTeacherInitial(name?: string): string {
+    if (!name) return 'H';
+    const trimmed = name.trim();
+    return trimmed.charAt(trimmed.length - 1).toUpperCase();
   }
 
   openAiChat(): void {

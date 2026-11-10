@@ -15,23 +15,65 @@
     </div>
   </div>
 
-  <!-- Thẻ nạp nhanh tài khoản Giáo viên -->
-  <div class="card teacher-quick-card p-4 mb-7 rounded-3">
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-      <div class="d-flex align-items-center">
-        <div class="symbol symbol-40px symbol-circle me-3">
-          <span class="symbol-label bg-primary text-white fw-bolder fs-5">H</span>
-        </div>
-        <div>
-          <div class="fw-bolder teacher-quick-name fs-6">Cô Lê Thị Diệu Huyên</div>
-          <div class="teacher-quick-sub fs-7">Trường THCS An Lập • 051197003685</div>
+  <!-- Thẻ nạp nhanh tài khoản Giáo viên (Hỗ trợ đa tài khoản cho đồng nghiệp) -->
+  <div class="mb-6" *ngIf="savedTeachers.length > 0; else defaultQuickCard">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+      <span class="fs-8 fw-bolder text-gray-700 text-uppercase letter-spacing-1">
+        👥 Tài khoản đã lưu ({{ savedTeachers.length }})
+      </span>
+      <span class="text-muted fs-8">Nhấp để chọn nhanh</span>
+    </div>
+    <div class="d-flex flex-column gap-2">
+      <div *ngFor="let t of savedTeachers"
+           class="card teacher-quick-card p-3 rounded-3 cursor-pointer border border-hover-primary transition-all"
+           [class.border-primary]="loginForm.get('username')?.value === t.username"
+           [class.bg-light-primary]="loginForm.get('username')?.value === t.username"
+           (click)="selectTeacher(t)">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <div class="d-flex align-items-center">
+            <div class="symbol symbol-38px symbol-circle me-3">
+              <span class="symbol-label bg-primary text-white fw-bolder fs-6">
+                {{ t.name ? t.name.trim().charAt(t.name.trim().length - 1) : (t.title ? t.title.charAt(t.title.length - 1) : 'G') }}
+              </span>
+            </div>
+            <div>
+              <div class="fw-bolder text-gray-900 fs-7">
+                {{ t.title || t.name }}
+                <span *ngIf="t.active" class="badge badge-light-success fs-9 ms-1">Đang dùng</span>
+              </div>
+              <div class="text-gray-500 fs-8">
+                {{ t.school || 'THCS An Lập' }} • <span class="fw-semibold">{{ t.username }}</span>
+                <span *ngIf="t.subject" class="text-primary ms-1">({{ t.subject }})</span>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-sm btn-light-primary rounded-pill px-3 py-1.5 fs-8 fw-bold">
+            ⚡ Chọn
+          </button>
         </div>
       </div>
-      <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 py-2 fs-8 fw-bold" (click)="fillQuickCredentials()">
-        ⚡ Nạp nhanh
-      </button>
     </div>
   </div>
+
+  <ng-template #defaultQuickCard>
+    <!-- Thẻ nạp nhanh mặc định Cô Lê Thị Diệu Huyên -->
+    <div class="card teacher-quick-card p-4 mb-7 rounded-3">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center">
+          <div class="symbol symbol-40px symbol-circle me-3">
+            <span class="symbol-label bg-primary text-white fw-bolder fs-5">H</span>
+          </div>
+          <div>
+            <div class="fw-bolder teacher-quick-name fs-6">Cô Lê Thị Diệu Huyên</div>
+            <div class="teacher-quick-sub fs-7">Trường THCS An Lập • 051197003685</div>
+          </div>
+        </div>
+        <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 py-2 fs-8 fw-bold" (click)="fillQuickCredentials()">
+          ⚡ Nạp nhanh
+        </button>
+      </div>
+    </div>
+  </ng-template>
 
   <!-- Alert hiển thị lỗi đăng nhập -->
   <div *ngIf="hasError" class="alert alert-danger d-flex align-items-center p-4 mb-6 rounded-3">

@@ -3,27 +3,37 @@ const path = require('path');
 const fs = require('fs');
 const core = require('./sync-core');
 const localDb = require('./local_attendance_db');
+const teacherProfileManager = require('./teacher-profile-manager');
 
 const app = express();
 const PORT = 3000;
 
-// Tìm thư mục chứa bản build tĩnh của Angular thông minh
+// Tìm thư mục chứa bản build tĩnh của Angular thông minh (Luôn ưu tiên thư mục có index.html mới nhất)
 function resolveDistDir() {
     const candidates = [
         path.join(__dirname, '..', 'APP WEB', 'dist', 'demo1', 'browser'),
         path.join(__dirname, 'app-web', 'dist', 'demo1', 'browser'),
+        path.join(__dirname, 'public'),
         path.join(__dirname, '..', 'dist', 'demo1', 'browser'),
         path.join(__dirname, 'dist', 'demo1', 'browser'),
         path.join(__dirname, '..', 'app-web', 'dist', 'demo1', 'browser'),
-        path.join(__dirname, 'public'),
         path.join(__dirname, '..', 'public')
     ];
+    let bestDir = null;
+    let latestMtime = 0;
     for (const dir of candidates) {
-        if (fs.existsSync(path.join(dir, 'index.html'))) {
-            return dir;
+        const indexPath = path.join(dir, 'index.html');
+        if (fs.existsSync(indexPath)) {
+            try {
+                const stat = fs.statSync(indexPath);
+                if (stat.mtimeMs > latestMtime) {
+                    latestMtime = stat.mtimeMs;
+                    bestDir = dir;
+                }
+            } catch (e) {}
         }
     }
-    return candidates[0];
+    return bestDir || candidates[0];
 }
 const DIST_DIR = resolveDistDir();
 
@@ -31,11 +41,12 @@ app.use(express.json({ limit: '20mb' }));
 
 // Health Check API
 app.get('/api/health', (req, res) => {
+    const active = teacherProfileManager.getActiveTeacher();
     res.json({
         status: 'ok',
         app: 'vnEdu Smart Sync Fullstack',
-        school: 'Trường THCS An Lập',
-        teacher: 'Cô Lê Thị Diệu Huyên',
+        school: active.school || 'Trường THCS An Lập',
+        teacher: active.title || 'Cô Lê Thị Diệu Huyên',
         uptime: Math.round(process.uptime()) + 's',
         distLoaded: fs.existsSync(DIST_DIR)
     });
@@ -93,16 +104,71 @@ app.post('/api/reset-excel', (req, res) => {
     }
 });
 
-// API: Đăng nhập vnEdu siêu tốc bằng HTTP thuần
+// ========================================================
+// API: QUẢN LÝ ĐA HỒ SƠ GIÁO VIÊN (MULTI-TEACHER PROFILES)
+// ========================================================
+app.get('/api/teachers', (req, res) => {
+    try {
+        const teachers = teacherProfileManager.getProfiles();
+        const current = teacherProfileManager.getActiveTeacher();
+        res.json({ success: true, teachers, current });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+app.post('/api/teachers/switch', (req, res) => {
+    try {
+        const { username } = req.body;
+        if (!username) {
+            return res.status(400).json({ success: false, error: 'Thiếu mã tài khoản giáo viên' });
+        }
+        const current = teacherProfileManager.setActiveTeacher(username);
+        res.json({ success: true, current, msg: `Đã chuyển sang tài khoản ${current.title}` });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+app.post('/api/teachers/delete', (req, res) => {
+    try {
+        const { username } = req.body;
+        const result = teacherProfileManager.deleteProfile(username);
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+// API: Đăng nhập vnEdu siêu tốc bằng HTTP thuần (Hỗ trợ đa tài khoản giáo viên)
 app.post('/api/vnedu/login', async (req, res) => {
     try {
         const username = req.body.username || '051197003685';
         const password = req.body.password || '';
+        const teacherName = req.body.teacherName || req.body.name || '';
+        const gender = req.body.gender || 'unknown';
+        const subject = req.body.subject || '';
+
         if (!password) {
             return res.status(400).json({ success: false, msg: 'Vui lòng nhập mật khẩu vnEdu.' });
         }
 
         const loginRes = await core.loginVnEduHttp(username, password);
+        if (loginRes.success) {
+            // Lưu hoặc cập nhật hồ sơ giáo viên vào danh sách
+            const profile = teacherProfileManager.upsertProfile({
+                username,
+                name: teacherName || (username === '051197003685' ? 'Lê Thị Diệu Huyên' : `Giáo viên ${username}`),
+                gender,
+                subject,
+                school: 'Trường THCS An Lập'
+            });
+            return res.json({
+                ...loginRes,
+                teacher: profile,
+                msg: `Đăng nhập vnEdu thành công! Chào ${profile.title}.`
+            });
+        }
         res.json(loginRes);
     } catch (e) {
         res.status(500).json({ success: false, msg: 'Lỗi đăng nhập: ' + e.message });
@@ -125,38 +191,49 @@ app.post('/api/vnedu/logout', (req, res) => {
 app.get('/api/vnedu/status', async (req, res) => {
     try {
         const session = core.getSessionStatus();
+        const active = teacherProfileManager.getActiveTeacher();
         res.json({
             success: true,
             connected: session.connected,
-            account: '051197003685',
-            teacherName: 'Lê Thị Diệu Huyên',
+            account: active.username,
+            teacherName: active.name,
+            teacherTitle: active.title,
+            subject: active.subject,
             tokenPreview: session.connected && session.token ? session.token.substring(0, 8) + '...' : null
         });
     } catch (e) {
+        const active = teacherProfileManager.getActiveTeacher();
         res.json({
             success: true,
             connected: false,
-            account: '051197003685',
-            teacherName: 'Lê Thị Diệu Huyên',
+            account: active.username,
+            teacherName: active.name,
+            teacherTitle: active.title,
+            subject: active.subject,
             tokenPreview: null
         });
     }
 });
 
-// API: Thông tin chung
+// API: Thông tin chung (Tự động thích ứng theo giáo viên đang hoạt động)
 app.get('/api/info', async (req, res) => {
     try {
         const source = req.query.source || 'vnedu';
         const file = core.getLatestExcelFile();
         const weekInfo = core.getAvailableWeeks(source);
         const schoolInfo = await core.getSchoolInfoFromVnEdu();
+        const active = teacherProfileManager.getActiveTeacher();
         res.json({
             success: true,
             teacher: {
-                name: 'Lê Thị Diệu Huyên',
-                account: '051197003685',
-                school: schoolInfo.school || 'Trường THCS An Lập',
-                branch: schoolInfo.branch || 'Phân hiệu An Lập',
+                name: active.name,
+                title: active.title,
+                shortName: active.shortName,
+                account: active.username,
+                subject: active.subject,
+                gender: active.gender,
+                school: schoolInfo.school || active.school || 'Trường THCS An Lập',
+                branch: schoolInfo.branch || active.branch || 'Phân hiệu An Lập',
                 year: '2025 - 2026'
             },
             file: file ? { name: file.name, time: file.time, isCustom: !!file.isCustom } : null,
@@ -857,7 +934,14 @@ app.post('/api/ai/chat', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Thiếu nội dung câu hỏi' });
         }
         const week = parseInt(currentWeek) || 9;
-        const result = await aiAssistant.processAiQuery({ message, currentWeek: week, history: history || [], clientSlots: slots });
+        const activeTeacher = teacherProfileManager.getActiveTeacher();
+        const result = await aiAssistant.processAiQuery({ 
+            message, 
+            currentWeek: week, 
+            history: history || [], 
+            clientSlots: slots,
+            teacher: activeTeacher
+        });
         res.json(result);
     } catch (e) {
         console.error('Lỗi AI Chat:', e);

@@ -3,12 +3,12 @@
   <button type="button" 
           class="btn-ai-launcher shadow-lg"
           (click)="toggleChat()"
-          title="Mở Trợ lý AI vnEdu • Cô Lê Thị Diệu Huyên">
+          [title]="'Mở Trợ lý AI vnEdu • ' + teacherTitle">
     <div class="launcher-pulse-ring"></div>
     <div class="launcher-icon-inner">
       <span class="ai-emoji">🤖</span>
     </div>
-    <span class="launcher-label d-none d-sm-inline">Trợ lý AI Cô Huyên</span>
+    <span class="launcher-label d-none d-sm-inline">Trợ lý AI</span>
     <span *ngIf="unreadReminders > 0" class="badge-reminder-count" title="Số tiết cần chú ý">
       {{ unreadReminders }}
     </span>
@@ -30,7 +30,7 @@
           <span class="badge-ai-version">Gemini AI</span>
         </div>
         <div class="fs-8 text-white text-opacity-75 lh-1">
-          Cô Lê Thị Diệu Huyên • THCS An Lập
+          {{ teacherTitle }} • {{ teacherSchool }}
         </div>
       </div>
     </div>

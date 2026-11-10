@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { VnEduService } from '../services/vnedu.service';
+import { AuthService } from '../../../modules/auth';
 import {
   VnEduInfo,
   VnEduWeekSchedule,
@@ -146,6 +147,65 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   // Toast / Thông báo
   toastMessage: { text: string; type: 'success' | 'danger' | 'info' } | null = null;
 
+  // Đa hồ sơ giáo viên (Multi-Teacher Switcher)
+  showTeacherSwitcherModal: boolean = false;
+  savedTeachersList: any[] = [];
+  isSwitchingTeacher: boolean = false;
+
+  get teacherTitle(): string {
+    return (this.info?.teacher as any)?.title || (this.status as any)?.teacherTitle || 'Cô Lê Thị Diệu Huyên';
+  }
+
+  get teacherPronoun(): string {
+    const gender = (this.info?.teacher as any)?.gender || 'female';
+    return gender === 'male' ? 'Thầy' : 'Cô';
+  }
+
+  get teacherSchool(): string {
+    return (this.info?.teacher as any)?.school || 'Trường THCS An Lập';
+  }
+
+  openTeacherSwitcherModal(): void {
+    this.showTeacherSwitcherModal = true;
+    this.authService.getSavedTeachers().subscribe({
+      next: (res) => {
+        if (res && res.success && Array.isArray(res.teachers)) {
+          this.savedTeachersList = res.teachers;
+          this.cdr.detectChanges();
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  closeTeacherSwitcherModal(): void {
+    this.showTeacherSwitcherModal = false;
+  }
+
+  onSwitchTeacher(username: string): void {
+    if (this.isSwitchingTeacher) return;
+    this.isSwitchingTeacher = true;
+    this.authService.switchTeacher(username).subscribe({
+      next: (res) => {
+        this.isSwitchingTeacher = false;
+        if (res && res.success) {
+          this.showTeacherSwitcherModal = false;
+          this.showToast(`Đã chuyển sang tài khoản ${res.teacher?.title || res.teacher?.name} thành công! 🎉`, 'success');
+          // Tải lại thông tin và lịch dạy của giáo viên mới
+          this.loadInitialData();
+        } else {
+          this.showToast('Không thể chuyển tài khoản, vui lòng thử lại!', 'danger');
+        }
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.isSwitchingTeacher = false;
+        this.showToast('Lỗi kết nối khi chuyển tài khoản!', 'danger');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
   // Danh sách tuần từ 1 đến 35 luôn sẵn sàng
   weeksList: Array<{ weekNumber: number; title: string; isCurrentRealWeek: boolean }> = Array.from({ length: 35 }, (_, i) => ({
     weekNumber: i + 1,
@@ -155,6 +215,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
 
   constructor(
     private vneduService: VnEduService,
+    private authService: AuthService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}

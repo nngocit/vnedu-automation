@@ -113,16 +113,29 @@
   <app-theme-mode-switcher [toggleBtnClass]="btnClass"></app-theme-mode-switcher>
 </div>
 
-<!-- Cụm Avatar Cô Huyên & Menu Người Dùng -->
+<!-- Cụm Avatar Giáo viên & Menu Người Dùng -->
 <div class="app-navbar-item" [ngClass]="itemClass">
   <div class="cursor-pointer d-flex align-items-center gap-2" data-kt-menu-trigger="{default: 'click'}" data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end">
-    <div class="d-none d-md-flex flex-column text-end me-1">
-      <span class="text-gray-900 fw-bolder fs-7 lh-1">Cô Diệu Huyên</span>
-      <span class="text-gray-500 fs-9 mt-1">THCS An Lập</span>
+    <div class="d-none d-md-flex flex-column text-end me-1" *ngIf="user$ | async as currentUser; else defaultUserNav">
+      <span class="text-gray-900 fw-bolder fs-7 lh-1">{{ currentUser.fullname || 'Cô Diệu Huyên' }}</span>
+      <span class="text-gray-500 fs-9 mt-1">{{ currentUser.companyName || 'THCS An Lập' }}</span>
     </div>
-    <div class="symbol symbol-35px symbol-circle">
-      <span class="symbol-label bg-primary text-white fw-bolder fs-6 shadow-xs">H</span>
+    <ng-template #defaultUserNav>
+      <div class="d-none d-md-flex flex-column text-end me-1">
+        <span class="text-gray-900 fw-bolder fs-7 lh-1">Cô Diệu Huyên</span>
+        <span class="text-gray-500 fs-9 mt-1">THCS An Lập</span>
+      </div>
+    </ng-template>
+    <div class="symbol symbol-35px symbol-circle" *ngIf="user$ | async as currentUser; else defaultAvatar">
+      <span class="symbol-label bg-primary text-white fw-bolder fs-6 shadow-xs">
+        {{ getTeacherInitial(currentUser.fullname) }}
+      </span>
     </div>
+    <ng-template #defaultAvatar>
+      <div class="symbol symbol-35px symbol-circle">
+        <span class="symbol-label bg-primary text-white fw-bolder fs-6 shadow-xs">H</span>
+      </div>
+    </ng-template>
   </div>
   <app-user-inner data-kt-menu='true'></app-user-inner>
 </div>

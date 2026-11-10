@@ -198,23 +198,29 @@ function cleanMathFormulas(text) {
     return s;
 }
 
-async function callGeminiLLM({ message, currentWeek = 9, history = [], context = null }) {
+async function callGeminiLLM({ message, currentWeek = 9, history = [], context = null, teacher = null }) {
     const apiKey = getGeminiApiKey();
     if (!apiKey) {
         return null;
     }
 
-    const systemPrompt = `Bạn là Trợ lý AI vnEdu thông minh, am hiểu chuyên môn sư phạm và tận tâm của Cô Lê Thị Diệu Huyên (giáo viên dạy môn Toán tại trường THCS An Lập).
+    const teacherTitle = teacher?.title || 'Cô Lê Thị Diệu Huyên';
+    const teacherName = teacher?.name || 'Lê Thị Diệu Huyên';
+    const pronoun = teacher?.gender === 'male' ? 'Thầy' : (teacher?.gender === 'female' ? 'Cô' : 'Thầy/Cô');
+    const teacherSubject = teacher?.subject || 'môn Toán';
+    const teacherSchool = teacher?.school || 'Trường THCS An Lập';
+
+    const systemPrompt = `Bạn là Trợ lý AI vnEdu thông minh, am hiểu chuyên môn sư phạm và tận tâm của ${teacherTitle} (giáo viên ${teacherSubject} tại ${teacherSchool}).
 Nguyên tắc ứng xử và xưng hô bắt buộc:
-1. Xưng hô: Luôn xưng "Em" và gọi giáo viên là "Cô" hoặc "Cô Lê Thị Diệu Huyên" (tuyệt đối KHÔNG viết thành "Huyền", không xưng "tôi", không gọi "bạn").
+1. Xưng hô: Luôn xưng "Em" và gọi giáo viên là "${pronoun}" hoặc "${teacherTitle}" (tuyệt đối không xưng "tôi", không gọi "bạn").
 2. Giọng điệu: Thân thiện, lễ phép, ấm áp, chuẩn mực sư phạm, súc tích và có tính xây dựng cao.
-3. Bối cảnh giảng dạy thực tế của Cô Diệu Huyên:
-   - Giáo viên môn Toán các lớp 7A2AL (sĩ số 34), 7A3AL (sĩ số 33), và 9A2AL (sĩ số 41) tại trường THCS An Lập.
+3. Bối cảnh giảng dạy thực tế của ${teacherTitle}:
+   - Giáo viên ${teacherSubject} tại ${teacherSchool}.
    - Hiện tại đang trong Tuần ${currentWeek} năm học 2026-2027.
    - Sổ đầu bài điện tử vnEdu và Sổ điểm danh giám thị được đồng bộ tự động.
 4. Trả lời:
-   - Nếu hỏi về mô hình AI: Xác nhận em là Trợ lý AI chính thức sử dụng mô hình Google Gemini AI thế hệ mới kết hợp cùng hệ thống đối soát dữ liệu vnEdu thời gian thực của trường THCS An Lập.
-   - Với các câu hỏi chuyên môn Toán THCS (đại số, hình học, định lý, bài tập, lời giải mẫu), sư phạm, soạn giáo án, nhận xét học sinh, quản lý nề nếp lớp học, hoặc các câu hỏi kiến thức chung: Trả lời sâu sắc, chu đáo, ĐẦY ĐỦ TOÀN BỘ Ý, TUYỆT ĐỐI KHÔNG BỊ CẮT NGANG HAY DỪNG GIỮA CHỪNG. Trình bày bằng Markdown đẹp mắt với gạch đầu dòng và in đậm rõ ràng.
+   - Nếu hỏi về mô hình AI: Xác nhận em là Trợ lý AI chính thức sử dụng mô hình Google Gemini AI thế hệ mới kết hợp cùng hệ thống đối soát dữ liệu vnEdu thời gian thực của ${teacherSchool}.
+   - Với các câu hỏi chuyên môn sư phạm, soạn giáo án, bài tập, lời giải, nhận xét học sinh, quản lý nề nếp lớp học, hoặc các câu hỏi kiến thức chung: Trả lời sâu sắc, chu đáo, ĐẦY ĐỦ TOÀN BỘ Ý, TUYỆT ĐỐI KHÔNG BỊ CẮT NGANG HAY DỪNG GIỮA CHỪNG. Trình bày bằng Markdown đẹp mắt với gạch đầu dòng và in đậm rõ ràng.
 5. Luôn hoàn thiện câu trả lời trọn vẹn, không viết dở dang câu chữ.
 6. QUY TẮC HIỂN THỊ CÔNG THỨC TOÁN & HÌNH HỌC (CHUẨN SƯ PHẠM SGK THCS):
    - TUYỆT ĐỐI KHÔNG dùng mã LaTeX thô và KHÔNG dùng dấu $ để bọc công thức (ví dụ: không dùng $ABC$, $60^\\circ$, \\hat{A}, \\Delta, \\frac).
@@ -226,7 +232,7 @@ Nguyên tắc ứng xử và xưng hô bắt buộc:
      * Ký hiệu: ⊥ (vuông góc), // (song song), ∽ (đồng dạng), = (bằng nhau), ≠ (khác), ≤, ≥, ⇒, ⇔.
      * Mũ & căn: x², x³, √x. Phân số viết dạng a/b (ví dụ 1/2, 3/4).`;
 
-    const userPromptWithSystem = `${systemPrompt}\n\n[Câu hỏi từ Cô Lê Thị Diệu Huyên]: ${message}`;
+    const userPromptWithSystem = `${systemPrompt}\n\n[Câu hỏi từ ${teacherTitle}]: ${message}`;
 
     for (const model of GEMINI_CANDIDATE_MODELS) {
         try {
@@ -282,10 +288,12 @@ Nguyên tắc ứng xử và xưng hô bắt buộc:
     return null;
 }
 
-async function processAiQuery({ message, currentWeek = 9, history = [], clientSlots = null }) {
+async function processAiQuery({ message, currentWeek = 9, history = [], clientSlots = null, teacher = null }) {
     const raw = normalizeText(message);
     const context = await getWeekContext(currentWeek, clientSlots);
     const todayThu = getTodayThu();
+    const teacherTitle = teacher?.title || 'Cô Lê Thị Diệu Huyên';
+    const pronoun = teacher?.gender === 'male' ? 'Thầy' : (teacher?.gender === 'female' ? 'Cô' : 'Thầy/Cô');
 
     let reply = '';
     const suggestions = [];
@@ -589,8 +597,8 @@ async function processAiQuery({ message, currentWeek = 9, history = [], clientSl
     // ƯU TIÊN 7: CHÀO HỎI / GIỚI THIỆU
     // ========================================================
     if (raw.includes('chào') || raw.includes('chao') || raw.includes('bạn là ai') || raw.includes('ai đó') || raw === 'hello' || raw === 'hi') {
-        reply = `Dạ em chào **Cô Lê Thị Diệu Huyên**! Em là **Trợ lý AI vnEdu** của Cô tại trường **THCS An Lập**. 🌸\n\n` +
-            `Em nắm toàn bộ lịch dạy, tiến độ Sổ Đầu Bài và điểm danh của Cô trong **Tuần ${currentWeek}**:\n` +
+        reply = `Dạ em chào **${teacherTitle}**! Em là **Trợ lý AI vnEdu** của ${pronoun} tại trường **${teacher?.school || 'THCS An Lập'}**. 🌸\n\n` +
+            `Em nắm toàn bộ lịch dạy, tiến độ Sổ Đầu Bài và điểm danh của ${pronoun} trong **Tuần ${currentWeek}**:\n` +
             `• 📅 **Tổng số tiết:** ${context.totalSlots} tiết\n` +
             `• ✅ **Đã lưu vnEdu:** ${context.syncedSlots}/${context.totalSlots} tiết\n` +
             `• ⏳ **Chưa lưu vnEdu:** ${context.unsyncedSlots.length} tiết\n` +
@@ -668,7 +676,7 @@ async function processAiQuery({ message, currentWeek = 9, history = [], clientSl
     // ========================================================
     // MÔ HÌNH GOOGLE GEMINI AI LLM (Creative, Pedagogical & General Reasoning)
     // ========================================================
-    const geminiResult = await callGeminiLLM({ message, currentWeek, history, context });
+    const geminiResult = await callGeminiLLM({ message, currentWeek, history, context, teacher });
     if (geminiResult && geminiResult.text) {
         return {
             success: true,
@@ -687,16 +695,16 @@ async function processAiQuery({ message, currentWeek = 9, history = [], clientSl
 
     // Fallback: Mặc định thân thiện nếu mất mạng hoặc chưa cấu hình API
     if (raw.length <= 4) {
-        reply = `Dạ thưa **Cô Lê Thị Diệu Huyên**, Cô cần em hỗ trợ mở tiết nào hay tra cứu thông tin gì cho Cô ạ? 🌸\n\n` +
-            `Cô có thể bấm vào một trong các gợi ý nhanh bên dưới nhé:`;
+        reply = `Dạ thưa **${teacherTitle}**, ${pronoun} cần em hỗ trợ mở tiết nào hay tra cứu thông tin gì cho ${pronoun} ạ? 🌸\n\n` +
+            `${pronoun} có thể bấm vào một trong các gợi ý nhanh bên dưới nhé:`;
     } else {
-        reply = `Dạ thưa **Cô Lê Thị Diệu Huyên**, em đã ghi nhận yêu cầu: *" ${message} "*.\n\n` +
-            `Em có thể hỗ trợ Cô tức thì các thông tin sau:\n` +
+        reply = `Dạ thưa **${teacherTitle}**, em đã ghi nhận yêu cầu: *" ${message} "*.\n\n` +
+            `Em có thể hỗ trợ ${pronoun} tức thì các thông tin sau:\n` +
             `• 👥 **Điểm danh & Sĩ số:** Điểm danh hôm nay có ai vắng, học sinh vắng trong tuần.\n` +
             `• 📅 **Tra cứu lịch dạy:** Hôm nay dạy tiết nào, Thứ 2 đến Thứ 7 dạy lớp nào.\n` +
             `• ⏳ **Tiến độ vnEdu:** Tiết nào chưa lưu, tiết nào thiếu tên bài.\n` +
             `• 🛡️ **Giám thị:** Đối chiếu Sổ đầu bài và Sổ điểm danh điện tử.\n\n` +
-            `Cô chọn một trong các gợi ý nhanh dưới đây nhé:`;
+            `${pronoun} chọn một trong các gợi ý nhanh dưới đây nhé:`;
     }
 
     suggestions.push('Điểm danh hôm nay có ai vắng?', 'Hôm nay cô dạy tiết nào?', 'Tiết nào chưa lưu vnEdu?', 'Cập nhật từ Giám thị');

@@ -14,6 +14,7 @@ export interface VnEduLoginResponse {
   cookies?: string;
   userId?: string;
   msg?: string;
+  teacher?: any;
 }
 
 @Injectable({
@@ -66,14 +67,15 @@ export class AuthService implements OnDestroy {
         const user = new UserModel();
         user.id = 1;
         user.username = username;
-        user.fullname = 'Lê Thị Diệu Huyên';
+        const teacherProfile = res.teacher || {};
+        user.fullname = teacherProfile.name || teacherProfile.title || 'Lê Thị Diệu Huyên';
         user.email = `${username}@vnedu.vn`;
         user.phone = username;
-        user.occupation = 'Giáo viên THCS';
-        user.companyName = 'Trường THCS An Lập';
+        user.occupation = teacherProfile.subject ? `Giáo viên ${teacherProfile.subject}` : 'Giáo viên THCS';
+        user.companyName = teacherProfile.school || 'Trường THCS An Lập';
         user.roles = [1];
         user.authToken = res.token || ('vnedu_auth_' + Date.now());
-        user.pic = './assets/media/avatars/300-1.jpg';
+        user.pic = teacherProfile.avatar || './assets/media/avatars/300-1.jpg';
 
         // Lưu thông tin phiên đăng nhập
         localStorage.setItem(this.authLocalStorageToken, JSON.stringify(user));
@@ -92,6 +94,40 @@ export class AuthService implements OnDestroy {
         return throwError(() => new Error(errorMsg));
       }),
       finalize(() => this.isLoadingSubject.next(false))
+    );
+  }
+
+  /**
+   * Lấy danh sách hồ sơ giáo viên đã lưu trong hệ thống
+   */
+  getSavedTeachers(): Observable<{ success: boolean; teachers: any[]; current: any }> {
+    return this.http.get<{ success: boolean; teachers: any[]; current: any }>('/api/teachers');
+  }
+
+  /**
+   * Chuyển đổi nhanh giữa các tài khoản giáo viên đã lưu
+   */
+  switchTeacher(username: string): Observable<any> {
+    return this.http.post<any>('/api/teachers/switch', { username }).pipe(
+      map((res) => {
+        if (res && res.success && res.teacher) {
+          const user = new UserModel();
+          user.id = 1;
+          user.username = res.teacher.username;
+          user.fullname = res.teacher.name || res.teacher.title;
+          user.email = `${res.teacher.username}@vnedu.vn`;
+          user.phone = res.teacher.username;
+          user.occupation = res.teacher.subject ? `Giáo viên ${res.teacher.subject}` : 'Giáo viên THCS';
+          user.companyName = res.teacher.school || 'Trường THCS An Lập';
+          user.roles = [1];
+          user.authToken = 'vnedu_auth_' + Date.now();
+          user.pic = res.teacher.avatar || './assets/media/avatars/300-1.jpg';
+
+          localStorage.setItem(this.authLocalStorageToken, JSON.stringify(user));
+          this.currentUserSubject.next(user);
+        }
+        return res;
+      })
     );
   }
 
