@@ -19,6 +19,7 @@ export class SidebarLogoComponent implements OnInit, OnDestroy {
   currentLayoutType: LayoutType | null;
 
   toggleAttr: string;
+  appVersion: string = 'v2.5.2';
 
   constructor(private layout: LayoutService) {}
 

@@ -22,8 +22,14 @@
       <div class="d-flex align-items-center gap-2 mb-2">
         <span class="hero-tag-pill">✨ Kế hoạch tuần {{ currentWeek }} • Học kỳ I</span>
       </div>
-      <h2 class="hero-title mb-1">Chào mừng {{ teacherTitle }}!</h2>
-      <p class="hero-subtitle mb-0">Chúc {{ teacherPronoun }} một ngày giảng dạy tràn ngập niềm vui và năng lượng tích cực tại {{ teacherSchool }}.</p>
+      <ng-container *ngIf="isSuperAdminLoggedIn">
+        <h2 class="hero-title mb-1">Xin chào Quản trị viên {{ currentLoggedInUser?.fullname || 'Xuân Ngọc' }}!</h2>
+        <p class="hero-subtitle mb-0">Hệ thống vnEdu Automation • Đang quản lý lịch dạy của: <strong>{{ teacherTitle }}</strong> ({{ teacherSchool }}).</p>
+      </ng-container>
+      <ng-container *ngIf="!isSuperAdminLoggedIn">
+        <h2 class="hero-title mb-1">Chào mừng {{ teacherTitle }}!</h2>
+        <p class="hero-subtitle mb-0">Chúc {{ teacherPronoun }} một ngày giảng dạy tràn ngập niềm vui và năng lượng tích cực tại {{ teacherSchool }}.</p>
+      </ng-container>
     </div>
     <div class="hero-stats-group position-relative z-index-2 d-flex align-items-center gap-2 flex-wrap">
       <button type="button" class="btn btn-sm btn-light-primary rounded-pill px-3 py-1.5 fw-bold d-flex align-items-center gap-1.5 shadow-xs" (click)="openTeacherSwitcherModal()">
@@ -117,6 +123,27 @@
         </button>
       </div>
     </div>
+  </div>
+
+  <!-- CẢNH BÁO TUẦN CŨ (ĐÃ QUA & CHỐT SỔ) -->
+  <div *ngIf="currentWeek < realCurrentWeek" class="alert alert-warning border border-warning border-dashed d-flex align-items-center justify-content-between p-4 mb-4 rounded-3 shadow-xs">
+    <div class="d-flex align-items-center gap-3">
+      <div class="symbol symbol-40px symbol-circle bg-light-warning text-warning d-flex align-items-center justify-content-center">
+        <span class="fs-2">⚠️</span>
+      </div>
+      <div>
+        <div class="fw-bolder text-gray-900 fs-7">
+          CẢNH BÁO: BẠN ĐANG XEM DỮ LIỆU TUẦN CŨ (TUẦN {{ currentWeek }})
+        </div>
+        <div class="text-gray-700 fs-8 mt-0.5">
+          Tuần này đã kết thúc và đã được chốt sổ lưu trữ trong CSDL. Vui lòng hết sức cẩn thận khi chỉnh sửa hoặc lưu lại vào vnEdu để tránh ghi đè làm thay đổi số liệu lịch sử.
+        </div>
+      </div>
+    </div>
+    <button type="button" class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3 py-1.5 fs-8 d-flex align-items-center gap-1 shadow-xs" (click)="loadSchedule(realCurrentWeek)">
+      <span>🔄</span>
+      <span>Về Tuần {{ realCurrentWeek }} (Hiện tại)</span>
+    </button>
   </div>
 
   <!-- BANNER THÔNG BÁO VÀ THỜI TIẾT ĐỘNG (WEATHER WIDGET & NHẮC NHỞ CÔ GIÁO) -->
@@ -568,6 +595,79 @@
           </div>
         </div>
       </div>
+
+      <!-- DÒNG 2: BIỂU ĐỒ XYZ TỈ LỆ CHUYÊN CẦN -->
+      <div class="border-top pt-4 mt-3">
+        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+          <div class="d-flex align-items-center gap-2">
+            <span class="fs-4">📈</span>
+            <div>
+              <span class="fw-bolder fs-7 text-gray-900">Biểu Đồ XYZ Tỉ Lệ Chuyên Cần & Điểm Danh Học Sinh</span>
+              <span class="badge badge-light-success fs-9 px-2.5 py-0.5 ms-2 rounded-pill fw-bold">
+                ⭐ Toàn tuần: {{ overallDiligenceRate }}% chuyên cần
+              </span>
+            </div>
+          </div>
+          <span class="text-muted fs-9">Trục X: Các thứ trong tuần • Trục Y: Tỉ lệ chuyên cần (%) • Trực quan hóa sĩ số</span>
+        </div>
+
+        <div class="row g-3">
+          <!-- Cột Trái: Biểu đồ Cột XYZ theo ngày (Thứ 2 đến Thứ 7) -->
+          <div class="col-12 col-lg-7">
+            <div class="p-4 rounded-3 border bg-light-subtle h-100">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="fs-8 fw-bold text-gray-700">Tỉ lệ đi học theo ngày (Trục X)</span>
+                <span class="fs-9 text-muted">Đường chuẩn: 98% (Chuẩn trường chuẩn Quốc Gia)</span>
+              </div>
+              <div class="d-flex align-items-end justify-content-between gap-2 pt-4 pb-2 px-3" style="min-height: 140px;">
+                <div *ngFor="let day of diligenceDailyStats" class="d-flex flex-column align-items-center flex-grow-1 position-relative">
+                  <span class="fs-9 fw-bold mb-1" [ngClass]="day.rate >= 98 ? 'text-success' : (day.rate >= 95 ? 'text-primary' : 'text-warning')">
+                    {{ day.rate }}%
+                  </span>
+                  <div class="w-100 rounded-pill bg-light position-relative overflow-hidden" style="height: 70px; max-width: 42px;">
+                    <div class="w-100 position-absolute bottom-0 rounded-pill transition-all"
+                         [style.height.%]="day.rate"
+                         [style.background]="day.rate >= 98 ? 'linear-gradient(180deg, #10b981, #059669)' : (day.rate >= 95 ? 'linear-gradient(180deg, #3b82f6, #2563eb)' : 'linear-gradient(180deg, #f59e0b, #d97706)')">
+                    </div>
+                  </div>
+                  <span class="fs-9 fw-bold mt-1" [class.text-primary]="day.isToday">{{ day.thuText }}</span>
+                  <span *ngIf="day.isToday" class="badge bg-warning text-dark fs-10 px-1 py-0 rounded-pill position-absolute" style="top: -18px;">Nay</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cột Phải: Thống kê chi tiết chuyên cần theo lớp -->
+          <div class="col-12 col-lg-5">
+            <div class="p-4 rounded-3 border bg-white h-100 d-flex flex-column justify-content-between gap-2">
+              <div class="d-flex align-items-center justify-content-between mb-1">
+                <span class="fs-8 fw-bold text-gray-700">Đánh giá nề nếp từng lớp</span>
+                <span class="fs-9 text-success fw-bold">✓ Xác thực CSDL</span>
+              </div>
+              <div class="d-flex flex-column gap-2">
+                <div *ngFor="let cls of diligenceClassStats" class="p-2.5 rounded-2 border bg-light-subtle d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="badge badge-primary fw-bolder px-2 py-1 fs-9">{{ cls.lop }}</span>
+                    <div>
+                      <div class="fs-8 fw-bold text-gray-900">Sĩ số {{ cls.roster }} em</div>
+                      <div class="fs-9 text-muted" *ngIf="cls.absentCount === 0">Đi học đầy đủ 100%</div>
+                      <div class="fs-9 text-danger" *ngIf="cls.absentCount > 0">{{ cls.absentCount }} học sinh vắng trong tuần</div>
+                    </div>
+                  </div>
+                  <div class="text-end">
+                    <div class="fs-7 fw-bolder" [ngClass]="cls.presentRate >= 98 ? 'text-success' : 'text-primary'">
+                      {{ cls.presentRate }}%
+                    </div>
+                    <span class="badge fs-10 py-0.5 px-2 rounded-pill" [ngClass]="cls.ratingClass">
+                      {{ cls.rating }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -671,6 +771,7 @@
          class="day-card"
          [class.is-today]="group.isToday"
          [class.is-completed]="group.isCompleted"
+         [class.day-card-future]="group.isFutureDay || isFutureWeek"
          [attr.id]="group.isToday ? 'day-card-today' : null">
       <!-- Header từng ngày -->
       <div class="day-card-header">
@@ -738,7 +839,8 @@
           <tbody>
             <tr *ngFor="let slot of group.slots; trackBy: trackBySlot"
                 [id]="'slot_row_' + slot.thu + '_' + slot.tiet + '_' + slot.lop"
-                [class.row-slot-pending]="!slot.isSynced">
+                [class.row-slot-pending]="!slot.isSynced && !group.isFutureDay && !slot.isFutureSlot && !isFutureWeek"
+                [class.row-slot-future]="group.isFutureDay || slot.isFutureSlot || isFutureWeek">
               <!-- TIẾT HỌC -->
               <td class="ps-4">
                 <div class="d-flex align-items-center gap-2">

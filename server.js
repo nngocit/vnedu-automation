@@ -59,7 +59,7 @@ app.get('/api/health', (req, res) => {
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-vnedu-token, x-vnedu-cookie');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-vnedu-token, x-vnedu-cookie, x-user-admin, x-user-email');
     if (req.method === 'OPTIONS') return res.sendStatus(200);
 
     const clientToken = req.headers['x-vnedu-token'];
@@ -67,6 +67,80 @@ app.use((req, res, next) => {
     if (clientToken && clientToken !== 'mock_token' && clientToken.length >= 20) {
         core.setSessionToken(clientToken, clientCookie || '');
     }
+    next();
+});
+
+// Từ điển dịch hành động người dùng sang tiếng Việt theo phong cách Wrapper
+function translateAction(req) {
+    const p = req.path;
+    const m = req.method;
+    if (p === '/api/vnedu/login') return { action: 'Đăng nhập hệ thống vnEdu' };
+    if (p === '/api/schedule') {
+        const w = req.query.week || 'hiện tại';
+        return { action: `Xem Sổ Đầu Bài (Tuần ${w})` };
+    }
+    if (p === '/api/save-attendance') {
+        const lop = req.body?.lop || '';
+        return { action: `Lưu điểm danh vắng (${lop || 'SĐB'})` };
+    }
+    if (p === '/api/attendance/scan-all-giam-thi') {
+        return { action: `Quét đối chiếu SĐĐ Giám thị` };
+    }
+    if (p === '/api/save-slot') {
+        const lop = req.body?.slot?.lop || req.body?.lop || '';
+        const tiet = req.body?.slot?.tiet || req.body?.tiet || '';
+        return { action: `Đồng bộ tiết học lên vnEdu (${lop ? 'Lớp ' + lop + ' • ' : ''}Tiết ${tiet})` };
+    }
+    if (p === '/api/db/attendance/ack') {
+        const lop = req.body?.lop || '';
+        return { action: `Xác nhận khớp CSDL điểm danh (${lop})` };
+    }
+    if (p === '/api/teachers/switch') {
+        return { action: `Chuyển tài khoản giáo viên (${req.body?.username || ''})` };
+    }
+    if (p === '/api/admin/clear-cache') return { action: `Xóa bộ nhớ đệm (Cache)` };
+    if (p === '/api/admin/stats') return { action: `Xem báo cáo quản trị hệ thống` };
+    if (p === '/api/admin/backup') return { action: `Tải bản sao lưu CSDL hệ thống` };
+    if (p === '/api/info') return { action: `Nạp cấu hình & thông tin trường` };
+    if (p.startsWith('/api/admin')) return { action: `Cấu hình quản trị (${p})` };
+    return { action: `${m} ${p}` };
+}
+
+// WRAPPER-STYLE AUDIT LOGGER MIDDLEWARE
+app.use((req, res, next) => {
+    if (!req.path.startsWith('/api') || req.path === '/api/health' || req.path === '/api/status') {
+        return next();
+    }
+    const rawIp = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.socket?.remoteAddress || '127.0.0.1';
+    const clientIp = String(rawIp).split(',')[0].trim().replace('::ffff:', '');
+    const startTime = Date.now();
+
+    // Xác định danh tính tài khoản
+    let actor = 'Khách vãng lai';
+    const activeTeacher = teacherProfileManager.getActiveTeacher();
+    if (req.headers['x-user-admin'] === 'true' || req.headers['x-user-email'] === 'xuanngocit@gmail.com') {
+        actor = 'Xuân Ngọc (Super Admin)';
+    } else if (activeTeacher?.title) {
+        actor = `${activeTeacher.title} (${activeTeacher.username})`;
+    }
+
+    res.on('finish', () => {
+        try {
+            const info = translateAction(req);
+            systemDb.logAudit(
+                info.action,
+                actor,
+                `${req.method} ${req.path} (${res.statusCode}) - ${Date.now() - startTime}ms`,
+                res.statusCode < 400 ? 'success' : 'warn',
+                clientIp,
+                req.headers['user-agent'] || '',
+                req.path,
+                req.method,
+                res.statusCode
+            );
+        } catch (_) {}
+    });
+
     next();
 });
 
@@ -177,9 +251,22 @@ app.post('/api/admin/settings', (req, res) => {
 
 app.get('/api/admin/logs', (req, res) => {
     try {
-        const limit = parseInt(req.query.limit) || 50;
-        const logs = adminManager.getAuditLogs(limit);
-        res.json({ success: true, logs });
+        const limit = parseInt(req.query.limit) || 100;
+        const systemLogs = systemDb.getAuditLogs(limit) || [];
+        const formatted = systemLogs.map(l => ({
+            id: l.id,
+            timestamp: l.created_at || l.createdAt,
+            action: l.action,
+            user: l.actor,
+            actor: l.actor,
+            ip: l.ip || '127.0.0.1',
+            endpoint: l.endpoint || '',
+            method: l.method || '',
+            statusCode: l.status_code || l.statusCode || 200,
+            details: l.details,
+            type: l.status === 'success' ? 'success' : (l.status === 'warn' ? 'warn' : 'info')
+        }));
+        res.json({ success: true, logs: formatted });
     } catch (e) {
         res.status(500).json({ success: false, error: e.message });
     }
@@ -816,7 +903,7 @@ const handleScanAllGiamThi = async (req, res) => {
             }
 
             // Lưu trạng thái vào CSDL
-            systemDb.recordAttendance(week, item.thu, item.tiet, item.lop, {
+            const attResult = systemDb.recordAttendance(week, item.thu, item.tiet, item.lop, {
                 ngay: item.ngay,
                 sdbAbsentCount: displaySdbCount,
                 sdbAbsentList: sdbDsVang,
@@ -841,6 +928,7 @@ const handleScanAllGiamThi = async (req, res) => {
                 giamThiSoLuongNghi: finalScanGtCount,
                 giamThiDsVang: finalScanGtList,
                 isMatched,
+                firstDetectedAt: attResult?.firstDetectedAt || null,
                 hsVangList: finalScanGtList.length > 0 ? finalScanGtList : (item.hsVangList || []),
                 soLuongNghi: finalScanGtCount > 0 ? finalScanGtCount : displaySdbCount
             };

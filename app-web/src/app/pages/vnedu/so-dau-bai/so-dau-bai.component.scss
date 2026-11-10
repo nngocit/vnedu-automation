@@ -597,6 +597,31 @@
     }
   }
 
+  // NGÀY CHƯA TỚI NGÀY DẠY (CHƯA DIỄN RA) -> NỀN XÁM, KHÔNG CẢNH BÁO, KHÔNG ĐỎ MỜ
+  &.day-card-future {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: none !important;
+
+    .day-card-header {
+      background: #f1f5f9 !important;
+      border-bottom: 1px solid #e2e8f0 !important;
+    }
+
+    .day-table tbody tr.row-slot-future {
+      background-color: #f8fafc !important;
+      border-left: 3px solid #cbd5e1 !important; // Không dùng viền nét đứt đỏ
+
+      &:hover {
+        background-color: #f1f5f9 !important;
+      }
+
+      td {
+        color: #64748b;
+      }
+    }
+  }
+
   .table-responsive {
     overflow: visible;
   }
@@ -767,6 +792,22 @@
 
       td:first-child {
         border-left: 3.5px dashed #ef4444;
+      }
+    }
+
+    &.row-slot-future {
+      background-color: #f8fafc !important;
+
+      &:hover {
+        background-color: #f1f5f9 !important;
+      }
+
+      td {
+        color: #64748b;
+      }
+
+      td:first-child {
+        border-left: 3.5px solid #cbd5e1 !important;
       }
     }
   }
@@ -2176,6 +2217,25 @@
 
       &::before {
         border-top-color: rgba(56, 189, 248, 0.4) !important;
+      }
+    }
+  }
+
+  .day-card.day-card-future {
+    background: #181c32 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+
+    .day-card-header {
+      background: #151728 !important;
+      border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+    }
+
+    .day-table tbody tr.row-slot-future {
+      background-color: #181c32 !important;
+      border-left: 3px solid #3f4254 !important;
+
+      &:hover {
+        background-color: #1b1f3a !important;
       }
     }
   }

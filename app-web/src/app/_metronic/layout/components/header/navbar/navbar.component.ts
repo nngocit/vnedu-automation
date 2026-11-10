@@ -20,6 +20,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
   userAvatarClass: string = 'symbol-35px symbol-md-40px';
   btnIconClass: string = 'fs-2 fs-md-1';
 
+  appVersion: string = 'v2.5.2';
+
   notifications: AppNotification[] = [];
   showNotificationDropdown: boolean = false;
   activeNotificationTab: 'all' | 'alerts' | 'info' = 'all';
@@ -100,8 +102,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   markAllAsRead(): void {
+    const readList: string[] = [];
     this.notifications.forEach(n => {
       n.isRead = true;
+      if (n.id) readList.push(n.id);
       if (n.id && n.id.startsWith('gt_mismatch_')) {
         const parts = n.id.replace('gt_mismatch_', '').split('_');
         if (parts.length >= 3) {
@@ -113,12 +117,22 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
       }
     });
+    try {
+      localStorage.setItem('vnedu_read_notifs', JSON.stringify(readList));
+    } catch (_) {}
     this.vneduService.setNotifications(this.notifications);
     this.cdr.detectChanges();
   }
 
   dismissNotification(id: string, event?: Event): void {
     if (event) event.stopPropagation();
+    try {
+      const raw = localStorage.getItem('vnedu_dismissed_notifs');
+      const list = raw ? JSON.parse(raw) : [];
+      list.push(id);
+      localStorage.setItem('vnedu_dismissed_notifs', JSON.stringify(Array.from(new Set(list))));
+    } catch (_) {}
+
     if (id && id.startsWith('gt_mismatch_')) {
       const parts = id.replace('gt_mismatch_', '').split('_');
       if (parts.length >= 3) {

@@ -29,6 +29,7 @@ export interface VnEduSlot {
   giamThiDsVang?: any[];
   isSynced?: boolean;
   isFutureSlot?: boolean;
+  firstDetectedAt?: string;
   statusText?: string;
   chitietId?: string | null;
   liveId?: string | null;

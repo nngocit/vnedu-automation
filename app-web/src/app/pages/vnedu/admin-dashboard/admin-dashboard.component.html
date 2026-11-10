@@ -12,7 +12,7 @@
               🛡️ TRUNG TÂM ĐIỀU HÀNH & QUẢN TRỊ TỐI CAO
             </span>
             <span class="badge badge-light-primary fw-bolder fs-8 px-3 py-1.5 rounded-pill">
-              THCS An Lập • Phiên bản v2.5.0
+              THCS An Lập • Phiên bản {{ appVersion }}
             </span>
             <span class="badge badge-success fw-bolder fs-9 px-2.5 py-1 rounded-pill">
               ● Server Online
@@ -25,7 +25,7 @@
           </h1>
 
           <p class="text-white text-opacity-85 fs-7 mb-0 max-w-700px">
-            Dành riêng cho <strong>Cô Lê Thị Diệu Huyên</strong>. Quản trị toàn diện: máy chủ ngầm, tài khoản đồng nghiệp, cấu hình tự động điền SĐB, đối chiếu Giám thị và bản quyền hệ thống.
+            Trung tâm điều hành tối cao dành cho <strong>Quản trị viên hệ thống (Super Admin)</strong>. Quản trị toàn diện: máy chủ ngầm, danh sách giáo viên bộ môn, cấu hình tự động điền SĐB, đối chiếu Giám thị và an toàn dữ liệu.
           </p>
         </div>
 
@@ -102,22 +102,22 @@
       </div>
     </div>
 
-    <!-- Card 3: Hồ sơ giáo viên đã lưu -->
+    <!-- Card 3: Quản trị viên & Giáo viên -->
     <div class="col-12 col-sm-6 col-xl-3">
       <div class="card h-100 border-0 rounded-3 shadow-xs p-5 bg-white border-top border-4 border-info">
         <div class="d-flex align-items-center justify-content-between mb-3">
           <div class="symbol symbol-45px symbol-circle bg-light-info text-info d-flex align-items-center justify-content-center">
-            <span class="fs-2">👥</span>
+            <span class="fs-2">🛡️</span>
           </div>
-          <span class="badge badge-light-primary fw-bold fs-9">{{ stats?.teachers?.total || 1 }} Giáo viên</span>
+          <span class="badge badge-light-danger fw-bold fs-9">Super Admin</span>
         </div>
         <div class="fs-3 fw-bolder text-gray-900 mb-1">
-          {{ stats?.teachers?.active?.shortName || 'Cô Diệu Huyên' }}
+          Xuân Ngọc
         </div>
-        <div class="text-muted fs-8 mb-2">Đang là tài khoản làm việc chính</div>
+        <div class="text-muted fs-8 mb-2">Quản trị viên tối cao hệ thống</div>
         <div class="d-flex align-items-center justify-content-between text-gray-600 fs-9 pt-2 border-top">
-          <span>Quyền hạn:</span>
-          <strong class="text-danger">Super Admin (Toán & HĐTN)</strong>
+          <span>Giáo viên chính:</span>
+          <strong class="text-primary">{{ stats?.teachers?.active?.shortName || 'Cô Diệu Huyên' }} (Toán)</strong>
         </div>
       </div>
     </div>
@@ -194,19 +194,19 @@
           <div class="col-12 col-lg-7">
             <div class="card border p-5 rounded-3 bg-light-subtle h-100">
               <h4 class="fw-bolder text-gray-900 fs-5 mb-4 d-flex align-items-center gap-2">
-                <span>🛡️ Đặc Quyền Quản Trị Hệ Thống Của Cô Diệu Huyên</span>
+                <span>🛡️ Chính Sách & Đặc Quyền Quản Trị Hệ Thống</span>
               </h4>
               <div class="d-flex flex-column gap-3 fs-7 text-gray-700">
                 <div class="d-flex align-items-start gap-2.5">
                   <span class="badge badge-success p-1 rounded-circle mt-1">✓</span>
                   <div>
-                    <strong>Chủ quyền tuyệt đối trên máy tính này:</strong> Hệ thống lưu dữ liệu độc quyền trên thư mục cục bộ của máy, không rò rỉ ra ngoài trường.
+                    <strong>Chủ quyền tuyệt đối trên máy tính này:</strong> Hệ thống lưu trữ dữ liệu mã hóa độc quyền trên máy cục bộ, an toàn tuyệt đối.
                   </div>
                 </div>
                 <div class="d-flex align-items-start gap-2.5">
                   <span class="badge badge-success p-1 rounded-circle mt-1">✓</span>
                   <div>
-                    <strong>Hỗ trợ đồng nghiệp đa tài khoản:</strong> Cô có thể cho phép đồng nghiệp bộ môn khác đăng nhập và sử dụng, hệ thống tự tách biệt thời khóa biểu và PPCT.
+                    <strong>Hỗ trợ đa tài khoản giáo viên:</strong> Hỗ trợ quản lý nhiều giáo viên bộ môn trong trường THCS An Lập, phân tách độc lập thời khóa biểu và PPCT.
                   </div>
                 </div>
                 <div class="d-flex align-items-start gap-2.5">
@@ -331,11 +331,8 @@
 
                 <!-- Role -->
                 <td>
-                  <span *ngIf="t.username === '051197003685'" class="badge badge-danger fw-bolder fs-9">
-                    👑 Super Admin
-                  </span>
-                  <span *ngIf="t.username !== '051197003685'" class="badge badge-light-dark fw-bold fs-9">
-                    Giáo viên bộ môn
+                  <span class="badge badge-light-primary fw-bold fs-9">
+                    {{ t.subject ? ('Giáo viên ' + t.subject) : 'Giáo viên bộ môn' }}
                   </span>
                 </td>
 
@@ -610,10 +607,11 @@
           <table class="table table-hover align-middle table-row-dashed fs-8 gy-3">
             <thead>
               <tr class="text-start text-gray-500 fw-bold fs-9 text-uppercase bg-light">
-                <th class="ps-3 rounded-start">Thời gian</th>
-                <th>Thao tác</th>
-                <th>Người thực hiện</th>
-                <th>Chi tiết hoạt động</th>
+                <th class="ps-3 rounded-start">Thời gian (VN)</th>
+                <th>IP Client</th>
+                <th>Tài khoản</th>
+                <th>Thao tác nghiệp vụ</th>
+                <th>Chi tiết Endpoint</th>
                 <th class="text-end pe-3 rounded-end">Trạng thái</th>
               </tr>
             </thead>
@@ -622,14 +620,20 @@
                 <td class="ps-3 text-muted font-monospace fs-9">
                   {{ log.timestamp | date:'dd/MM/yyyy HH:mm:ss' }}
                 </td>
+                <td>
+                  <span class="badge badge-light-dark font-monospace fs-9 px-2 py-0.5">
+                    🌐 {{ log.ip || '127.0.0.1' }}
+                  </span>
+                </td>
+                <td class="text-primary fw-bold">
+                  {{ log.actor || log.user }}
+                </td>
                 <td class="fw-bolder text-gray-900">
                   {{ log.action }}
                 </td>
-                <td class="text-primary fw-semibold">
-                  {{ log.user }}
-                </td>
-                <td class="text-gray-700">
-                  {{ log.details }}
+                <td class="text-gray-700 font-monospace fs-9">
+                  <span *ngIf="log.method" class="badge badge-light fw-bold me-1">{{ log.method }}</span>
+                  <span>{{ log.endpoint || log.details }}</span>
                 </td>
                 <td class="text-end pe-3">
                   <span class="badge fs-9 py-0.5 px-2 rounded-pill"
@@ -639,12 +643,12 @@
                           'badge-light-primary text-primary': log.type === 'info',
                           'badge-light-danger text-danger': log.type === 'danger'
                         }">
-                    {{ log.type | uppercase }}
+                    {{ log.statusCode || 200 }} • {{ log.type | uppercase }}
                   </span>
                 </td>
               </tr>
               <tr *ngIf="filteredLogs.length === 0">
-                <td colspan="5" class="text-center py-6 text-muted fs-8">
+                <td colspan="6" class="text-center py-6 text-muted fs-8">
                   Không tìm thấy dòng nhật ký nào phù hợp.
                 </td>
               </tr>

@@ -99,9 +99,20 @@ function initSqliteSchema(db) {
             actor TEXT,
             details TEXT,
             status TEXT,
+            ip TEXT,
+            endpoint TEXT,
+            method TEXT,
+            status_code INTEGER,
             created_at TEXT
         );
     `);
+
+    // Migration an toàn cho SQLite nếu bảng cũ chưa có các cột wrapper
+    try { db.exec("ALTER TABLE audit_logs ADD COLUMN ip TEXT;"); } catch (_) {}
+    try { db.exec("ALTER TABLE audit_logs ADD COLUMN endpoint TEXT;"); } catch (_) {}
+    try { db.exec("ALTER TABLE audit_logs ADD COLUMN method TEXT;"); } catch (_) {}
+    try { db.exec("ALTER TABLE audit_logs ADD COLUMN status_code INTEGER;"); } catch (_) {}
+    try { db.exec("ALTER TABLE attendance_ledger ADD COLUMN first_detected_at TEXT;"); } catch (_) {}
 
     // Khởi tạo Super Admin mặc định: xuanngocit@gmail.com / Joungmin@961
     const checkAdmin = db.prepare('SELECT id FROM admins WHERE username = ?').get('xuanngocit@gmail.com');
@@ -282,15 +293,20 @@ module.exports = {
     recordAttendance(week, thu, tiet, lop, data) {
         const key = `w${week}_t${thu}_s${tiet}_${lop}`;
         const now = new Date().toISOString();
+        let firstDetectedAt = now;
 
         if (useSqlite && sqliteDb) {
             try {
+                const existing = sqliteDb.prepare('SELECT first_detected_at FROM attendance_ledger WHERE slot_key = ?').get(key);
+                if (existing && existing.first_detected_at) {
+                    firstDetectedAt = existing.first_detected_at;
+                }
                 const sdbList = JSON.stringify(data.sdbAbsentList || []);
                 const gtList = JSON.stringify(data.giamThiAbsentList || []);
                 const isMatched = data.isMatched ? 1 : 0;
                 const stmt = sqliteDb.prepare(`
-                    INSERT INTO attendance_ledger (slot_key, week, thu, tiet, lop, ngay, sdb_absents, sdb_absent_list, giamthi_absents, giamthi_absent_list, is_matched, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO attendance_ledger (slot_key, week, thu, tiet, lop, ngay, sdb_absents, sdb_absent_list, giamthi_absents, giamthi_absent_list, is_matched, first_detected_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(slot_key) DO UPDATE SET
                         ngay = excluded.ngay,
                         sdb_absents = excluded.sdb_absents,
@@ -300,7 +316,7 @@ module.exports = {
                         is_matched = excluded.is_matched,
                         updated_at = excluded.updated_at
                 `);
-                stmt.run(key, Number(week), Number(thu), Number(tiet), lop, data.ngay || '', Number(data.sdbAbsentCount || 0), sdbList, Number(data.giamThiAbsentCount || 0), gtList, isMatched, now);
+                stmt.run(key, Number(week), Number(thu), Number(tiet), lop, data.ngay || '', Number(data.sdbAbsentCount || 0), sdbList, Number(data.giamThiAbsentCount || 0), gtList, isMatched, firstDetectedAt, now);
             } catch (e) {
                 console.error('[SystemDB SQLite] recordAttendance error:', e.message);
             }
@@ -308,6 +324,9 @@ module.exports = {
 
         // Đồng bộ luôn vào Native Engine
         const db = readJsonDb();
+        if (db.attendance_ledger[key] && db.attendance_ledger[key].firstDetectedAt) {
+            firstDetectedAt = db.attendance_ledger[key].firstDetectedAt;
+        }
         db.attendance_ledger[key] = {
             week: Number(week),
             thu: Number(thu),
@@ -319,10 +338,11 @@ module.exports = {
             giamThiAbsentCount: Number(data.giamThiAbsentCount || 0),
             giamThiAbsentList: data.giamThiAbsentList || [],
             isMatched: !!data.isMatched,
+            firstDetectedAt: firstDetectedAt,
             updatedAt: now
         };
         writeJsonDb(db);
-        return true;
+        return { success: true, firstDetectedAt };
     },
 
     acknowledgeConflict(week, thu, tiet, lop, actor = 'Super Admin') {
@@ -440,13 +460,20 @@ module.exports = {
         return !!db.locked_weeks[`week_${week}`];
     },
 
-    logAudit(action, actor, details, status = 'success') {
+    logAudit(action, actor, details, status = 'success', ip = '127.0.0.1', userAgent = '', endpoint = '', method = '', statusCode = 200) {
         const now = new Date().toISOString();
         if (useSqlite && sqliteDb) {
             try {
-                sqliteDb.prepare('INSERT INTO audit_logs (action, actor, details, status, created_at) VALUES (?, ?, ?, ?, ?)')
-                        .run(action, actor, String(details), status, now);
-            } catch (_) {}
+                sqliteDb.prepare(`
+                    INSERT INTO audit_logs (action, actor, details, status, ip, endpoint, method, status_code, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `).run(action, actor, String(details), status, ip, endpoint, method, Number(statusCode), now);
+            } catch (_) {
+                try {
+                    sqliteDb.prepare('INSERT INTO audit_logs (action, actor, details, status, created_at) VALUES (?, ?, ?, ?, ?)')
+                            .run(action, actor, String(details), status, now);
+                } catch (_) {}
+            }
         }
         const db = readJsonDb();
         db.audit_logs = db.audit_logs || [];
@@ -456,20 +483,31 @@ module.exports = {
             actor,
             details: String(details),
             status,
+            ip,
+            userAgent,
+            endpoint,
+            method,
+            statusCode: Number(statusCode),
             createdAt: now
         });
-        if (db.audit_logs.length > 200) {
-            db.audit_logs = db.audit_logs.slice(0, 200);
+        if (db.audit_logs.length > 300) {
+            db.audit_logs = db.audit_logs.slice(0, 300);
         }
         writeJsonDb(db);
         return true;
     },
 
-    getAuditLogs(limit = 50) {
+    getAuditLogs(limit = 100) {
         if (useSqlite && sqliteDb) {
             try {
                 const rows = sqliteDb.prepare('SELECT * FROM audit_logs ORDER BY id DESC LIMIT ?').all(Number(limit));
-                if (rows && rows.length > 0) return rows;
+                if (rows && rows.length > 0) {
+                    return rows.map(r => ({
+                        ...r,
+                        createdAt: r.created_at,
+                        statusCode: r.status_code
+                    }));
+                }
             } catch (_) {}
         }
         const db = readJsonDb();
