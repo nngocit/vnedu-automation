@@ -324,133 +324,146 @@ app.get('/api/schedule', async (req, res) => {
             });
         }
 
-        // Nếu là tuần tương lai (chưa tới ngày dạy trong năm học thực tế):
-        // Đánh dấu rõ ràng là kế hoạch bài dạy sắp tới, chưa diễn ra, chưa ghi nhận SĐB
-        if (week > 9) {
-            data.schedule = data.schedule.map(slot => ({
-                ...slot,
-                isFutureSlot: true,
-                isSynced: false,
-                statusText: '📅 Chưa tới ngày dạy',
-                soLuongNghi: 0,
-                hsVangList: [],
-                sdbSoLuongNghi: 0,
-                sdbDsVang: [],
-                giamThiSoLuongNghi: 0,
-                giamThiDsVang: [],
-                isMatched: true
-            }));
-            data.syncedSlots = 0;
-            data.readySlots = data.schedule.length;
-        }
+        const weekInfo = core.getAvailableWeeks(source);
+        const currentRealWeek = weekInfo.currentRealWeek || 10;
+        const day = new Date().getDay();
+        const todayThu = day === 0 ? 8 : day + 1; // 2..8 (Thứ 2..CN)
 
-        // Chỉ đối chiếu điểm danh và trạng thái vnEdu trực tiếp cho các tuần hiện tại hoặc quá khứ (<= 9)
-        if (checkLive && week <= 9) {
+        // Tra cứu dữ liệu trực tiếp từ vnEdu nếu có yêu cầu (hoặc mặc định cho các tuần có thể có data)
+        let liveStatusList = [];
+        if (checkLive) {
             try {
-                const liveStatusList = await core.checkLiveStatus(week);
-                const sddMap = {};
-                const uniqueClasses = [...new Set(data.schedule.map(s => s.lop).filter(Boolean))];
-                await Promise.allSettled(uniqueClasses.map(async (lop) => {
-                    try {
-                        const item = data.schedule.find(s => s.lop === lop);
-                        const [d, m, y] = (item?.ngay || '').split('/');
-                        if (m && y) {
-                            const thangNam = `${m}-${y}`;
-                            const sddRes = await core.getSoDiemDanhNamHoc(lop, thangNam);
-                            if (sddRes && sddRes.absentByDay) {
-                                sddMap[lop] = sddRes.absentByDay;
-                            }
-                        }
-                    } catch (e) { }
-                }));
-
-                data.schedule = data.schedule.map(item => {
-                    const matchedLive = liveStatusList.find(l =>
-                        l.lop === item.lop &&
-                        l.thu === item.thu &&
-                        l.buoi === item.buoi &&
-                        l.tiet === item.tiet
-                    );
-
-                    let liveData = null;
-                    if (matchedLive) {
-                        liveData = {
-                            chitietId: matchedLive.chitietId,
-                            ppct: matchedLive.ppct,
-                            noiDung: matchedLive.noiDung,
-                            soLuongNghi: matchedLive.soLuongNghi,
-                            dsHsVang: matchedLive.dsHsVang
-                        };
-                    }
-
-                    const [dStr] = (item.ngay || '').split('/');
-                    const dayNum = parseInt(dStr);
-                    const sessionKey = item.buoi === 1 ? 'morning' : 'afternoon';
-                    const sddDayData = sddMap[item.lop]?.[dayNum]?.[sessionKey] || [];
-
-                    let hsVangList = [];
-                    let soLuongNghi = 0;
-
-                    const sdbRawList = (liveData && Array.isArray(liveData.dsHsVang) && liveData.dsHsVang.length > 0) ? liveData.dsHsVang : [];
-                    const sdbCount = sdbRawList.length > 0 ? sdbRawList.length : (liveData?.soLuongNghi || 0);
-                    const giamThiCount = sddDayData.length;
-
-                    if (sddDayData.length > 0) {
-                        hsVangList = sddDayData;
-                        soLuongNghi = sddDayData.length;
-                    } else if (sdbRawList.length > 0) {
-                        hsVangList = sdbRawList.map((name, idx) => {
-                            const isKhongPhep = typeof name === 'string' && name.includes('(K)');
-                            const cleanName = typeof name === 'string' ? name.replace(/\s*\([PKpkCókhôngphép\s]+\)/gi, '').trim() : (name.fullName || '');
-                            return {
-                                id: 'live_' + idx,
-                                fullName: cleanName,
-                                rawName: name,
-                                coPhep: !isKhongPhep,
-                                khongPhep: isKhongPhep,
-                                statusText: isKhongPhep ? 'Vắng không phép' : 'Vắng có phép'
-                            };
-                        });
-                        soLuongNghi = sdbCount;
-                    }
-
-                    let isMatched = false;
-                    let finalGiamThiCount = giamThiCount;
-                    let finalGiamThiDsVang = sddDayData;
-
-                    if (giamThiCount > 0 && sdbCount === giamThiCount) {
-                        isMatched = true;
-                    } else if (giamThiCount === 0 && sdbCount === 0) {
-                        isMatched = true;
-                    } else if (giamThiCount === 0 && sdbCount > 0) {
-                        // SĐB đã lưu danh sách vắng trên vnEdu, SĐĐ Giám thị chưa chốt riêng hoặc không có quyền truy cập
-                        // -> Công nhận dữ liệu SĐB của GV là số liệu chuẩn, ĐÃ KHỚP!
-                        isMatched = true;
-                        finalGiamThiCount = sdbCount;
-                        finalGiamThiDsVang = hsVangList;
-                    } else {
-                        isMatched = false;
-                    }
-
-                    return {
-                        ...item,
-                        chitietId: liveData ? liveData.chitietId : (item.chitietId || null),
-                        liveId: liveData ? liveData.chitietId : (item.liveId || null),
-                        isSynced: liveData ? true : (item.isSynced !== undefined ? item.isSynced : false),
-                        liveData: liveData || item.liveData || null,
-                        hsVangList,
-                        soLuongNghi: soLuongNghi || (liveData ? liveData.soLuongNghi : 0),
-                        sdbSoLuongNghi: sdbCount,
-                        sdbDsVang: sdbRawList,
-                        giamThiSoLuongNghi: finalGiamThiCount,
-                        giamThiDsVang: finalGiamThiDsVang,
-                        isMatched
-                    };
-                });
+                liveStatusList = await core.checkLiveStatus(week);
             } catch (liveErr) {
-                console.warn('Lỗi kiểm tra trạng thái vnEdu trực tiếp:', liveErr.message);
+                console.warn(`Lỗi kiểm tra trạng thái vnEdu trực tiếp tuần ${week}:`, liveErr.message);
             }
         }
+
+        const sddMap = {};
+        if (checkLive && liveStatusList.length > 0) {
+            const uniqueClasses = [...new Set(data.schedule.map(s => s.lop).filter(Boolean))];
+            await Promise.allSettled(uniqueClasses.map(async (lop) => {
+                try {
+                    const item = data.schedule.find(s => s.lop === lop);
+                    const [d, m, y] = (item?.ngay || '').split('/');
+                    if (m && y) {
+                        const thangNam = `${m}-${y}`;
+                        const sddRes = await core.getSoDiemDanhNamHoc(lop, thangNam);
+                        if (sddRes && sddRes.absentByDay) {
+                            sddMap[lop] = sddRes.absentByDay;
+                        }
+                    }
+                } catch (e) { }
+            }));
+        }
+
+        data.schedule = data.schedule.map(item => {
+            const matchedLive = liveStatusList.find(l =>
+                (l.lop === item.lop || l.lop === item.lop + 'AL' || (item.lop && item.lop.includes(l.lop))) &&
+                Number(l.thu) === Number(item.thu) &&
+                Number(l.tiet) === Number(item.tiet)
+            );
+
+            let liveData = null;
+            if (matchedLive) {
+                liveData = {
+                    chitietId: matchedLive.chitietId,
+                    ppct: matchedLive.ppct || item.ppct,
+                    noiDung: matchedLive.noiDung || item.tenBai,
+                    soLuongNghi: matchedLive.soLuongNghi !== undefined ? matchedLive.soLuongNghi : 0,
+                    dsHsVang: matchedLive.dsHsVang || []
+                };
+            }
+
+            const [dStr] = (item.ngay || '').split('/');
+            const dayNum = parseInt(dStr);
+            const sessionKey = item.buoi === 1 ? 'morning' : 'afternoon';
+            const sddDayData = sddMap[item.lop]?.[dayNum]?.[sessionKey] || [];
+
+            let hsVangList = [];
+            let soLuongNghi = 0;
+
+            const sdbRawList = (liveData && Array.isArray(liveData.dsHsVang) && liveData.dsHsVang.length > 0) ? liveData.dsHsVang : (item.sdbDsVang || []);
+            const sdbCount = sdbRawList.length > 0 ? sdbRawList.length : (liveData?.soLuongNghi !== undefined ? liveData.soLuongNghi : (item.sdbSoLuongNghi || 0));
+            const giamThiCount = sddDayData.length;
+
+            if (sddDayData.length > 0) {
+                hsVangList = sddDayData;
+                soLuongNghi = sddDayData.length;
+            } else if (sdbRawList.length > 0) {
+                hsVangList = sdbRawList.map((name, idx) => {
+                    const isKhongPhep = typeof name === 'string' && name.includes('(K)');
+                    const cleanName = typeof name === 'string' ? name.replace(/\s*\([PKpkCókhôngphép\s]+\)/gi, '').trim() : (name.fullName || '');
+                    return {
+                        id: 'live_' + idx,
+                        fullName: cleanName,
+                        rawName: name,
+                        coPhep: !isKhongPhep,
+                        khongPhep: isKhongPhep,
+                        statusText: isKhongPhep ? 'Vắng không phép' : 'Vắng có phép'
+                    };
+                });
+                soLuongNghi = sdbCount;
+            }
+
+            let isMatched = false;
+            let finalGiamThiCount = giamThiCount;
+            let finalGiamThiDsVang = sddDayData;
+
+            if (giamThiCount > 0 && sdbCount === giamThiCount) {
+                isMatched = true;
+            } else if (giamThiCount === 0 && sdbCount === 0) {
+                isMatched = true;
+            } else if (giamThiCount === 0 && sdbCount > 0) {
+                // SĐB đã lưu danh sách vắng trên vnEdu, SĐĐ Giám thị chưa chốt riêng hoặc không có quyền truy cập
+                // -> Công nhận dữ liệu SĐB của GV là số liệu chuẩn, ĐÃ KHỚP!
+                isMatched = true;
+                finalGiamThiCount = sdbCount;
+                finalGiamThiDsVang = hsVangList;
+            } else {
+                isMatched = false;
+            }
+
+            // Trạng thái đồng bộ vnEdu
+            const isSynced = !!liveData || item.isSynced === true || !!item.chitietId;
+            let isFutureSlot = false;
+            let statusText = isSynced ? '✅ Đã lưu vnEdu' : '⏳ Chưa lưu';
+
+            if (!isSynced) {
+                if (week > currentRealWeek) {
+                    isFutureSlot = true;
+                    statusText = '📅 Chưa tới ngày dạy';
+                } else if (week === currentRealWeek) {
+                    if (item.thu > todayThu) {
+                        isFutureSlot = true;
+                        statusText = '📅 Kế hoạch bài dạy';
+                    } else if (item.thu === todayThu) {
+                        statusText = '⏳ Chưa lưu (Hôm nay)';
+                    } else {
+                        statusText = '⏳ Chưa lưu';
+                    }
+                }
+            }
+
+            return {
+                ...item,
+                tenBai: (liveData?.noiDung || item.tenBai || item.baiDay || '').trim(),
+                ppct: liveData?.ppct || item.ppct,
+                chitietId: liveData ? liveData.chitietId : (item.chitietId || null),
+                liveId: liveData ? liveData.chitietId : (item.liveId || null),
+                isSynced,
+                isFutureSlot,
+                statusText,
+                liveData: liveData || item.liveData || null,
+                hsVangList,
+                soLuongNghi: soLuongNghi || (liveData ? liveData.soLuongNghi : 0),
+                sdbSoLuongNghi: sdbCount,
+                sdbDsVang: sdbRawList,
+                giamThiSoLuongNghi: finalGiamThiCount,
+                giamThiDsVang: finalGiamThiDsVang,
+                isMatched
+            };
+        });
 
         data.totalSlots = data.schedule.length;
         data.syncedSlots = data.schedule.filter(s => s.isSynced).length;
@@ -933,7 +946,7 @@ app.post('/api/ai/chat', async (req, res) => {
         if (!message) {
             return res.status(400).json({ success: false, error: 'Thiếu nội dung câu hỏi' });
         }
-        const week = parseInt(currentWeek) || 9;
+        const week = parseInt(currentWeek) || core.getAvailableWeeks().currentRealWeek || 10;
         const activeTeacher = teacherProfileManager.getActiveTeacher();
         const result = await aiAssistant.processAiQuery({ 
             message, 
