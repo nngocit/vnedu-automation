@@ -9,19 +9,21 @@
         </div>
       </div>
 
-      <div class="d-flex flex-column min-w-0 flex-grow-1">
-        <!-- Tên Giáo viên -->
+      <div class="d-flex flex-column min-w-0 flex-grow-1 overflow-hidden">
+        <!-- Tên Giáo viên / Super Admin -->
         <div class="fw-bolder fs-6 text-gray-900 text-truncate" [title]="_user.fullname || 'Cô Lê Thị Diệu Huyên'">
           {{ _user.fullname || 'Cô Lê Thị Diệu Huyên' }}
         </div>
-        <!-- Môn học giảng dạy -->
-        <div class="d-flex align-items-center gap-1.5 mt-1">
-          <span class="badge badge-light-primary fw-bolder fs-8 px-2.5 py-1 text-truncate">
-            {{ _user.occupation || 'Giáo viên Toán & HĐTN' }}
+        <!-- Môn học giảng dạy hoặc Vai trò hệ thống -->
+        <div class="d-flex align-items-center mt-1">
+          <span class="badge fw-bolder fs-8 px-2.5 py-1 text-truncate mw-100"
+                [ngClass]="isAdmin(_user) ? 'badge-light-danger text-danger' : 'badge-light-primary'"
+                [title]="_user.occupation || (isAdmin(_user) ? '🛡️ Super Admin Hệ Thống' : 'Giáo viên Toán & HĐTN')">
+            {{ _user.occupation || (isAdmin(_user) ? '🛡️ Super Admin Hệ Thống' : 'Giáo viên Toán & HĐTN') }}
           </span>
         </div>
-        <!-- Trường & Mã vnEdu -->
-        <div class="text-gray-500 fs-8 mt-1.5 text-truncate">
+        <!-- Trường & Mã vnEdu / Tài khoản -->
+        <div class="text-gray-500 fs-8 mt-1.5 text-truncate" [title]="(_user.companyName || 'THCS An Lập') + ' • ' + (_user.phone || _user.username || '051197003685')">
           {{ _user.companyName || 'THCS An Lập' }} • <strong class="text-gray-700">{{ _user.phone || _user.username || '051197003685' }}</strong>
         </div>
       </div>

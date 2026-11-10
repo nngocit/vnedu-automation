@@ -83,9 +83,9 @@
             <span class="fs-9 text-muted ms-1">{{ notif.time }}</span>
           </div>
           <div class="fs-8 text-gray-700 mt-0.5 line-clamp-2">{{ notif.message }}</div>
-          <div *ngIf="notif.slotRef" class="mt-1 d-flex align-items-center gap-1.5">
+          <div *ngIf="notif.slotRef" class="mt-1 d-flex align-items-center gap-1.5 flex-wrap">
             <span class="badge badge-light-primary fs-9 py-0.5 px-1.5">
-              Thứ {{ notif.slotRef.thu }} • Tiết {{ notif.slotRef.tiet }} • {{ notif.slotRef.lop }}
+              <span *ngIf="notif.slotRef.week">Tuần {{ notif.slotRef.week }} • </span>Thứ {{ notif.slotRef.thu }}<span *ngIf="notif.slotRef.ngay">, ngày {{ notif.slotRef.ngay }}</span> • Tiết {{ notif.slotRef.tiet }} • Lớp {{ notif.slotRef.lop }}
             </span>
             <span class="fs-9 text-primary fw-bold cursor-pointer hover-underline" (click)="navigateToSlot(notif, $event)">Xem chi tiết 👉</span>
           </div>

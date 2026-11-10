@@ -109,7 +109,7 @@
         <span class="bullet bullet-dot bg-success me-1"></span>
         <select class="week-select-pill" [(ngModel)]="currentWeek" (change)="onWeekChange($event)" title="Chọn tuần học">
           <option *ngFor="let opt of weeksList; trackBy: trackByWeek" [value]="opt.weekNumber">
-            Tuần {{ opt.weekNumber }}{{ opt.weekNumber === 9 ? ' • HK I (Hiện tại)' : '' }}
+            Tuần {{ opt.weekNumber }}{{ opt.weekNumber === realCurrentWeek ? ' • HK I (Hiện tại)' : '' }}
           </option>
         </select>
         <button type="button" class="nav-btn" (click)="nextWeek()" [disabled]="currentWeek >= 35" title="Tuần sau">
@@ -1267,7 +1267,12 @@
           <span>Đang chọn vắng <strong>{{ countTotalVang }}</strong> học sinh ({{ countVangPhep }} phép, {{ countVangKhongPhep }} không phép)</span>
         </div>
       </div>
-      <div class="d-flex gap-2">
+      <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-sm btn-light-success fw-bold rounded-pill px-3 shadow-xs"
+                (click)="confirmMatchToDb(selectedSlotForAttendance)"
+                title="Xác nhận dữ liệu điểm danh hiện tại là chính xác, chốt khớp vào CSDL (Bỏ qua cảnh báo)">
+          🛡️ Chốt Khớp CSDL
+        </button>
         <button type="button" class="btn btn-sm btn-footer-close fw-bold rounded-pill px-4" (click)="closeAttendanceModal()">
           Đóng
         </button>

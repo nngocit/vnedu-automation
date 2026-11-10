@@ -100,13 +100,36 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   markAllAsRead(): void {
-    this.notifications.forEach(n => n.isRead = true);
+    this.notifications.forEach(n => {
+      n.isRead = true;
+      if (n.id && n.id.startsWith('gt_mismatch_')) {
+        const parts = n.id.replace('gt_mismatch_', '').split('_');
+        if (parts.length >= 3) {
+          const thu = parseInt(parts[0]);
+          const tiet = parseInt(parts[1]);
+          const lop = parts[2];
+          const week = n.slotRef?.week || 10;
+          this.vneduService.ackAttendanceConflict(week, thu, tiet, lop).subscribe();
+        }
+      }
+    });
     this.vneduService.setNotifications(this.notifications);
     this.cdr.detectChanges();
   }
 
   dismissNotification(id: string, event?: Event): void {
     if (event) event.stopPropagation();
+    if (id && id.startsWith('gt_mismatch_')) {
+      const parts = id.replace('gt_mismatch_', '').split('_');
+      if (parts.length >= 3) {
+        const thu = parseInt(parts[0]);
+        const tiet = parseInt(parts[1]);
+        const lop = parts[2];
+        const targetNotif = this.notifications.find(n => n.id === id);
+        const week = targetNotif?.slotRef?.week || 10;
+        this.vneduService.ackAttendanceConflict(week, thu, tiet, lop).subscribe();
+      }
+    }
     this.notifications = this.notifications.filter(n => n.id !== id);
     this.vneduService.setNotifications(this.notifications);
     this.cdr.detectChanges();

@@ -5,6 +5,8 @@ const core = require('./sync-core');
 const localDb = require('./local_attendance_db');
 const teacherProfileManager = require('./teacher-profile-manager');
 const adminManager = require('./admin-manager');
+const adminDb = require('./admin-db');
+const systemDb = require('./system_db');
 
 const app = express();
 const PORT = 3000;
@@ -222,29 +224,74 @@ app.post('/api/admin/teachers/save', (req, res) => {
     }
 });
 
-// API: Đăng nhập vnEdu siêu tốc bằng HTTP thuần (Hỗ trợ đa tài khoản giáo viên)
+// API: Đăng nhập vnEdu siêu tốc bằng HTTP thuần (Hỗ trợ đa tài khoản giáo viên & Super Admin)
 app.post('/api/vnedu/login', async (req, res) => {
     try {
-        const username = req.body.username || '051197003685';
-        const password = req.body.password || '';
+        const username = (req.body.username || '').trim();
+        const password = (req.body.password || '').trim();
         const teacherName = req.body.teacherName || req.body.name || '';
         const gender = req.body.gender || 'unknown';
         const subject = req.body.subject || '';
 
         if (!password) {
-            return res.status(400).json({ success: false, msg: 'Vui lòng nhập mật khẩu vnEdu.' });
+            return res.status(400).json({ success: false, msg: 'Vui lòng nhập mật khẩu.' });
         }
 
-        const loginRes = await core.loginVnEduHttp(username, password);
+        // 1. Kiểm tra đăng nhập Super Admin Tối Cao (xuanngocit@gmail.com / Joungmin@961)
+        const isSuperAdminId = username.toLowerCase() === 'xuanngocit@gmail.com' || username.toLowerCase() === 'xuanngocit';
+        if (isSuperAdminId) {
+            const adminUser = adminDb.verifyAdmin(username, password);
+            if (!adminUser) {
+                adminManager.logAction('Đăng nhập Super Admin thất bại', username, 'Sai mật khẩu Super Admin', 'warn');
+                return res.status(401).json({ success: false, msg: 'Mật khẩu Super Admin không chính xác!' });
+            }
+
+            adminManager.logAction('Đăng nhập Super Admin', `${adminUser.name} (${adminUser.email})`, 'Đăng nhập vào hệ thống với toàn quyền Quản Trị Viên Tối Cao', 'success');
+            return res.json({
+                success: true,
+                isSuperAdmin: true,
+                token: 'SUPER_ADMIN_' + Buffer.from(adminUser.email).toString('base64'),
+                user: {
+                    id: 999,
+                    username: adminUser.username,
+                    email: adminUser.email,
+                    fullname: adminUser.name,
+                    phone: adminUser.email,
+                    occupation: 'Super Admin Tối Cao',
+                    companyName: 'Hệ Thống vnEdu Automation',
+                    roles: [99],
+                    isSuperAdmin: true
+                },
+                teacher: {
+                    username: adminUser.username,
+                    name: adminUser.name,
+                    title: 'Super Admin ' + adminUser.name,
+                    shortName: 'Admin ' + adminUser.name,
+                    gender: 'male',
+                    subject: 'Quản Trị Toàn Quyền',
+                    school: 'Hệ Thống vnEdu Automation',
+                    branch: 'Máy chủ cục bộ',
+                    avatarText: 'N',
+                    isSuperAdmin: true,
+                    active: true
+                },
+                msg: `Chào mừng Super Admin ${adminUser.name}! Đã đăng nhập toàn quyền quản trị tối cao.`
+            });
+        }
+
+        // 2. Đăng nhập tài khoản vnEdu giáo viên (Cô Lê Thị Diệu Huyên hoặc đồng nghiệp)
+        const vneduUsername = username || '051197003685';
+        const loginRes = await core.loginVnEduHttp(vneduUsername, password);
         if (loginRes.success) {
             // Lưu hoặc cập nhật hồ sơ giáo viên vào danh sách
             const profile = teacherProfileManager.upsertProfile({
-                username,
-                name: teacherName || (username === '051197003685' ? 'Lê Thị Diệu Huyên' : `Giáo viên ${username}`),
+                username: vneduUsername,
+                name: teacherName || (vneduUsername === '051197003685' ? 'Lê Thị Diệu Huyên' : `Giáo viên ${vneduUsername}`),
                 gender,
                 subject,
                 school: 'Trường THCS An Lập'
             });
+            adminManager.logAction('Đăng nhập vnEdu', profile.title, `Đăng nhập thành công tài khoản vnEdu ${vneduUsername}`, 'info');
             return res.json({
                 ...loginRes,
                 teacher: profile,
@@ -355,7 +402,8 @@ app.post('/api/config/ppct', (req, res) => {
 // API: Lấy dữ liệu thời khóa biểu tuần
 app.get('/api/schedule', async (req, res) => {
     try {
-        const week = parseInt(req.query.week) || 9;
+        const currentRealWeek = core.getAvailableWeeks().currentRealWeek || 10;
+        const week = parseInt(req.query.week) || currentRealWeek;
         const source = req.query.source || 'vnedu';
         const checkLive = req.query.checkLive === '1' || req.query.checkLive === 'true' || req.query.checkLive === true;
 
@@ -407,7 +455,7 @@ app.get('/api/schedule', async (req, res) => {
         }
 
         const weekInfo = core.getAvailableWeeks(source);
-        const currentRealWeek = weekInfo.currentRealWeek || 10;
+        // currentRealWeek is already calculated above
         const day = new Date().getDay();
         const todayThu = day === 0 ? 8 : day + 1; // 2..8 (Thứ 2..CN)
 
@@ -562,7 +610,8 @@ app.get('/api/attendance', async (req, res) => {
     try {
         const { lop, week, thu, tiet, chitietId } = req.query;
         if (!lop) return res.status(400).json({ success: false, msg: 'Thiếu tên lớp' });
-        const weekNum = parseInt(week) || 9;
+        const currentRealWeek = core.getAvailableWeeks().currentRealWeek || 10;
+        const weekNum = parseInt(week) || currentRealWeek;
 
         const result = await core.getDaSachHocSinhVang(lop, weekNum, thu, tiet, chitietId || '');
         
@@ -611,8 +660,26 @@ app.post('/api/attendance/scan-giam-thi', handleScanGiamThi);
 // API: Quét lại toàn bộ Sổ Điểm Danh Giám Thị cho toàn bộ tuần
 const handleScanAllGiamThi = async (req, res) => {
     try {
-        const week = parseInt(req.body?.week || req.query?.week) || 9;
+        const weekInfo = core.getAvailableWeeks();
+        const currentRealWeek = weekInfo.currentRealWeek || 10;
+        const week = parseInt(req.body?.week || req.query?.week) || currentRealWeek;
         let scheduleSlots = Array.isArray(req.body?.slots) ? req.body.slots : [];
+
+        // QUY TẮC CSDL: Chỉ quét ở đúng tuần hiện tại thực tế!
+        // Các tuần quá khứ (Tuần 1..9) đã chốt sổ trong CSDL, không bao giờ quét ngầm gây sai lệch
+        if (week < currentRealWeek) {
+            return res.json({
+                success: true,
+                msg: `Tuần ${week} là tuần lưu trữ, đã được chốt số liệu an toàn trong CSDL.`,
+                totalUpdatedAbsents: 0,
+                matchedSlotsCount: scheduleSlots.length,
+                mismatchedSlotsCount: 0,
+                schedule: scheduleSlots.map(s => ({
+                    ...s,
+                    isMatched: true
+                }))
+            });
+        }
 
         // Nếu client không gửi kèm slots, tìm lịch từ vnEdu hoặc Excel hoặc live status an toàn
         if (!scheduleSlots || scheduleSlots.length === 0) {
@@ -743,6 +810,21 @@ const handleScanAllGiamThi = async (req, res) => {
                 isMatched = false;
             }
 
+            // Kiểm tra CSDL địa phương: nếu đã được xác nhận thì xem như đã khớp
+            if (systemDb.isSlotAcknowledged(week, item.thu, item.tiet, item.lop)) {
+                isMatched = true;
+            }
+
+            // Lưu trạng thái vào CSDL
+            systemDb.recordAttendance(week, item.thu, item.tiet, item.lop, {
+                ngay: item.ngay,
+                sdbAbsentCount: displaySdbCount,
+                sdbAbsentList: sdbDsVang,
+                giamThiAbsentCount: finalScanGtCount,
+                giamThiAbsentList: finalScanGtList,
+                isMatched
+            });
+
             totalUpdatedAbsents += (finalScanGtCount > 0 ? finalScanGtCount : displaySdbCount);
 
             if (isMatched) {
@@ -786,11 +868,38 @@ const handleScanAllGiamThi = async (req, res) => {
 app.get('/api/attendance/scan-all-giam-thi', handleScanAllGiamThi);
 app.post('/api/attendance/scan-all-giam-thi', handleScanAllGiamThi);
 
+// API: Đánh dấu xác nhận khớp điểm danh (Lưu vĩnh viễn vào CSDL địa phương)
+app.post('/api/db/attendance/ack', (req, res) => {
+    try {
+        const { week, thu, tiet, lop } = req.body;
+        if (!week || !thu || !tiet || !lop) {
+            return res.status(400).json({ success: false, msg: 'Thiếu thông tin tiết học cần xác nhận' });
+        }
+        const result = systemDb.acknowledgeConflict(week, thu, tiet, lop);
+        adminManager.logAction('Xác nhận khớp điểm danh', 'Giáo viên', `Đã chốt khớp Tiết ${tiet} Thứ ${thu} Lớp ${lop} Tuần ${week}`, 'success');
+        res.json({ success: true, ...result, msg: `Đã xác nhận và chốt khớp Tiết ${tiet} Thứ ${thu} lớp ${lop}!` });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+// API: Đọc trạng thái điểm danh đã lưu trong CSDL theo tuần
+app.get('/api/db/attendance/:week', (req, res) => {
+    try {
+        const week = parseInt(req.params.week) || 10;
+        const ledger = systemDb.getWeekAttendanceLedger(week);
+        res.json({ success: true, week, ledger });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
 // API: Lưu điểm danh học sinh vắng
 app.post('/api/save-attendance', async (req, res) => {
     try {
         const { chitietId, studentsData, soLuongNghi, slot, week } = req.body;
-        const weekNum = parseInt(week) || 9;
+        const currentRealWeek = core.getAvailableWeeks().currentRealWeek || 10;
+        const weekNum = parseInt(week) || currentRealWeek;
         let targetChitietId = chitietId || (slot && (slot.chitietId || slot.liveId)) || null;
 
         // Nếu chưa có chitietId và có slot, tự động lưu tiết dạy lên SĐB trước để tạo ID
@@ -851,7 +960,7 @@ app.post('/api/save-attendance', async (req, res) => {
 
         const saveRes = await core.saveHocSinhVangToVnEdu(targetChitietId, absentList, targetLop);
 
-        // Lưu bản ghi vào CSDL local attendance_db.json
+        // Lưu bản ghi vào CSDL local attendance_db.json & system_database.json
         if (slot) {
             try {
                 localDb.saveRecord(slot.lop, weekNum, slot.thu, slot.tiet, {
@@ -859,6 +968,14 @@ app.post('/api/save-attendance', async (req, res) => {
                     soLuongNghi: absentList.length,
                     absentList,
                     studentsData
+                });
+                systemDb.acknowledgeConflict(weekNum, slot.thu, slot.tiet, slot.lop);
+                systemDb.recordAttendance(weekNum, slot.thu, slot.tiet, slot.lop, {
+                    ngay: slot.ngay,
+                    sdbAbsentCount: absentList.length,
+                    sdbAbsentList: absentList,
+                    giamThiAbsentCount: absentList.length,
+                    isMatched: true
                 });
             } catch (errDb) {
                 console.warn('Lỗi ghi CSDL local:', errDb.message);
@@ -896,7 +1013,8 @@ app.post('/api/save-attendance', async (req, res) => {
 // API: Rà soát & kiểm toán toàn diện quy tắc nghiệp vụ cho 1 tuần học
 app.get('/api/validation/audit-week', async (req, res) => {
     try {
-        const week = parseInt(req.query.week) || 9;
+        const currentRealWeek = core.getAvailableWeeks().currentRealWeek || 10;
+        const week = parseInt(req.query.week) || currentRealWeek;
         let schedule = [];
         try {
             const data = await core.getWeekScheduleFromVnEdu(week);
@@ -945,7 +1063,8 @@ app.post('/api/sync-slot', async (req, res) => {
         const { slot, week } = req.body;
         if (!slot) return res.status(400).json({ success: false, msg: 'Thiếu thông tin tiết dạy' });
 
-        const result = await core.saveSlotToVnEdu(slot, week || 9);
+        const currentRealWeek = core.getAvailableWeeks().currentRealWeek || 10;
+        const result = await core.saveSlotToVnEdu(slot, week || currentRealWeek);
         const savedId = result.chitietId || slot.chitietId || slot.liveId || (result && result.data && result.data.id);
 
         if (result.success && savedId && slot.hsVangList && Array.isArray(slot.hsVangList) && slot.hsVangList.length > 0) {
@@ -970,7 +1089,8 @@ app.post('/api/sync-slot', async (req, res) => {
 app.post('/api/sync-batch', async (req, res) => {
     try {
         const { week, filter, slots } = req.body;
-        const weekNum = parseInt(week) || 9;
+        const currentRealWeek = core.getAvailableWeeks().currentRealWeek || 10;
+        const weekNum = parseInt(week) || currentRealWeek;
         let slotsToSync = slots;
 
         if (!slotsToSync || !Array.isArray(slotsToSync)) {
@@ -1051,7 +1171,8 @@ app.post('/api/ai/chat', async (req, res) => {
 
 app.get('/api/ai/summary', async (req, res) => {
     try {
-        const week = parseInt(req.query.week) || 9;
+        const currentRealWeek = core.getAvailableWeeks().currentRealWeek || 10;
+        const week = parseInt(req.query.week) || currentRealWeek;
         const context = await aiAssistant.getWeekContext(week);
         res.json({
             success: true,

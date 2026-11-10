@@ -16,8 +16,11 @@ export class SidebarMenuComponent implements OnInit {
   constructor(private authService: AuthService) {
     this.isAdmin$ = this.authService.currentUser$.pipe(
       map(u => {
-        const phone = u?.phone || u?.username;
-        return phone === '051197003685';
+        const identifier = u?.phone || u?.username || u?.email;
+        return Boolean(identifier === '051197003685' ||
+               identifier === 'xuanngocit@gmail.com' ||
+               (u as any)?.isSuperAdmin === true ||
+               (u?.roles && u.roles.includes(99)));
       })
     );
   }

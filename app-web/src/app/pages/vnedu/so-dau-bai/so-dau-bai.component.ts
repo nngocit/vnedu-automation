@@ -18,7 +18,16 @@ export interface AppNotification {
   category: string;
   severity: 'error' | 'warning' | 'info' | 'success';
   time: string;
-  slotRef?: { thu: number; tiet: number; lop: string };
+  slotRef?: {
+    week?: number;
+    ngay?: string;
+    thu: number;
+    tiet: number;
+    lop: string;
+    category?: string;
+    openModal?: boolean;
+    [key: string]: any;
+  };
   isRead: boolean;
 }
 
@@ -38,8 +47,8 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   scheduleData: VnEduWeekSchedule | null = null;
   slots: VnEduSlot[] = [];
 
-  currentWeek = 9;
-  realCurrentWeek = 9; // Tuần thực tế đang diễn ra trong năm học
+  currentWeek = 10;
+  realCurrentWeek = 10; // Tuần thực tế đang diễn ra trong năm học
   dataSource: 'vnedu' | 'excel' = 'vnedu';
   todayStr = '';
   selectedClassFilter: string = 'all';
@@ -223,7 +232,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   weeksList: Array<{ weekNumber: number; title: string; isCurrentRealWeek: boolean }> = Array.from({ length: 35 }, (_, i) => ({
     weekNumber: i + 1,
     title: `Tuần ${i + 1}`,
-    isCurrentRealWeek: i + 1 === 9
+    isCurrentRealWeek: i + 1 === 10
   }));
 
   constructor(
@@ -540,8 +549,10 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     this.vneduService.getInfo(this.dataSource).subscribe({
       next: (info) => {
         this.info = info;
-        this.realCurrentWeek = info.currentRealWeek || 9;
-        this.currentWeek = info.currentRealWeek || 9;
+        const urlParams = (typeof window !== 'undefined' && window.location?.search) ? new URLSearchParams(window.location.search) : null;
+        const qWeek = urlParams ? parseInt(urlParams.get('week') || '') : null;
+        this.realCurrentWeek = info.currentRealWeek || 10;
+        this.currentWeek = qWeek || this.currentWeek || info.currentRealWeek || 10;
         if (info.weeks && info.weeks.length > 0) {
           this.weeksList = info.weeks.map((w, idx) => ({
             weekNumber: w.weekNumber || (idx + 1),
@@ -583,9 +594,15 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
         this.loadAuditNotifications();
         this.isLoading = false;
         this.cdr.detectChanges();
-        // Tự động quét đối chiếu SĐĐ Giám Thị chạy ngầm cho tuần nếu tuần có tiết dạy
-        if (this.slots.length > 0) {
+
+        // QUY TẮC CSDL: Chỉ tự động quét đối chiếu ngầm ở đúng TUẦN HIỆN TẠI THỰC TẾ
+        // Các tuần quá khứ (Tuần 1..9) đã chốt sổ trong CSDL, không bao giờ quét ngầm gây sai lệch
+        if (this.slots.length > 0 && this.currentWeek === this.realCurrentWeek) {
           this.autoScanSupervisorQuietly();
+        } else {
+          this.isAutoScanning = false;
+          this.autoScanStatusText = 'Tuần lưu trữ (Đã chốt CSDL)';
+          this.autoScanStatusClass = 'status-success';
         }
       },
       error: (err) => {
@@ -622,6 +639,14 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   
   // Nạp và kiểm toán toàn bộ thông báo/cảnh báo nghiệp vụ (Chuông thông báo)
   loadAuditNotifications(): void {
+    // QUY TẮC CSDL: Chỉ nạp thông báo/cảnh báo cho đúng tuần hiện tại thực tế
+    // Khi đang xem các tuần quá khứ, không tạo cảnh báo giả làm phiền
+    if (this.currentWeek !== this.realCurrentWeek) {
+      this.notifications = [];
+      this.vneduService.setNotifications([]);
+      return;
+    }
+
     this.vneduService.auditWeek(this.currentWeek).subscribe({
       next: (res) => {
         if (res.success && Array.isArray(res.issues)) {
@@ -646,14 +671,23 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
           const mismatchedSlots = this.slots.filter(s => s.isMatched === false);
           if (mismatchedSlots.length > 0) {
             mismatchedSlots.forEach(s => {
+              const dateInfo = s.ngay ? `, ngày ${s.ngay}` : '';
               newNotifs.push({
                 id: `gt_mismatch_${s.thu}_${s.tiet}_${s.lop}`,
-                title: `Giám thị vừa nhập vắng: Lớp ${s.lop} (Thứ ${s.thu} • Tiết ${s.tiet})`,
+                title: `Giám thị vừa nhập vắng: Lớp ${s.lop} (Tuần ${this.currentWeek} • Thứ ${s.thu}${dateInfo} • Tiết ${s.tiet})`,
                 message: `Giám thị ghi nhận ${s.giamThiSoLuongNghi || 0} em vắng, SĐB hiện ghi ${s.sdbSoLuongNghi || 0} em (chưa cập nhật)`,
                 category: 'ATTENDANCE',
                 severity: 'warning',
                 time: nowStr,
-                slotRef: { thu: s.thu, tiet: s.tiet, lop: s.lop },
+                slotRef: {
+                  week: this.currentWeek,
+                  ngay: s.ngay,
+                  thu: s.thu,
+                  tiet: s.tiet,
+                  lop: s.lop,
+                  category: 'ATTENDANCE',
+                  openModal: true
+                },
                 isRead: false
               });
             });
@@ -674,14 +708,8 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
           this.vneduService.setNotifications(newNotifs);
           this.cdr.detectChanges();
 
-          // TỰ ĐỘNG BUNG HÒM THƯ RA SẴN KHI PHÁT HIỆN CẢNH BÁO / LỆCH ĐIỂM DANH
-          const hasUnreadAlerts = newNotifs.some(n => (n.severity === 'error' || n.severity === 'warning') && !n.isRead);
-          if (hasUnreadAlerts && !this.hasAutoOpenedMailbox) {
-            this.hasAutoOpenedMailbox = true;
-            setTimeout(() => {
-              this.vneduService.triggerOpenNotificationDropdown(true);
-            }, 600);
-          }
+          // Cập nhật trạng thái thông báo vào huy hiệu chuông (Không tự động bung hòm thư gây phiền)
+          this.hasAutoOpenedMailbox = true;
         }
       },
       error: () => {}
@@ -697,14 +725,59 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   }
 
   markAllNotificationsAsRead(): void {
-    this.notifications.forEach(n => n.isRead = true);
+    this.notifications.forEach(n => {
+      n.isRead = true;
+      if (n.id && n.id.startsWith('gt_mismatch_')) {
+        const parts = n.id.replace('gt_mismatch_', '').split('_');
+        if (parts.length >= 3) {
+          const thu = parseInt(parts[0]);
+          const tiet = parseInt(parts[1]);
+          const lop = parts[2];
+          const week = n.slotRef?.week || this.currentWeek;
+          this.vneduService.ackAttendanceConflict(week, thu, tiet, lop).subscribe();
+          const slot = this.slots.find(s => s.thu === thu && s.tiet === tiet && s.lop === lop);
+          if (slot) slot.isMatched = true;
+        }
+      }
+    });
+    this.vneduService.setNotifications(this.notifications);
     this.cdr.detectChanges();
   }
 
   dismissNotification(id: string, event?: Event): void {
     if (event) event.stopPropagation();
+    if (id && id.startsWith('gt_mismatch_')) {
+      const parts = id.replace('gt_mismatch_', '').split('_');
+      if (parts.length >= 3) {
+        const thu = parseInt(parts[0]);
+        const tiet = parseInt(parts[1]);
+        const lop = parts[2];
+        const targetNotif = this.notifications.find(n => n.id === id);
+        const week = targetNotif?.slotRef?.week || this.currentWeek;
+        this.vneduService.ackAttendanceConflict(week, thu, tiet, lop).subscribe({
+          next: () => {
+            const slot = this.slots.find(s => s.thu === thu && s.tiet === tiet && s.lop === lop);
+            if (slot) slot.isMatched = true;
+            this.cdr.detectChanges();
+          }
+        });
+      }
+    }
     this.notifications = this.notifications.filter(n => n.id !== id);
+    this.vneduService.setNotifications(this.notifications);
     this.cdr.detectChanges();
+  }
+
+  confirmMatchToDb(slot: any): void {
+    if (!slot) return;
+    this.vneduService.ackAttendanceConflict(this.currentWeek, slot.thu, slot.tiet, slot.lop).subscribe({
+      next: () => {
+        slot.isMatched = true;
+        this.closeAttendanceModal();
+        this.loadAuditNotifications();
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   // Điều hướng và làm nổi bật tiết học từ thông báo
@@ -1442,6 +1515,8 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
           slot.sdbSoLuongNghi = absentList.length;
           slot.sdbDsVang = absentList.map(a => a.fullName + (a.coPhep ? ' (P)' : ' (K)'));
           slot.isMatched = true;
+          // Lưu trạng thái xác nhận vào CSDL hệ thống
+          this.vneduService.ackAttendanceConflict(this.currentWeek, slot.thu, slot.tiet, slot.lop).subscribe();
           if (res.chitietId) {
             slot.chitietId = res.chitietId;
             slot.liveId = res.chitietId;
@@ -2018,6 +2093,10 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   // Helper tính toán trạng thái và số lượng điểm danh đối chiếu
   isCanDoiChieu(slot: any): boolean {
     if (!slot) return false;
+    // QUY TẮC CSDL: Các tuần quá khứ (Tuần < realCurrentWeek) đã chốt sổ trong CSDL, không bao giờ báo "Cần đối chiếu" nữa
+    if (this.currentWeek < this.realCurrentWeek) {
+      return false;
+    }
     // Nếu là tuần tương lai (chưa tới ngày dạy) thì KHÔNG báo lệch điểm danh, trừ khi tiết đó đã có dữ liệu thực tế trên vnEdu
     if ((this.isFutureWeek || slot.isFutureSlot) && !slot.isSynced) {
       return false;
@@ -2059,6 +2138,10 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   }
 
   getAttendanceChipClass(slot: any): string {
+    if (this.currentWeek < this.realCurrentWeek) {
+      const count = this.getDisplayAbsentCount(slot);
+      return count > 0 ? 'chip-matched' : 'chip-present all-present';
+    }
     if ((this.isFutureWeek || slot.isFutureSlot) && !slot.isSynced) {
       return 'chip-future-slot';
     }
@@ -2073,6 +2156,12 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   }
 
   getAttendanceChipTooltip(slot: any): string {
+    if (this.currentWeek < this.realCurrentWeek) {
+      const count = this.getDisplayAbsentCount(slot);
+      return count === 0
+        ? 'Tuần lưu trữ (Đã chốt CSDL): Cả lớp có mặt đầy đủ'
+        : `Tuần lưu trữ (Đã chốt CSDL): Đã ghi nhận ${count} em vắng`;
+    }
     if ((this.isFutureWeek || slot.isFutureSlot) && !slot.isSynced) {
       return 'Tiết dạy thuộc kế hoạch bài dạy Tuần ' + this.currentWeek + ' (Chưa tới ngày dạy). Tiết học chưa diễn ra nên chưa điểm danh.';
     }
@@ -2092,6 +2181,16 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   // Tự động quét đối chiếu SĐĐ Giám Thị chạy ngầm (Silent Background Scan)
   autoScanSupervisorQuietly(): void {
     if (this.isAutoScanning || !this.slots || this.slots.length === 0) return;
+
+    // QUY TẮC VÀNG: CHỈ TỰ ĐỘNG QUÉT ĐỐI CHIẾU Ở ĐÚNG TUẦN HIỆN TẠI THỰC TẾ
+    // Các tuần quá khứ (Tuần 1..9) đã chốt sổ trong CSDL, không bao giờ quét ngầm gây sai lệch
+    if (this.currentWeek !== this.realCurrentWeek) {
+      this.isAutoScanning = false;
+      this.autoScanStatusText = 'Tuần lưu trữ (Đã chốt CSDL)';
+      this.autoScanStatusClass = 'status-success';
+      return;
+    }
+
     this.isAutoScanning = true;
     this.autoScanStatusText = 'Đang tự động đối chiếu SĐĐ Giám thị...';
     this.autoScanStatusClass = 'status-scanning';
@@ -2126,10 +2225,6 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
             this.autoScanStatusText = `⚠️ Có ${mismatched} tiết cần đối chiếu`;
             this.autoScanStatusClass = 'status-warning';
             this.loadAuditNotifications();
-            // TỰ ĐỘNG BUNG HÒM THƯ RA SẴN NGAY LẬP TỨC CHO CÔ
-            setTimeout(() => {
-              this.vneduService.triggerOpenNotificationDropdown(true);
-            }, 500);
           } else {
             this.autoScanStatusText = `🛡️ SĐĐ Giám thị: Khớp 100% (${matchedWithAbsents} tiết có HS vắng)`;
             this.autoScanStatusClass = 'status-success';

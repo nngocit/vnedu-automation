@@ -17,7 +17,16 @@ export interface AppNotification {
   category: string;
   severity: 'error' | 'warning' | 'info' | 'success';
   time: string;
-  slotRef?: { thu: number; tiet: number; lop: string };
+  slotRef?: {
+    week?: number;
+    ngay?: string;
+    thu: number;
+    tiet: number;
+    lop: string;
+    category?: string;
+    openModal?: boolean;
+    [key: string]: any;
+  };
   isRead: boolean;
 }
 
@@ -249,6 +258,12 @@ export class VnEduService {
 
   deleteTeacher(username: string): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/teachers/delete`, { username }, {
+      headers: this.getHeaders()
+    });
+  }
+
+  ackAttendanceConflict(week: number, thu: number, tiet: number, lop: string): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/db/attendance/ack`, { week, thu, tiet, lop }, {
       headers: this.getHeaders()
     });
   }

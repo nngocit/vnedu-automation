@@ -11,7 +11,7 @@ import { AuthService, UserType } from '../../../../../../modules/auth';
 })
 export class UserInnerComponent implements OnInit, OnDestroy {
   @HostBinding('class')
-  class = `menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg menu-state-primary fw-bold py-4 fs-6 w-300px shadow-lg`;
+  class = `menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg menu-state-primary fw-bold py-4 fs-6 w-325px shadow-lg`;
   @HostBinding('attr.data-kt-menu') dataKtMenu = 'true';
 
   language: LanguageFlag;
@@ -38,8 +38,11 @@ export class UserInnerComponent implements OnInit, OnDestroy {
 
   isAdmin(user?: UserType | null): boolean {
     if (!user) return false;
-    const phone = user.phone || user.username;
-    return phone === '051197003685';
+    const identifier = user.phone || user.username || user.email;
+    return identifier === '051197003685' ||
+           identifier === 'xuanngocit@gmail.com' ||
+           (user as any).isSuperAdmin === true ||
+           (user.roles && user.roles.includes(99));
   }
 
   logout() {
