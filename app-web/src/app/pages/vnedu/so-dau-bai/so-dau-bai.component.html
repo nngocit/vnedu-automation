@@ -85,13 +85,13 @@
   <div class="top-nav-bar d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
     <!-- Cụm nút hành động nghiệp vụ (Chuẩn Zalo 1 Primary duy nhất, các nút phụ Soft Tone) -->
     <div class="d-flex flex-wrap align-items-center gap-2">
-      <button class="pill-btn pill-primary shadow-xs" (click)="syncBatch('all')" [disabled]="isSavingBatch" title="Đồng bộ toàn bộ tiết trong tuần vào Sổ Đầu Bài vnEdu">
+      <button class="pill-btn pill-orange shadow-xs" (click)="syncBatch('all')" [disabled]="isSavingBatch" title="Đồng bộ toàn bộ tiết trong tuần vào Sổ Đầu Bài vnEdu">
         <app-keenicon name="double-check" class="fs-4 me-1 text-white"></app-keenicon>
-        Đồng bộ cả tuần
+        ⚡ Đồng bộ cả tuần
       </button>
 
-      <button class="pill-btn pill-soft-cyan shadow-xs" (click)="syncBatch('today')" [disabled]="isSavingBatch" title="Đồng bộ các tiết dạy hôm nay">
-        <app-keenicon name="check-circle" class="fs-4 me-1 text-primary"></app-keenicon>
+      <button class="pill-btn pill-primary shadow-xs" (click)="syncBatch('today')" [disabled]="isSavingBatch" title="Đồng bộ các tiết dạy hôm nay">
+        <app-keenicon name="check-circle" class="fs-4 me-1 text-white"></app-keenicon>
         Đồng bộ hôm nay
       </button>
 
@@ -1266,13 +1266,13 @@
               <!-- THAO TÁC (LƯU SỔ / SỬA) -->
               <td class="text-end pe-4 custom-tooltip-cell">
                 <div class="interactive-tooltip-wrapper">
-                  <button class="btn-action-link"
-                          [class.btn-future-plan]="isFutureWeek || slot.isFutureSlot"
+                  <button class="btn-action-pill"
+                          [ngClass]="(isFutureWeek || slot.isFutureSlot) ? 'btn-future' : (slot.isSynced ? 'btn-synced' : 'btn-orange-action')"
                           [disabled]="slot.isSaving"
                           (click)="syncSingle(slot)"
                           [title]="(isFutureWeek || slot.isFutureSlot) ? 'Xem và chuẩn bị kế hoạch bài dạy cho tiết học này' : (slot.isSynced ? 'Cập nhật lại thông tin bài dạy, nhận xét và điểm danh lên vnEdu' : 'Lưu tiết học này vào Sổ Đầu Bài vnEdu')">
                     <span *ngIf="slot.isSaving" class="spinner-border spinner-border-sm me-1" role="status"></span>
-                    {{ (isFutureWeek || slot.isFutureSlot) ? 'Chuẩn bị KHGD' : 'Sửa / Lưu lại' }}
+                    {{ (isFutureWeek || slot.isFutureSlot) ? '📋 Chuẩn bị KHGD' : (slot.isSynced ? '✓ Cập nhật lại' : '💾 Lưu SĐB') }}
                   </button>
 
                   <!-- Rich Tooltip cho Thao tác -->

@@ -20,7 +20,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   userAvatarClass: string = 'symbol-35px symbol-md-40px';
   btnIconClass: string = 'fs-2 fs-md-1';
 
-  appVersion: string = 'v2.8.1';
+  appVersion: string = 'v2.8.3';
 
   notifications: AppNotification[] = [];
   showNotificationDropdown: boolean = false;

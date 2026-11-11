@@ -18,7 +18,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
   @Input() currentLoggedInUser: any = null;
   @Input() isFutureWeek: boolean = false;
   @Input() isSavingBatch: boolean = false;
-  @Input() appVersion: string = 'v2.8.1';
+  @Input() appVersion: string = 'v2.8.3';
 
   @Output() weekChange = new EventEmitter<number>();
   @Output() prevWeek = new EventEmitter<void>();

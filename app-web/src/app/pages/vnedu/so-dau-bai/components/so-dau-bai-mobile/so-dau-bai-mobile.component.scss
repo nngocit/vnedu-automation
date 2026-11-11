@@ -2,6 +2,8 @@
 // MOBILE NATIVE COMPONENT STYLES
 // Theo chuẩn Thiết kế App Thanh niên Việt Nam (VNPT / TW Đoàn)
 // Phối màu: Xanh Thanh Niên #2b59ff, Vạch Vàng #ffd200, Cam #ff7a00
+// Font chữ: Nunito & Be Vietnam Pro (Chuẩn App Thanh Niên & VNPT)
+// Typography: Rõ ràng, sắc nét, không bị co nhỏ hay vỡ nét
 // ========================================================
 
 $tnvn-blue-deep: #2554f2;
@@ -14,16 +16,17 @@ $tnvn-bg: #f4f6fa;
 $tnvn-card-border: #edf1f7;
 $tnvn-field-bg: #f2f4f8;
 $tnvn-text-main: #14142b;
-$tnvn-text-muted: #8a94a6;
+$tnvn-text-muted: #64748b;
 
 .mobile-app-wrapper {
   background-color: $tnvn-bg !important;
   min-height: 100vh;
-  padding-bottom: 5.5rem; // Chừa chỗ cho bottom navigation dock
-  font-family: 'Lexend', 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  padding-bottom: 6rem; // Chừa chỗ cho bottom navigation dock
+  font-family: 'Nunito', 'Be Vietnam Pro', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   color: $tnvn-text-main;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 // ========================================================
@@ -41,11 +44,11 @@ $tnvn-text-muted: #8a94a6;
   }
 
   .header-nav-btn {
-    width: 38px;
-    height: 38px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.18);
     backdrop-filter: blur(8px);
     color: #ffffff;
     display: flex;
@@ -55,8 +58,8 @@ $tnvn-text-muted: #8a94a6;
     transition: all 0.2s ease;
 
     .header-svg-icon {
-      width: 19px;
-      height: 19px;
+      width: 22px;
+      height: 22px;
       stroke: #ffffff;
     }
 
@@ -68,16 +71,17 @@ $tnvn-text-muted: #8a94a6;
 
   .header-title-box {
     .header-app-title {
-      font-size: 1.05rem;
+      font-size: 19px !important;
       font-weight: 800;
       color: #ffffff;
       letter-spacing: -0.2px;
-      line-height: 1.2;
+      line-height: 24px;
     }
     .header-app-sub {
-      font-size: 0.7rem;
-      color: rgba(255, 255, 255, 0.85);
-      font-weight: 500;
+      font-size: 13.5px !important;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 600;
+      line-height: 18px;
     }
   }
 
@@ -91,12 +95,12 @@ $tnvn-text-muted: #8a94a6;
       flex-direction: column;
       align-items: center;
       cursor: pointer;
-      padding: 4px 8px;
+      padding: 6px 12px;
 
       .subtab-text {
-        font-size: 0.82rem;
-        font-weight: 600;
-        color: rgba(255, 255, 255, 0.72);
+        font-size: 15px !important;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.78);
         transition: color 0.2s ease;
       }
 
@@ -108,12 +112,12 @@ $tnvn-text-muted: #8a94a6;
 
         // VẠCH CHỈ MỤC VÀNG (#ffd200) CHUẨN MẪU ẢNH 1 VÀ 6
         .subtab-active-yellow-bar {
-          width: 28px;
-          height: 3.5px;
+          width: 36px;
+          height: 4px;
           background: $tnvn-yellow-indicator;
           border-radius: 3px;
-          margin-top: 4px;
-          box-shadow: 0 1px 4px rgba(255, 210, 0, 0.5);
+          margin-top: 5px;
+          box-shadow: 0 1px 4px rgba(255, 210, 0, 0.6);
         }
       }
     }
@@ -141,8 +145,8 @@ $tnvn-text-muted: #8a94a6;
   }
 
   .avatar-wrapper {
-    width: 60px;
-    height: 60px;
+    width: 66px;
+    height: 66px;
     cursor: pointer;
 
     .avatar-ring {
@@ -164,7 +168,7 @@ $tnvn-text-muted: #8a94a6;
         justify-content: center;
 
         .avatar-emoji {
-          font-size: 1.65rem;
+          font-size: 28px;
         }
       }
 
@@ -172,8 +176,8 @@ $tnvn-text-muted: #8a94a6;
         position: absolute;
         bottom: -2px;
         right: -2px;
-        width: 20px;
-        height: 20px;
+        width: 22px;
+        height: 22px;
         border-radius: 50%;
         background: $tnvn-blue;
         border: 2px solid #ffffff;
@@ -186,13 +190,16 @@ $tnvn-text-muted: #8a94a6;
   }
 
   .teacher-name-heading {
+    font-size: 18px !important;
+    font-weight: 800;
     letter-spacing: -0.2px;
+    line-height: 24px;
   }
 
   .edit-pencil-icon {
-    font-size: 0.85rem;
+    font-size: 16px;
     cursor: pointer;
-    opacity: 0.8;
+    opacity: 0.85;
     &:hover {
       opacity: 1;
     }
@@ -202,18 +209,19 @@ $tnvn-text-muted: #8a94a6;
   .badge-verified-tnvn {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
     background: #f1f5f9;
     color: #475569;
-    font-size: 0.72rem;
+    font-size: 13px !important;
     font-weight: 700;
-    padding: 3px 10px;
+    padding: 5px 12px;
     border-radius: 9999px;
     border: 1px solid #e2e8f0;
 
     .check-icon {
       color: #10b981;
       font-weight: 900;
+      font-size: 14px;
     }
   }
 
@@ -222,11 +230,23 @@ $tnvn-text-muted: #8a94a6;
     align-items: center;
     background: $tnvn-blue-light;
     color: $tnvn-blue;
-    font-size: 0.72rem;
+    font-size: 13px !important;
     font-weight: 800;
-    padding: 3px 9px;
+    padding: 5px 12px;
     border-radius: 9999px;
     border: 1px solid rgba(43, 89, 255, 0.2);
+  }
+
+  .school-label {
+    font-size: 13px !important;
+    font-weight: 600;
+    color: $tnvn-text-muted;
+  }
+
+  .school-name {
+    font-size: 15px !important;
+    font-weight: 800;
+    color: #1e293b;
   }
 
   // Bộ chọn tuần Capsule
@@ -234,14 +254,14 @@ $tnvn-text-muted: #8a94a6;
     background: $tnvn-field-bg;
     border: 1px solid #e2e8f0;
     border-radius: 9999px;
-    padding: 2px 4px;
+    padding: 3px 6px;
 
     .week-btn-arrow {
       background: transparent;
       border: none;
       color: $tnvn-text-muted;
-      font-size: 0.75rem;
-      padding: 3px 6px;
+      font-size: 15px !important;
+      padding: 4px 8px;
       cursor: pointer;
       border-radius: 50%;
       line-height: 1;
@@ -256,10 +276,10 @@ $tnvn-text-muted: #8a94a6;
     .week-select-tnvn {
       background: transparent;
       border: none;
-      font-size: 0.75rem;
+      font-size: 14px !important;
       font-weight: 800;
       color: $tnvn-blue;
-      padding: 2px 4px;
+      padding: 4px 8px;
       outline: none;
       cursor: pointer;
     }
@@ -271,6 +291,10 @@ $tnvn-text-muted: #8a94a6;
   background: #fffbeb !important;
   border: 1px solid #fef3c7;
   box-shadow: 0 1px 3px rgba(245, 158, 11, 0.08);
+
+  .notice-text {
+    font-size: 13.5px !important;
+  }
 }
 
 // ========================================================
@@ -280,6 +304,7 @@ $tnvn-text-muted: #8a94a6;
   .day-segmented-track {
     background: #edf1f7 !important;
     border-radius: 9999px;
+    padding: 4px;
     gap: 4px;
   }
 
@@ -287,28 +312,30 @@ $tnvn-text-muted: #8a94a6;
     background: transparent;
     border: none;
     border-radius: 9999px;
-    padding: 5px 2px;
+    padding: 8px 4px;
     cursor: pointer;
     transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     color: $tnvn-text-muted;
     outline: none;
 
     .day-pill-name {
-      font-size: 0.8rem;
-      line-height: 1.1;
+      font-size: 16px !important;
+      font-weight: 800;
+      line-height: 20px;
       color: inherit;
     }
 
     .day-pill-date {
-      font-size: 0.65rem;
-      line-height: 1;
+      font-size: 13.5px !important;
+      font-weight: 600;
+      line-height: 17px;
       color: inherit;
-      opacity: 0.8;
+      opacity: 0.85;
     }
 
     .status-micro-dot {
-      width: 5px;
-      height: 5px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: transparent;
 
@@ -331,13 +358,13 @@ $tnvn-text-muted: #8a94a6;
     &.active {
       background: $tnvn-blue !important;
       color: #ffffff !important;
-      box-shadow: 0 3px 10px rgba(43, 89, 255, 0.38);
+      box-shadow: 0 4px 12px rgba(43, 89, 255, 0.38);
 
       .day-pill-name {
         color: #ffffff !important;
       }
       .day-pill-date {
-        color: rgba(255, 255, 255, 0.9) !important;
+        color: rgba(255, 255, 255, 0.95) !important;
         opacity: 1;
       }
       .status-micro-dot {
@@ -356,33 +383,43 @@ $tnvn-text-muted: #8a94a6;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 
   &.is-today-banner {
-    border-left: 4px solid $tnvn-blue !important;
+    border-left: 5px solid $tnvn-blue !important;
+  }
+
+  .banner-day-title {
+    font-size: 17px !important;
+    font-weight: 800;
+  }
+
+  .banner-slots-count {
+    font-size: 14px !important;
+    font-weight: 700;
   }
 
   .badge-pill-today {
     background: $tnvn-blue-light;
     color: $tnvn-blue;
-    font-size: 0.68rem;
+    font-size: 13px !important;
     font-weight: 800;
-    padding: 2px 8px;
+    padding: 4px 11px;
     border-radius: 9999px;
   }
 
   .badge-pill-done {
     background: #ecfdf5;
     color: #059669;
-    font-size: 0.68rem;
+    font-size: 13px !important;
     font-weight: 800;
-    padding: 2px 8px;
+    padding: 4px 11px;
     border-radius: 9999px;
   }
 
   .badge-pill-future {
     background: #f1f5f9;
     color: #64748b;
-    font-size: 0.68rem;
+    font-size: 13px !important;
     font-weight: 700;
-    padding: 2px 8px;
+    padding: 4px 11px;
     border-radius: 9999px;
   }
 
@@ -392,9 +429,10 @@ $tnvn-text-muted: #8a94a6;
     color: #ffffff !important;
     border: none;
     border-radius: 9999px;
-    font-size: 0.8rem;
+    font-size: 15px !important;
     font-weight: 800;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
+    padding: 12px 20px;
     box-shadow: 0 4px 14px rgba(255, 122, 0, 0.35);
     cursor: pointer;
     transition: all 0.2s ease;
@@ -423,20 +461,20 @@ $tnvn-text-muted: #8a94a6;
   transition: all 0.2s ease;
 
   &.slot-pending {
-    border-left: 3.5px solid #f59e0b !important;
+    border-left: 4.5px solid #f59e0b !important;
   }
   &.slot-synced {
-    border-left: 3.5px solid #10b981 !important;
+    border-left: 4.5px solid #10b981 !important;
   }
   &.slot-future {
-    border-left: 3.5px solid #94a3b8 !important;
+    border-left: 4.5px solid #94a3b8 !important;
   }
 
   // Session Badge (Sáng / Chiều)
   .session-badge {
-    font-size: 0.68rem;
+    font-size: 13px !important;
     font-weight: 800;
-    padding: 2px 7px;
+    padding: 4px 10px;
     border-radius: 6px;
 
     &.morning {
@@ -449,11 +487,22 @@ $tnvn-text-muted: #8a94a6;
     }
   }
 
+  .slot-tiet-heading {
+    font-size: 17px !important;
+    font-weight: 800;
+  }
+
+  .slot-time-text {
+    font-size: 13.5px !important;
+    font-weight: 600;
+    color: $tnvn-text-muted;
+  }
+
   // Class Pill (Lớp học)
   .class-pill {
-    font-size: 0.72rem;
+    font-size: 14px !important;
     font-weight: 800;
-    padding: 3px 9px;
+    padding: 4px 12px;
     border-radius: 8px;
 
     &.class-badge-9a2 {
@@ -476,9 +525,9 @@ $tnvn-text-muted: #8a94a6;
 
   // Attendance Pill (Điểm danh)
   .attendance-pill {
-    font-size: 0.7rem;
+    font-size: 13.5px !important;
     font-weight: 700;
-    padding: 3px 8px;
+    padding: 4px 12px;
     border-radius: 9999px;
     cursor: pointer;
     border: 1px solid transparent;
@@ -513,15 +562,27 @@ $tnvn-text-muted: #8a94a6;
     }
   }
 
+  .subject-title {
+    font-size: 17px !important;
+    font-weight: 800;
+  }
+
+  .ppct-label {
+    font-size: 14px !important;
+    font-weight: 700;
+    color: #475569;
+  }
+
   // Tiết PPCT Box
   .input-ppct-tnvn {
-    width: 46px;
-    height: 32px;
-    border-radius: 10px;
-    border: 1px solid transparent;
+    width: 54px;
+    height: 40px;
+    border-radius: 12px;
+    border: 1.5px solid transparent;
     background: $tnvn-field-bg !important;
     color: $tnvn-blue !important;
-    font-size: 0.85rem;
+    font-size: 16px !important;
+    font-weight: 800;
     outline: none;
     transition: all 0.2s ease;
     &:focus {
@@ -534,10 +595,10 @@ $tnvn-text-muted: #8a94a6;
   // Form Label (Chuẩn ảnh 3 "Nơi sinh hoạt Đoàn *")
   .form-field-label {
     display: block;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: $tnvn-text-muted;
-    margin-bottom: 5px;
+    font-size: 14px !important;
+    font-weight: 700;
+    color: #475569;
+    margin-bottom: 6px;
     letter-spacing: 0.1px;
   }
 
@@ -547,9 +608,10 @@ $tnvn-text-muted: #8a94a6;
     background: $tnvn-field-bg !important;
     border: 1.5px solid transparent !important;
     border-radius: 14px !important;
-    padding: 10px 14px;
-    font-size: 0.82rem;
+    padding: 12px 16px;
+    font-size: 15px !important;
     font-weight: 600;
+    min-height: 48px;
     color: $tnvn-text-main !important;
     outline: none;
     transition: all 0.2s ease;
@@ -567,8 +629,8 @@ $tnvn-text-muted: #8a94a6;
     .select-form-tnvn {
       appearance: none;
       -webkit-appearance: none;
-      padding-right: 36px;
-      font-weight: 500;
+      padding-right: 38px;
+      font-weight: 600;
       cursor: pointer;
     }
 
@@ -577,17 +639,17 @@ $tnvn-text-muted: #8a94a6;
       right: 14px;
       top: 50%;
       transform: translateY(-50%);
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
       pointer-events: none;
     }
   }
 
   // Badge trạng thái Slot
   .badge-slot-status {
-    font-size: 0.7rem;
+    font-size: 13.5px !important;
     font-weight: 700;
-    padding: 3px 8px;
+    padding: 5px 12px;
     border-radius: 9999px;
 
     &.synced {
@@ -609,9 +671,9 @@ $tnvn-text-muted: #8a94a6;
   // Nếu đã lưu: Nút Xanh/Xám nhã nhặn
   .btn-slot-action {
     border-radius: 9999px;
-    font-size: 0.75rem;
+    font-size: 14px !important;
     font-weight: 800;
-    padding: 7px 16px;
+    padding: 10px 20px;
     cursor: pointer;
     transition: all 0.2s ease;
     border: none;
@@ -664,8 +726,8 @@ $tnvn-text-muted: #8a94a6;
   border-top: 1px solid $tnvn-card-border;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
   z-index: 990;
-  height: 60px;
-  padding: 4px 12px calc(4px + env(safe-area-inset-bottom, 0px)) 12px;
+  height: 66px;
+  padding: 6px 12px calc(6px + env(safe-area-inset-bottom, 0px)) 12px;
 
   .bottom-nav-item {
     background: transparent;
@@ -689,8 +751,8 @@ $tnvn-text-muted: #8a94a6;
     }
 
     .nav-label {
-      font-size: 0.68rem;
-      font-weight: 500;
+      font-size: 13px !important;
+      font-weight: 600;
       color: $tnvn-text-muted; // MÀU XÁM KHI CHƯA CHỌN
       line-height: 1;
       transition: color 0.15s ease;
@@ -700,7 +762,7 @@ $tnvn-text-muted: #8a94a6;
     &.active {
       .nav-label {
         color: $tnvn-blue !important; // MÀU XANH KHI ĐANG CHỌN
-        font-weight: 700;
+        font-weight: 800;
       }
     }
 

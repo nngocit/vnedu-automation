@@ -62,7 +62,7 @@
             <span class="avatar-emoji">{{ isSuperAdminLoggedIn ? '👑' : '👩‍🏫' }}</span>
           </div>
           <span class="avatar-camera-badge" title="Cập nhật ảnh đại diện">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" width="11" height="11">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" width="12" height="12">
               <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
               <circle cx="12" cy="13" r="4"></circle>
             </svg>
@@ -71,15 +71,15 @@
       </div>
 
       <!-- Lời chào & Tên giáo viên -->
-      <div class="d-flex align-items-center justify-content-center gap-1.5 mb-1" (click)="switchTeacher.emit()">
-        <h2 class="teacher-name-heading mb-0 fw-bolder fs-6 text-gray-900">
+      <div class="d-flex align-items-center justify-content-center gap-1.5 mb-1.5" (click)="switchTeacher.emit()">
+        <h2 class="teacher-name-heading mb-0 fw-bold text-gray-900">
           Xin chào, {{ isSuperAdminLoggedIn ? (currentLoggedInUser?.fullname || 'Xuân Ngọc') : teacherTitle }}
         </h2>
         <span class="edit-pencil-icon" title="Đổi giáo viên">✏️</span>
       </div>
 
-      <!-- Badges: Đã xác thực + Phiên bản v2.8.1 -->
-      <div class="d-flex align-items-center justify-content-center gap-2 mb-2.5 flex-wrap">
+      <!-- Badges: Đã xác thực + Phiên bản v2.8.3 -->
+      <div class="d-flex align-items-center justify-content-center gap-2 mb-3 flex-wrap">
         <span class="badge-verified-tnvn">
           <span class="check-icon">✓</span>
           <span>{{ isSuperAdminLoggedIn ? 'Super Admin quản trị' : 'Giáo viên đã xác thực' }}</span>
@@ -90,10 +90,10 @@
       </div>
 
       <!-- Đơn vị công tác & Bộ chọn tuần dạng Capsule -->
-      <div class="school-and-week-row d-flex align-items-center justify-content-between pt-2 border-top border-gray-100 flex-wrap gap-2">
+      <div class="school-and-week-row d-flex align-items-center justify-content-between pt-2.5 border-top border-gray-100 flex-wrap gap-2">
         <div class="text-start">
-          <div class="text-muted fs-9 fw-semibold">Đơn vị công tác</div>
-          <div class="text-gray-800 fs-8 fw-bold text-truncate" style="max-width: 155px;">
+          <div class="school-label text-muted">Đơn vị công tác</div>
+          <div class="school-name text-gray-900 fw-bold text-truncate" style="max-width: 160px;">
             {{ teacherSchool }}
           </div>
         </div>
@@ -113,9 +113,9 @@
   </section>
 
   <!-- CẢNH BÁO TUẦN CŨ -->
-  <div *ngIf="currentWeek < realCurrentWeek" class="mobile-notice-strip warning mx-3 mb-3 px-3 py-2 rounded-3 d-flex align-items-center gap-2">
-    <span class="fs-6">⚠️</span>
-    <span class="fs-8 text-amber-900 fw-semibold">
+  <div *ngIf="currentWeek < realCurrentWeek" class="mobile-notice-strip warning mx-3 mb-3 px-3 py-2.5 rounded-3 d-flex align-items-center gap-2">
+    <span class="fs-5">⚠️</span>
+    <span class="notice-text text-amber-900 fw-semibold">
       Đang xem <strong>Tuần {{ currentWeek }}</strong> (Tuần cũ đã chốt sổ CSDL). Cẩn thận khi lưu đè dữ liệu!
     </span>
   </div>
@@ -127,7 +127,7 @@
     <div class="day-segmented-track d-flex p-1">
       <button *ngFor="let g of dayGroups; trackBy: trackByThu"
               type="button"
-              class="day-pill-btn flex-fill d-flex flex-column align-items-center justify-content-center py-1.5"
+              class="day-pill-btn flex-fill d-flex flex-column align-items-center justify-content-center py-2"
               [class.active]="selectedThu === g.thu"
               [class.is-today]="g.isToday"
               (click)="selectDay(g.thu)">
@@ -141,7 +141,7 @@
                 [class.dot-alert]="g.pendingCount > 0 && !g.isFutureDay && currentWeek === realCurrentWeek">
           </span>
         </div>
-        <span class="day-pill-date fs-10">{{ getDayDate(g.ngay) }}</span>
+        <span class="day-pill-date">{{ getDayDate(g.ngay) }}</span>
       </button>
     </div>
   </div>
@@ -154,7 +154,7 @@
            [class.is-completed-banner]="selectedGroup?.isCompleted">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
       <div class="d-flex align-items-center gap-2">
-        <h3 class="mb-0 fs-6 fw-bolder text-gray-900">
+        <h3 class="banner-day-title mb-0 fw-bold text-gray-900">
           {{ selectedGroup?.thuText || 'Thứ Hai' }}, {{ selectedGroup?.ngay || '' }}
         </h3>
         <span *ngIf="selectedGroup?.isToday" class="badge-pill-today">HÔM NAY</span>
@@ -162,23 +162,23 @@
         <span *ngIf="selectedGroup?.isFutureDay || currentWeek > realCurrentWeek" class="badge-pill-future">📅 Kế hoạch</span>
       </div>
 
-      <span class="fs-8 fw-semibold text-gray-600">
+      <span class="banner-slots-count fw-bold text-gray-700">
         {{ selectedGroup?.slots?.length || 0 }} tiết giảng dạy
       </span>
     </div>
 
     <!-- Nút LƯU NHANH HÔM NAY (Màu Cam Thanh Niên chuẩn theo ảnh mẫu 1) -->
     <div *ngIf="selectedGroup?.isToday && selectedGroup?.pendingCount > 0" class="mt-2.5 pt-2 border-top border-gray-100 d-flex flex-column gap-2">
-      <div class="d-flex align-items-center justify-content-between fs-8">
-        <span class="text-danger fw-bold">⚠️ Còn {{ selectedGroup.pendingCount }} tiết chưa lưu vnEdu</span>
-        <span class="text-muted">Cập nhật ngay</span>
+      <div class="d-flex align-items-center justify-content-between">
+        <span class="text-danger fw-bold fs-7">⚠️ Còn {{ selectedGroup.pendingCount }} tiết chưa lưu vnEdu</span>
+        <span class="text-muted fs-8">Cập nhật ngay</span>
       </div>
       <button type="button"
-              class="btn-tnvn-orange w-100 py-2.5 d-flex align-items-center justify-content-center gap-1.5"
+              class="btn-tnvn-orange w-100 py-3 d-flex align-items-center justify-content-center gap-2"
               (click)="syncToday.emit()"
               [disabled]="isSavingBatch">
         <span *ngIf="isSavingBatch" class="spinner-border spinner-border-sm me-1" role="status"></span>
-        <span class="fw-bolder">⚡ LƯU NHANH HÔM NAY ({{ selectedGroup.pendingCount }} TIẾT)</span>
+        <span class="fw-bold">⚡ LƯU NHANH HÔM NAY ({{ selectedGroup.pendingCount }} TIẾT)</span>
       </button>
     </div>
   </section>
@@ -190,8 +190,8 @@
     <!-- Trạng thái trống nếu không có tiết -->
     <div *ngIf="!selectedGroup || selectedGroup.slots.length === 0" class="empty-day-state text-center py-5 bg-white rounded-4 shadow-xs">
       <div class="fs-1 mb-2">🏖️</div>
-      <h4 class="fw-bold text-gray-800 fs-7 mb-1">Không có tiết dạy trong ngày này</h4>
-      <p class="fs-8 text-muted mb-0">Cô giáo được nghỉ dạy vào {{ selectedGroup?.thuText }}. Chọn thứ khác trên thanh điều hướng.</p>
+      <h4 class="fw-bold text-gray-800 mb-1 fs-6">Không có tiết dạy trong ngày này</h4>
+      <p class="text-muted mb-0 fs-7">Cô giáo được nghỉ dạy vào {{ selectedGroup?.thuText }}. Chọn thứ khác trên thanh điều hướng.</p>
     </div>
 
     <!-- Từng thẻ tiết học -->
@@ -202,16 +202,16 @@
          [class.slot-future]="selectedGroup.isFutureDay || slot.isFutureSlot || currentWeek > realCurrentWeek">
       
       <!-- Hàng 1: Tiết học & Điểm danh -->
-      <div class="d-flex align-items-center justify-content-between pb-2 mb-2.5 border-bottom border-gray-100">
-        <div class="d-flex align-items-center gap-1.5">
+      <div class="d-flex align-items-center justify-content-between pb-2.5 mb-2.5 border-bottom border-gray-100">
+        <div class="d-flex align-items-center gap-2">
           <span class="session-badge" [class.morning]="slot.tiet <= 5" [class.afternoon]="slot.tiet > 5">
             {{ slot.tiet <= 5 ? 'Sáng' : 'Chiều' }}
           </span>
-          <span class="fw-bolder fs-7 text-gray-900">Tiết {{ slot.tiet }}</span>
-          <span class="fs-9 text-muted font-monospace">({{ getSlotTime(slot) }})</span>
+          <span class="slot-tiet-heading fw-bold text-gray-900">Tiết {{ slot.tiet }}</span>
+          <span class="slot-time-text text-muted">({{ getSlotTime(slot) }})</span>
         </div>
 
-        <div class="d-flex align-items-center gap-1.5">
+        <div class="d-flex align-items-center gap-2">
           <span class="class-pill" [ngClass]="getClassBadgeClass(slot.lop)">
             {{ slot.lop }}
           </span>
@@ -238,13 +238,13 @@
       </div>
 
       <!-- Hàng 2: Môn học & Tiết PPCT -->
-      <div class="d-flex align-items-center justify-content-between mb-2.5">
-        <span class="fw-bold fs-7 text-gray-900 text-truncate d-flex align-items-center gap-1.5">
-          <span class="fs-7">📚</span>
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <span class="subject-title fw-bold text-gray-900 text-truncate d-flex align-items-center gap-1.5">
+          <span>📚</span>
           <span>{{ slot.mon }}</span>
         </span>
-        <div class="d-flex align-items-center gap-1.5 fs-8 text-gray-600 flex-shrink-0">
-          <span class="fw-semibold">Tiết PPCT:</span>
+        <div class="d-flex align-items-center gap-2 flex-shrink-0">
+          <span class="ppct-label fw-bold text-gray-700">Tiết PPCT:</span>
           <input type="number"
                  class="input-ppct-tnvn text-center fw-bold"
                  [(ngModel)]="slot.ppct" min="1" max="150">
@@ -252,7 +252,7 @@
       </div>
 
       <!-- Hàng 3: Tên bài dạy (Input form style Ảnh 3) -->
-      <div class="mb-2.5">
+      <div class="mb-3">
         <label class="form-field-label">Tên bài dạy *</label>
         <input type="text"
                class="input-form-tnvn w-100"
@@ -280,7 +280,7 @@
       </div>
 
       <!-- Hàng 5: Footer trạng thái & Nút thao tác CTA -->
-      <div class="d-flex align-items-center justify-content-between pt-2.5 border-top border-gray-100">
+      <div class="d-flex align-items-center justify-content-between pt-3 border-top border-gray-100">
         <div>
           <span *ngIf="currentWeek > realCurrentWeek || slot.isFutureSlot" class="badge-slot-status future">
             📅 Kế hoạch bài dạy
@@ -318,7 +318,7 @@
     <button type="button" class="bottom-nav-item active" (click)="activeTab = 'schedule'">
       <div class="nav-icon-box">
         <!-- SVG SOLID BLUE (ĐANG CHỌN) -->
-        <svg viewBox="0 0 24 24" fill="#2b59ff" width="22" height="22">
+        <svg viewBox="0 0 24 24" fill="#2b59ff" width="24" height="24">
           <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/>
         </svg>
       </div>
@@ -329,7 +329,7 @@
     <button type="button" class="bottom-nav-item" (click)="syncAll.emit()">
       <div class="nav-icon-box">
         <!-- SVG OUTLINE GRAY (CHƯA CHỌN) -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="#8a94a6" stroke-width="2" width="22" height="22">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#8a94a6" stroke-width="2" width="24" height="24">
           <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
           <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
         </svg>
@@ -341,7 +341,7 @@
     <button type="button" class="bottom-nav-item" (click)="scanSupervisor.emit()">
       <div class="nav-icon-box">
         <!-- SVG OUTLINE GRAY (CHƯA CHỌN) -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="#8a94a6" stroke-width="2" width="22" height="22">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#8a94a6" stroke-width="2" width="24" height="24">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
         </svg>
       </div>
@@ -352,7 +352,7 @@
     <button type="button" class="bottom-nav-item" (click)="scanSupervisor.emit()">
       <div class="nav-icon-box">
         <!-- SVG OUTLINE GRAY (CHƯA CHỌN) -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="#8a94a6" stroke-width="2" width="22" height="22">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#8a94a6" stroke-width="2" width="24" height="24">
           <rect x="3" y="3" width="7" height="7"></rect>
           <rect x="14" y="3" width="7" height="7"></rect>
           <rect x="14" y="14" width="7" height="7"></rect>
@@ -366,7 +366,7 @@
     <button type="button" class="bottom-nav-item" (click)="switchTeacher.emit()">
       <div class="nav-icon-box">
         <!-- SVG OUTLINE GRAY (CHƯA CHỌN) -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="#8a94a6" stroke-width="2" width="22" height="22">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#8a94a6" stroke-width="2" width="24" height="24">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
           <circle cx="12" cy="7" r="4"></circle>
         </svg>

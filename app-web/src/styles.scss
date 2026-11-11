@@ -19,21 +19,21 @@ button,
 input,
 select,
 textarea {
-  font-family: 'Lexend', 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+  font-family: 'Nunito', 'Be Vietnam Pro', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 /* ========================================================= */
 /* LIGHT MODE: THANH NIÊN VIỆT NAM OFFICIAL MODERN THEME     */
-/* (Xanh Hoàng gia Đoàn TNCS Hồ Chí Minh - Royal Youth Blue) */
+/* (Xanh Thanh Niên #2b59ff - Chuẩn TW Đoàn & VNPT)          */
 /* ========================================================= */
 [data-bs-theme="light"],
 :root:not([data-bs-theme="dark"]) {
-  --bs-primary: #0052cc !important;
-  --bs-primary-rgb: 0, 82, 204 !important;
-  --bs-link-color: #0052cc !important;
-  --bs-link-hover-color: #003ea8 !important;
+  --bs-primary: #2b59ff !important;
+  --bs-primary-rgb: 43, 89, 255 !important;
+  --bs-link-color: #2b59ff !important;
+  --bs-link-hover-color: #1a47e8 !important;
 
   body,
   #kt_app_root,
@@ -41,13 +41,13 @@ textarea {
   .app-page,
   .app-wrapper,
   .app-main {
-    background: #f1f5f9 !important;
+    background: #f4f6fa !important;
   }
 
   #kt_app_header {
     background: #ffffff !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04) !important;
+    border-bottom: 1px solid #edf1f7 !important;
+    box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.03) !important;
   }
 
   // Sidebar sáng đồng bộ - Màu thương hiệu Thanh Niên Việt Nam
@@ -55,8 +55,8 @@ textarea {
   .app-sidebar {
     background: #ffffff !important;
     background-color: #ffffff !important;
-    border-right: 1px solid #e2e8f0 !important;
-    box-shadow: 1px 0 4px 0 rgba(0, 0, 0, 0.04) !important;
+    border-right: 1px solid #edf1f7 !important;
+    box-shadow: 1px 0 6px 0 rgba(0, 0, 0, 0.03) !important;
 
     #kt_app_sidebar_logo {
       background: #ffffff !important;
@@ -71,46 +71,63 @@ textarea {
 
     .menu-link {
       color: #334155 !important;
-      border-radius: 8px !important;
+      border-radius: 10px !important;
+      margin: 2px 10px !important;
+      padding: 10px 14px !important;
+      transition: all 0.2s ease !important;
 
       .menu-title {
-        color: #1e293b !important;
-        font-weight: 700 !important;
+        color: #334155 !important;
+        font-weight: 600 !important;
+        font-size: 0.875rem !important;
       }
+      
+      // Icon KHI CHƯA CHỌN (Outline Gray #8a94a6)
       .menu-icon app-keenicon,
       .menu-icon i {
-        color: #0052cc !important;
+        color: #8a94a6 !important;
+        transition: color 0.2s ease !important;
       }
 
       &:hover {
-        background-color: #f1f5f9 !important;
+        background-color: #f4f6fa !important;
         .menu-title {
-          color: #0052cc !important;
+          color: #2b59ff !important;
+        }
+        .menu-icon app-keenicon,
+        .menu-icon i {
+          color: #2b59ff !important;
         }
       }
 
+      // KHI ĐANG CHỌN (Active: Nền xanh nhạt, Icon xanh đặc, Chữ xanh đậm, Vạch viền bên trái)
       &.active {
         background-color: #eef4ff !important;
+        border-left: 3.5px solid #2b59ff !important;
+
         .menu-title {
-          color: #0052cc !important;
+          color: #2b59ff !important;
           font-weight: 800 !important;
         }
         .menu-icon app-keenicon,
         .menu-icon i {
-          color: #0052cc !important;
+          color: #2b59ff !important;
         }
       }
     }
 
     .menu-section {
-      color: #64748b !important;
+      color: #8a94a6 !important;
       font-weight: 700 !important;
+      font-size: 0.72rem !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.5px !important;
     }
 
     .badge.badge-light-success {
-      background-color: #dcfce7 !important;
-      color: #15803d !important;
-      border: 1px solid #86efac !important;
+      background-color: #ecfdf5 !important;
+      color: #059669 !important;
+      border: 1px solid #a7f3d0 !important;
       font-weight: 700 !important;
     }
   }
@@ -121,21 +138,23 @@ textarea {
 
   .top-nav-bar {
     background: #ffffff !important;
-    border: 1px solid #e4e6eb !important;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
-    border-radius: 10px !important;
+    border: 1px solid #edf1f7 !important;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.03) !important;
+    border-radius: 16px !important;
+    padding: 12px 18px !important;
   }
 
   .day-card {
     background: #ffffff !important;
-    border: 1px solid #e4e6eb !important;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
-    border-radius: 10px !important;
+    border: 1px solid #edf1f7 !important;
+    box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.03) !important;
+    border-radius: 18px !important;
 
     .day-card-header {
       background: #ffffff !important;
       border-bottom: 1px solid #f0f2f5 !important;
       border-left: none !important;
+      padding: 14px 18px !important;
 
       .day-title {
         color: #0f172a !important;
@@ -145,34 +164,38 @@ textarea {
 
     .day-table {
       thead th {
-        background: #f4f5f7 !important;
-        color: #0f172a !important;
-        border-bottom: 2px solid #cbd5e1 !important;
+        background: #f8fafd !important;
+        color: #1e293b !important;
+        border-bottom: 2px solid #e2e8f0 !important;
         font-weight: 800 !important;
-        font-size: 0.78rem !important;
-        letter-spacing: 0.04em !important;
+        font-size: 0.8rem !important;
+        letter-spacing: 0.02em !important;
+        padding: 12px 14px !important;
       }
 
       tbody td {
         border-bottom: 1px solid #f0f2f5 !important;
         color: #1c1e21 !important;
+        padding: 12px 14px !important;
       }
 
       tbody tr:hover {
-        background-color: #f7f8fa !important;
+        background-color: #f8fafd !important;
       }
 
       .form-control.form-control-solid,
       .form-select.form-select-solid {
-        background-color: #f4f5f7 !important;
-        color: #1c1e21 !important;
-        border: 1px solid #e4e6eb !important;
-        border-radius: 8px !important;
+        background-color: #f2f4f8 !important;
+        color: #14142b !important;
+        border: 1.5px solid transparent !important;
+        border-radius: 10px !important;
+        font-weight: 600 !important;
+        transition: all 0.2s ease !important;
 
         &:focus {
           background-color: #ffffff !important;
-          border-color: #0052cc !important;
-          box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.15) !important;
+          border-color: #2b59ff !important;
+          box-shadow: 0 0 0 3px rgba(43, 89, 255, 0.15) !important;
         }
       }
     }
@@ -465,7 +488,12 @@ textarea {
 /* "MOBILE MÀU TỐI BỎ LUÔN KO XÀI - 100% LIGHT THEME NATIVE"  */
 /* ========================================================= */
 @media (max-width: 767.98px) {
-  // 1. Luôn ép Light Mode trên màn hình Mobile (Bỏ hoàn toàn Dark Mode trên Mobile)
+  // 1. Luôn ép Light Mode & Root Typography chuẩn trên màn hình Mobile (Bỏ hoàn toàn Dark Mode trên Mobile)
+  html,
+  body {
+    font-size: 16px !important;
+  }
+
   html,
   body,
   #kt_body,

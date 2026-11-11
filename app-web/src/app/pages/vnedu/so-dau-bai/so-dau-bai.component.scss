@@ -36,28 +36,41 @@
 
   // Primary Action duy nhất: Xanh Thanh Niên Việt Nam
   &.pill-primary {
-    background-color: #0052cc;
-    color: #ffffff;
-    border: 1px solid #0040a8;
-    box-shadow: 0 2px 6px rgba(0, 82, 204, 0.28);
+    background: linear-gradient(135deg, #2554f2 0%, #2b59ff 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 3px 10px rgba(43, 89, 255, 0.32) !important;
 
     &:hover {
-      background-color: #0040a8;
+      filter: brightness(1.06);
+      color: #ffffff;
+    }
+  }
+
+  // Nút hành động nổi bật màu Cam Thanh Niên (Chuẩn nút Chỉnh sửa / Đồng bộ)
+  &.pill-orange {
+    background: linear-gradient(135deg, #ff8c00 0%, #ff5e00 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(255, 122, 0, 0.35) !important;
+
+    &:hover {
+      filter: brightness(1.06);
       color: #ffffff;
     }
   }
 
   // Soft Blue Pill (Đồng bộ hôm nay)
   &.pill-soft-blue {
-    background-color: #eef4ff;
-    color: #0052cc;
-    border: 1px solid #bfdbfe;
-    box-shadow: 0 1px 2px rgba(0, 82, 204, 0.08);
+    background-color: #eef4ff !important;
+    color: #2b59ff !important;
+    border: 1px solid rgba(43, 89, 255, 0.2) !important;
+    box-shadow: 0 1px 2px rgba(43, 89, 255, 0.08) !important;
 
     &:hover {
-      background-color: #dbeafe;
-      color: #0040a8;
-      border-color: #93c5fd;
+      background-color: #dbeafe !important;
+      color: #1a47e8 !important;
+      border-color: #2b59ff !important;
     }
   }
 
@@ -4039,8 +4052,8 @@
 
 // 1. HERO WELCOME CARD - XANH THANH NIÊN VIỆT NAM OFFICIAL THEME
 .hero-welcome-card {
-  background: linear-gradient(135deg, #003ea8 0%, #0052cc 60%, #1865f2 100%);
-  border-radius: 16px;
+  background: linear-gradient(135deg, #2554f2 0%, #2b59ff 50%, #3062f9 100%) !important;
+  border-radius: 20px;
   padding: 1.5rem 1.75rem;
   color: #ffffff;
   display: flex;
@@ -4048,7 +4061,7 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 1.25rem;
-  box-shadow: 0 10px 25px -5px rgba(0, 82, 204, 0.35);
+  box-shadow: 0 10px 30px -5px rgba(43, 89, 255, 0.35);
   position: relative;
   overflow: hidden;
 
@@ -4406,11 +4419,69 @@
   }
 }
 
-// 11. LINK THAO TÁC SỬA / LƯU LẠI CHUẨN ZALO LINK
+// 11. NÚT THAO TÁC SỬA / LƯU LẠI (CHUẨN APP THANH NIÊN VIỆT NAM)
+.btn-action-pill {
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 6px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+  // Khi chưa lưu: Nút CAM Thanh Niên nổi bật
+  &.btn-orange-action {
+    background: linear-gradient(135deg, #ff8c00 0%, #ff5e00 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 3px 10px rgba(255, 122, 0, 0.3);
+
+    &:hover {
+      filter: brightness(1.08);
+      box-shadow: 0 5px 14px rgba(255, 122, 0, 0.45);
+      transform: translateY(-1px);
+    }
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  // Khi đã lưu: Nút Xanh ngọc nhã nhặn
+  &.btn-synced {
+    background: #ecfdf5 !important;
+    color: #059669 !important;
+    border: 1px solid #a7f3d0 !important;
+
+    &:hover {
+      background: #d1fae5 !important;
+      border-color: #6ee7b7 !important;
+    }
+  }
+
+  // Khi là kế hoạch: Nút Xám thanh lịch
+  &.btn-future {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    border: 1px solid #e2e8f0 !important;
+
+    &:hover {
+      background: #e2e8f0 !important;
+    }
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
 .btn-action-link {
   background: transparent;
   border: none;
-  color: #0052cc;
+  color: #2b59ff;
   font-weight: 600;
   font-size: 0.8125rem;
   padding: 4px 8px;
@@ -4421,7 +4492,7 @@
   transition: all 0.15s ease;
 
   &:hover {
-    color: #0054cc;
+    color: #1a47e8;
     text-decoration: underline;
   }
 }
