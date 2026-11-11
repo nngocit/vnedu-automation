@@ -970,3 +970,206 @@ $tnvn-text-muted: #64748b;
     border: 1px solid #e2e8f0;
   }
 }
+
+// ========================================================
+// 12. GIAO DIỆN TIN NHẮN NỘI BỘ GIÁO VIÊN (TEXT CHAT)
+// ========================================================
+.mobile-chat-screen {
+  min-height: 520px;
+
+  .chat-school-icon-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: #eef4ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    border: 1px solid rgba(43, 89, 255, 0.15);
+  }
+
+  .chat-search-input {
+    width: 100% !important;
+    display: block;
+    border: 1px solid #e2e8f0;
+    font-size: 14px !important;
+  }
+
+  .chat-filter-scroll {
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  .chat-filter-chip {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &.active {
+      background: #2b59ff;
+      color: #ffffff;
+      border-color: #2b59ff;
+    }
+  }
+
+  .chat-contact-card {
+    border: 1px solid #eef2f6;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    &:active {
+      transform: scale(0.98);
+      background: #f8fafc;
+    }
+
+    .contact-avatar-wrap {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+
+      .online-indicator-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #10b981;
+        border: 2px solid #ffffff;
+      }
+    }
+
+    .contact-dept-tag {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+    }
+  }
+
+  // Khung hội thoại trực tiếp
+  .chat-conversation-view {
+    min-height: 540px;
+  }
+
+  .chat-conv-header {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    z-index: 10;
+
+    .contact-avatar-sm {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+
+      .online-indicator-dot-sm {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #10b981;
+        border: 2px solid #ffffff;
+      }
+    }
+
+    .badge-dept-micro {
+      background: #eef4ff;
+      color: #2b59ff;
+      padding: 1px 6px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 11px;
+    }
+  }
+
+  .chat-msg-row {
+    max-width: 86%;
+
+    &.incoming {
+      align-self: flex-start;
+      .msg-avatar-micro {
+        width: 28px;
+        height: 28px;
+        flex-shrink: 0;
+      }
+      .incoming-bubble {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-bottom-left-radius: 4px !important;
+        line-height: 1.45;
+      }
+    }
+
+    &.outgoing {
+      align-self: flex-end;
+      margin-left: auto;
+      .outgoing-bubble {
+        background: linear-gradient(135deg, #1d4ae8 0%, #2b59ff 100%);
+        color: #ffffff;
+        border-bottom-right-radius: 4px !important;
+        box-shadow: 0 4px 12px rgba(43, 89, 255, 0.22);
+        line-height: 1.45;
+      }
+    }
+  }
+
+  .chat-bottom-input-bar {
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
+    z-index: 10;
+
+    .quick-replies-row {
+      scrollbar-width: none;
+      &::-webkit-scrollbar {
+        display: none;
+      }
+    }
+
+    .quick-reply-pill {
+      white-space: nowrap;
+      cursor: pointer;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1d4ed8;
+      &:active {
+        background: #dbeafe;
+      }
+    }
+
+    .chat-text-input {
+      width: 100% !important;
+      background: #f1f5f9 !important;
+      border: 1px solid #e2e8f0 !important;
+      color: #0f172a !important;
+      font-size: 14px !important;
+      &:focus {
+        background: #ffffff !important;
+        border-color: #2b59ff !important;
+        box-shadow: 0 0 0 3px rgba(43, 89, 255, 0.12) !important;
+      }
+    }
+
+    .btn-send-chat {
+      white-space: nowrap;
+      background: #2b59ff;
+      color: #ffffff;
+      border: none;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      &:not(:disabled):active {
+        transform: scale(0.95);
+        background: #1a47e8;
+      }
+    }
+  }
+}
