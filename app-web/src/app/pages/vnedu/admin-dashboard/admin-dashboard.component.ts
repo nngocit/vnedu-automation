@@ -12,7 +12,7 @@ import { Router } from '@angular/router';
 })
 export class AdminDashboardComponent implements OnInit, OnDestroy {
   activeTab: 'overview' | 'teachers' | 'automation' | 'session' | 'backup' | 'logs' = 'overview';
-  appVersion: string = 'v2.8.9';
+  appVersion: string = 'v2.8.10';
   isLoading: boolean = false;
   isSaving: boolean = false;
   isPinging: boolean = false;

@@ -577,6 +577,12 @@ textarea {
     padding-right: 0 !important;
     padding-top: 0 !important;
   }
+
+  // Khử triệt để giao diện 3D mặc định của trình duyệt cho tất cả nút bấm và input
+  button, input, select, textarea {
+    -webkit-appearance: none;
+    appearance: none;
+  }
 }
 
 /* ========================================================= */

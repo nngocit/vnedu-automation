@@ -411,24 +411,24 @@
           </div>
         </div>
 
-        <!-- 3 Thống kê chi tiết -->
+        <!-- 3 Thống kê chi tiết chuẩn UI/UX Pro Max -->
         <div class="row g-2 text-center">
           <div class="col-4">
-            <div class="p-2.5 rounded-3 bg-light-success border border-success-subtle">
-              <div class="fs-4 fw-bold text-success">{{ syncedSlotsCount }}</div>
-              <div class="fs-8 text-muted fw-bold">Đã lưu vnEdu</div>
+            <div class="sync-stat-box sync-stat-synced p-2.5 rounded-3 border">
+              <div class="sync-stat-num text-success">{{ syncedSlotsCount }}</div>
+              <div class="sync-stat-label text-muted">Đã lưu vnEdu</div>
             </div>
           </div>
           <div class="col-4">
-            <div class="p-2.5 rounded-3 bg-light-warning border border-warning-subtle">
-              <div class="fs-4 fw-bold text-warning">{{ pendingSlotsCount }}</div>
-              <div class="fs-8 text-muted fw-bold">Cần lưu SĐB</div>
+            <div class="sync-stat-box sync-stat-pending p-2.5 rounded-3 border">
+              <div class="sync-stat-num text-warning">{{ pendingSlotsCount }}</div>
+              <div class="sync-stat-label text-muted">Cần lưu SĐB</div>
             </div>
           </div>
           <div class="col-4">
-            <div class="p-2.5 rounded-3 bg-light-info border border-info-subtle">
-              <div class="fs-4 fw-bold text-info">{{ mismatchedSlotsCount }}</div>
-              <div class="fs-8 text-muted fw-bold">Lệch Giám thị</div>
+            <div class="sync-stat-box sync-stat-mismatch p-2.5 rounded-3 border">
+              <div class="sync-stat-num text-info">{{ mismatchedSlotsCount }}</div>
+              <div class="sync-stat-label text-muted">Lệch Giám thị</div>
             </div>
           </div>
         </div>
@@ -438,20 +438,23 @@
       <section class="sync-actions-card p-3 bg-white rounded-4 shadow-xs d-flex flex-column gap-2.5">
         <h4 class="fw-bold fs-6 text-gray-800 mb-1">Thao tác đồng bộ CSDL</h4>
         
-        <!-- Nút Cam: Lưu toàn bộ tuần -->
+        <!-- Nút Cam / Xanh: Lưu toàn bộ tuần -->
         <button type="button"
                 class="btn-tnvn-orange w-100 py-3 d-flex align-items-center justify-content-center gap-2"
+                [class.btn-tnvn-done]="pendingSlotsCount === 0"
                 (click)="syncAll.emit()"
                 [disabled]="isSavingBatch">
           <span *ngIf="isSavingBatch" class="spinner-border spinner-border-sm" role="status"></span>
-          <span class="fw-bold fs-6">⚡ LƯU TẤT CẢ TIẾT TRONG TUẦN ({{ pendingSlotsCount }} TIẾT)</span>
+          <span class="fw-bold fs-6">
+            {{ pendingSlotsCount > 0 ? ('⚡ LƯU TẤT CẢ TIẾT TRONG TUẦN (' + pendingSlotsCount + ' TIẾT)') : '✓ ĐÃ LƯU ĐỦ TẤT CẢ TIẾT (' + syncedSlotsCount + ' TIẾT)' }}
+          </span>
         </button>
 
         <!-- Nút Xanh: Quét đối chiếu Giám thị -->
         <button type="button"
                 class="btn-sync-action-blue w-100 py-2.5 d-flex align-items-center justify-content-center gap-2"
                 (click)="scanSupervisor.emit()">
-          <span>🛡️</span>
+          <span class="fs-6">🛡️</span>
           <span class="fw-bold">Quét & Đối chiếu SĐĐ Giám thị</span>
         </button>
       </section>
