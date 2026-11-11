@@ -302,13 +302,13 @@
                 <span>📅 Kế hoạch</span>
               </ng-container>
               <ng-container *ngIf="currentWeek <= realCurrentWeek && !slot.isFutureSlot && isCanDoiChieu(slot)">
-                <span>⚠️ Lệch GT ({{ slot.giamThiSoLuongNghi || 0 }} vắng)</span>
+                <span>⚠️ Lệch GT ({{ slot.giamThiSoLuongNghi || 0 }})</span>
               </ng-container>
               <ng-container *ngIf="currentWeek <= realCurrentWeek && !slot.isFutureSlot && !isCanDoiChieu(slot) && getDisplayAbsentCount(slot) > 0">
-                <span>✓ {{ getDisplayAbsentCount(slot) }} vắng</span>
+                <span>⚠️ Vắng {{ getDisplayAbsentCount(slot) }}</span>
               </ng-container>
               <ng-container *ngIf="currentWeek <= realCurrentWeek && !slot.isFutureSlot && !isCanDoiChieu(slot) && getDisplayAbsentCount(slot) === 0">
-                <span>✓ Đủ (0 vắng)</span>
+                <span>✓ Đủ</span>
               </ng-container>
             </div>
           </div>
@@ -355,18 +355,18 @@
           </div>
         </div>
 
-        <!-- Hàng 5: Footer trạng thái & Nút thao tác CTA -->
-        <div class="d-flex align-items-center justify-content-between pt-3 border-top border-gray-100">
-          <div>
-            <span *ngIf="currentWeek > realCurrentWeek || slot.isFutureSlot" class="badge-slot-status future">
-              📅 Kế hoạch bài dạy
-            </span>
-            <span *ngIf="currentWeek <= realCurrentWeek && !slot.isFutureSlot && slot.isSynced" class="badge-slot-status synced">
-              ✓ Đã lưu vnEdu
-            </span>
-            <span *ngIf="currentWeek <= realCurrentWeek && !slot.isFutureSlot && !slot.isSynced" class="badge-slot-status pending">
-              ⏰ Cần nhập SĐB
-            </span>
+        <!-- Hàng 5: Footer trạng thái & Nút thao tác CTA gọn gàng & thông minh -->
+        <div class="d-flex align-items-center justify-content-between pt-2.5 border-top border-gray-100">
+          <div class="slot-status-info">
+            <div *ngIf="currentWeek > realCurrentWeek || slot.isFutureSlot" class="d-flex align-items-center gap-1.5 text-muted fs-8 fw-semibold">
+              <span>📅</span> Kế hoạch bài dạy
+            </div>
+            <div *ngIf="currentWeek <= realCurrentWeek && !slot.isFutureSlot && slot.isSynced" class="d-flex align-items-center gap-1.5 text-success fs-8 fw-bold">
+              <span class="status-dot-pulse bg-success"></span> Đã lưu vnEdu
+            </div>
+            <div *ngIf="currentWeek <= realCurrentWeek && !slot.isFutureSlot && !slot.isSynced" class="d-flex align-items-center gap-1.5 text-warning fs-8 fw-bold">
+              <span class="status-dot-pulse bg-warning"></span> Cần nhập SĐB
+            </div>
           </div>
 
           <button type="button"
@@ -376,7 +376,7 @@
                   (click)="syncSingle.emit(slot)">
             <span *ngIf="slot.isSaving" class="spinner-border spinner-border-sm me-1" role="status"></span>
             <span>
-              {{ (currentWeek > realCurrentWeek || slot.isFutureSlot) ? '📋 Chuẩn bị KHGD' : (slot.isSynced ? '✓ Cập nhật lại' : '💾 LƯU SĐB') }}
+              {{ (currentWeek > realCurrentWeek || slot.isFutureSlot) ? '📋 Chuẩn bị KHGD' : (slot.isSynced ? 'Cập nhật' : '⚡ LƯU SĐB') }}
             </span>
           </button>
         </div>
