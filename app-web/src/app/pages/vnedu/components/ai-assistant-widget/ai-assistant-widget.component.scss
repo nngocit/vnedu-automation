@@ -7,6 +7,43 @@
   right: 24px;
   z-index: 1040;
 
+  @media (max-width: 767.98px) {
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px)) !important;
+    right: calc(16px + env(safe-area-inset-right, 0px)) !important;
+
+    .btn-ai-launcher {
+      width: 48px !important;
+      height: 48px !important;
+      padding: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border-radius: 50% !important;
+
+      .launcher-icon-inner {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 1.15rem !important;
+        margin: 0 !important;
+      }
+
+      .launcher-pulse-ring {
+        border-radius: 50% !important;
+        inset: -3px !important;
+      }
+
+      .badge-reminder-count {
+        top: -3px !important;
+        right: -2px !important;
+        min-width: 18px !important;
+        height: 18px !important;
+        font-size: 0.65rem !important;
+        padding: 0 4px !important;
+        border: 2px solid #ffffff !important;
+      }
+    }
+  }
+
   .btn-ai-launcher {
     position: relative;
     display: inline-flex;
@@ -100,6 +137,17 @@
   flex-direction: column;
   box-shadow: 0 20px 45px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(99, 102, 241, 0.12);
   animation: slideUpScale 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+  @media (max-width: 767.98px) {
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+    right: calc(10px + env(safe-area-inset-right, 0px)) !important;
+    left: calc(10px + env(safe-area-inset-left, 0px)) !important;
+    width: auto !important;
+    max-width: calc(100vw - 20px) !important;
+    height: calc(100vh - 80px) !important;
+    max-height: 84vh !important;
+    border-radius: 18px !important;
+  }
 
   // Header
   .chat-header {

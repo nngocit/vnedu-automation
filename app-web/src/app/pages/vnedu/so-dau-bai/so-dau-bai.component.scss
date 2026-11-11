@@ -493,23 +493,10 @@
   transition: all 0.25s ease;
   position: relative;
 
-  // NỔI BẬT THANH LỊCH KHI LÀ NGÀY HÔM NAY CÓ TIẾT DẠY (Zalo Modern Theme - Đã khử hoàn toàn trùng đè viền)
+  // NỔI BẬT THANH LỊCH KHI LÀ NGÀY HÔM NAY CÓ TIẾT DẠY (Khử hoàn toàn chồng màu / double border)
   &.is-today {
-    border: 1px solid #bfdbfe !important;
+    border: 1.5px solid #93c5fd !important;
     box-shadow: 0 4px 20px -2px rgba(0, 104, 255, 0.12), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
-
-    // Dải nhấn màu xanh bên trái duy nhất (Left Accent Strip) bằng ::before
-    // Khử sạch lỗi miter join góc bo và không trùng đè với viền bảng bên trong
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      bottom: 0;
-      width: 4.5px;
-      background: #0068ff;
-      z-index: 5;
-    }
 
     .day-card-header {
       background: #f8fbff !important;
@@ -541,22 +528,10 @@
     }
   }
 
-  // KHUNG VIỀN XANH LÁ CHO NGÀY ĐÃ HOÀN TẤT 100% TIẾT DẠY
+  // KHUNG VIỀN XANH LÁ CHO NGÀY ĐÃ HOÀN TẤT 100% TIẾT DẠY (Khử hoàn toàn chồng màu / double border)
   &.is-completed {
-    border: 1.5px solid #10b981 !important;
-    box-shadow: 0 4px 18px -2px rgba(16, 185, 129, 0.14), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
-
-    // Dải nhấn xanh lá bên trái thanh thoát
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      bottom: 0;
-      width: 4.5px;
-      background: #10b981;
-      z-index: 5;
-    }
+    border: 1.5px solid #86efac !important;
+    box-shadow: 0 4px 18px -2px rgba(16, 185, 129, 0.12), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
 
     .day-card-header {
       background: #f0fdf4 !important;
@@ -784,14 +759,14 @@
     }
 
     &.row-slot-pending {
-      background-color: rgba(254, 242, 242, 0.4);
+      background-color: rgba(254, 242, 242, 0.45);
 
       &:hover {
-        background-color: rgba(254, 242, 242, 0.7) !important;
+        background-color: rgba(254, 242, 242, 0.75) !important;
       }
 
       td:first-child {
-        border-left: 3.5px dashed #ef4444;
+        border-left: 3.5px solid #ef4444 !important;
       }
     }
 
@@ -5310,6 +5285,7 @@ body.dark-mode {
 
 .slot-mobile-cards-list {
   background: #f8fafc;
+  padding: 0.75rem 0.65rem !important;
   border-bottom-left-radius: 14px;
   border-bottom-right-radius: 14px;
 }
@@ -5317,25 +5293,30 @@ body.dark-mode {
 .slot-mobile-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-left: 4.5px solid #3b82f6 !important;
+  border-left: 3.5px solid #3b82f6 !important;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
   transition: all 0.2s ease;
 
   &.slot-card-pending {
-    background: #ffffff;
-    border-color: #fee2e2;
-    border-left: 4.5px solid #ef4444 !important;
+    background: #fffdfd;
+    border-color: #fecaca;
+    border-left: 3.5px solid #ef4444 !important;
+    box-shadow: 0 2px 6px -1px rgba(239, 68, 68, 0.08);
   }
 
   &.slot-card-synced {
     background: #ffffff;
-    border-color: #d1fae5;
-    border-left: 4.5px solid #10b981 !important;
+    border-color: #bbf7d0;
+    border-left: 3.5px solid #10b981 !important;
+    box-shadow: 0 1px 4px rgba(16, 185, 129, 0.05);
   }
 
   &.slot-card-future {
     background: #f8fafc !important;
     border-color: #e2e8f0;
-    border-left: 4.5px solid #cbd5e1 !important;
+    border-left: 3.5px solid #cbd5e1 !important;
+    box-shadow: none;
   }
 
   .form-control, .form-select {
@@ -5349,7 +5330,10 @@ body.dark-mode {
 
 @media (max-width: 767.98px) {
   .vnedu-app-container {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
     padding-bottom: 6rem !important; // Không bị nút Trợ lý AI che khuất
+    overflow-x: hidden !important;
   }
 
   .hero-welcome-card {
