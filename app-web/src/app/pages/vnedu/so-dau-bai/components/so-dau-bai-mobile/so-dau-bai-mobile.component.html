@@ -865,20 +865,300 @@
   </ng-container>
 
   <!-- ======================================================== -->
-  <!-- TAB 5: KHÁM PHÁ (TÍNH NĂNG ĐANG PHÁT TRIỂN)              -->
+  <!-- TAB 5: KHÁM PHÁ & THƯ VIỆN TÀI LIỆU (CHUẨN APP THANH NIÊN) -->
   <!-- ======================================================== -->
   <ng-container *ngIf="activeTab === 'discover'">
-    <main class="mobile-coming-soon px-4 py-5 text-center d-flex flex-column align-items-center justify-content-center">
-      <div class="coming-soon-icon mb-3">🧭</div>
-      <h3 class="fw-bold text-gray-900 fs-5 mb-2">Tính năng đang phát triển</h3>
-      <p class="text-muted fs-7 mb-4 px-3">
-        Kho tiện ích Khám phá: Ngân hàng đề kiểm tra, Giáo án điện tử AI và Thư viện tài liệu giảng dạy sẽ sớm có mặt trên ứng dụng.
-      </p>
-      <button type="button"
-              class="btn-return-schedule px-4 py-2.5 rounded-pill"
-              (click)="activeTab = 'schedule'">
-        ← Quay lại Sổ Đầu Bài
-      </button>
+    <main class="mobile-discover-screen px-3 pt-3 pb-5 d-flex flex-column gap-3">
+
+      <!-- 1. DẢI SUBTABS CHUYỂN MỤC KHÁM PHÁ (CHUẨN ẢNH 96abbc49) -->
+      <div class="discover-subtabs-card p-1.5 bg-white rounded-pill shadow-xs d-flex">
+        <button type="button"
+                class="discover-subtab-btn flex-fill py-2 px-3 rounded-pill fw-bold fs-8 d-flex align-items-center justify-content-center gap-1.5"
+                [class.active]="discoverSubTab === 'documents'"
+                (click)="discoverSubTab = 'documents'">
+          <span>📚</span>
+          <span>Tài Liệu</span>
+        </button>
+        <button type="button"
+                class="discover-subtab-btn flex-fill py-2 px-3 rounded-pill fw-bold fs-8 d-flex align-items-center justify-content-center gap-1.5"
+                [class.active]="discoverSubTab === 'tools'"
+                (click)="discoverSubTab = 'tools'">
+          <span>⚡</span>
+          <span>Tiện Ích TT22</span>
+        </button>
+        <button type="button"
+                class="discover-subtab-btn flex-fill py-2 px-3 rounded-pill fw-bold fs-8 d-flex align-items-center justify-content-center gap-1.5"
+                [class.active]="discoverSubTab === 'news'"
+                (click)="discoverSubTab = 'news'">
+          <span>📰</span>
+          <span>Bản Tin</span>
+        </button>
+      </div>
+
+      <!-- ==================================================== -->
+      <!-- PHÂN ĐOẠN 1: THƯ VIỆN TÀI LIỆU (CHUẨN ẢNH MẪU 7cce5eef) -->
+      <!-- ==================================================== -->
+      <div *ngIf="discoverSubTab === 'documents'" class="discover-docs-view d-flex flex-column gap-3">
+        <!-- Banner Thư viện tài liệu -->
+        <div class="chat-header-banner p-3 rounded-4 bg-white shadow-xs d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2.5">
+            <div class="chat-school-icon-badge" style="background: #eff6ff;">
+              📚
+            </div>
+            <div>
+              <h2 class="chat-banner-title mb-0 fw-bold text-gray-900 fs-6">Thư Viện Tài Liệu</h2>
+              <span class="chat-banner-sub text-muted fs-8">Kho giáo án, biểu mẫu & quy chế vnEdu</span>
+            </div>
+          </div>
+          <span class="badge bg-light-primary text-primary fw-bold px-2.5 py-1.5 rounded-pill fs-8">
+            5 Chuyên mục
+          </span>
+        </div>
+
+        <!-- Ô tìm kiếm tài liệu chuẩn ảnh mẫu -->
+        <div class="chat-search-box position-relative">
+          <span class="chat-search-icon position-absolute top-50 start-0 translate-middle-y ms-3 text-muted">
+            🔍
+          </span>
+          <input type="text"
+                 class="form-control-tnvn chat-search-input ps-5 pe-4 py-2.5 rounded-pill bg-white shadow-xs"
+                 [(ngModel)]="searchDocQuery"
+                 placeholder="Tìm kiếm mẫu giáo án, ma trận đề, biểu mẫu..."
+                 title="Tìm tài liệu">
+          <button *ngIf="searchDocQuery"
+                  type="button"
+                  class="btn-clear-search position-absolute top-50 end-0 translate-middle-y me-3 border-0 bg-transparent text-muted"
+                  (click)="searchDocQuery = ''">
+            ✕
+          </button>
+        </div>
+
+        <!-- Danh sách thư viện tài liệu dạng Card (giống hệt ảnh mẫu 7cce5eef) -->
+        <div class="d-flex flex-column gap-2.5">
+          <div *ngIf="filteredCategories.length === 0" class="text-center py-5 bg-white rounded-4 shadow-xs">
+            <div class="fs-1 mb-2">📁</div>
+            <div class="fw-bold text-gray-800 fs-6">Không tìm thấy tài liệu phù hợp</div>
+            <div class="text-muted fs-8">Thử tìm theo từ khóa: 'toán', 'kế hoạch', 'quy chế'...</div>
+          </div>
+
+          <div *ngFor="let cat of filteredCategories" class="doc-category-card p-3 bg-white rounded-4 shadow-xs">
+            <!-- Header chuyên mục -->
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <div class="d-flex align-items-center gap-2.5 min-w-0">
+                <div class="doc-cat-icon rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                     [style.background]="cat.iconBg">
+                  <span style="font-size: 20px;">{{ cat.icon }}</span>
+                </div>
+                <div class="min-w-0">
+                  <h3 class="doc-cat-title mb-0 fw-bold text-gray-900 fs-7 text-truncate">
+                    {{ cat.title }}
+                  </h3>
+                  <span class="doc-cat-date text-muted fs-9">{{ cat.date }}</span>
+                </div>
+              </div>
+
+              <div class="d-flex align-items-center gap-1.5 flex-shrink-0 text-muted fs-9 fw-bold">
+                <span>📎</span>
+                <span>{{ cat.docs?.length || cat.count }}</span>
+              </div>
+            </div>
+
+            <!-- Danh sách file tài liệu bên trong -->
+            <div class="doc-files-list pt-2 border-top border-gray-100 d-flex flex-column gap-2">
+              <div *ngFor="let doc of cat.docs"
+                   class="doc-file-item p-2.5 rounded-3 bg-light d-flex align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2 min-w-0">
+                  <span class="file-type-badge fs-8">{{ doc.type === 'pdf' ? '📕' : (doc.type === 'xlsx' ? '📗' : '📘') }}</span>
+                  <div class="min-w-0">
+                    <div class="doc-file-name text-gray-900 fw-semibold fs-8 text-truncate">{{ doc.name }}</div>
+                    <div class="doc-file-meta text-muted fs-9">
+                      {{ doc.size }} • 👁️ {{ doc.views }} • ⬇️ {{ doc.downloads }}
+                    </div>
+                  </div>
+                </div>
+
+                <button type="button"
+                        class="btn-doc-download rounded-pill px-2.5 py-1 fs-9 fw-bold btn-primary text-white border-0"
+                        (click)="previewDoc(doc)">
+                  Tải về
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================================================== -->
+      <!-- PHÂN ĐOẠN 2: TIỆN ÍCH GIÁO VIÊN & TÍNH ĐIỂM TT22      -->
+      <!-- ==================================================== -->
+      <div *ngIf="discoverSubTab === 'tools'" class="discover-tools-view d-flex flex-column gap-3">
+        <!-- Card 1: Công cụ Tính điểm trung bình môn học Thông tư 22 -->
+        <div class="tool-card p-3 bg-white rounded-4 shadow-xs">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="d-flex align-items-center gap-2">
+              <span class="fs-4">🧮</span>
+              <div>
+                <h3 class="mb-0 fw-bold fs-6 text-gray-900">Tính Điểm ĐTBm Môn Học</h3>
+                <span class="text-muted fs-8">Quy chuẩn tính điểm Thông tư 22/2021/TT-BGDĐT</span>
+              </div>
+            </div>
+            <span class="badge" [ngClass]="calculatedRank.badgeClass">
+              {{ calculatedRank.text }}
+            </span>
+          </div>
+
+          <!-- Kết quả ĐTBm hiển thị to rõ -->
+          <div class="score-result-box p-3 rounded-4 mb-3 d-flex align-items-center justify-content-between text-white"
+               style="background: linear-gradient(135deg, #1d4ae8 0%, #2b59ff 100%);">
+            <div>
+              <div class="fs-8 text-white-50 fw-semibold">ĐIỂM TRUNG BÌNH MÔN (ĐTBm)</div>
+              <div class="fs-2 fw-black text-white mt-0.5">{{ calculatedDtb }} / 10</div>
+            </div>
+            <div class="text-end">
+              <span class="badge bg-white text-primary fw-bold px-3 py-1.5 rounded-pill fs-7">
+                {{ calculatedRank.text }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Các ô nhập điểm -->
+          <div class="row g-2 mb-2">
+            <div class="col-3">
+              <label class="form-label fs-9 fw-bold text-muted mb-1">ĐĐGtx 1</label>
+              <input type="number" step="0.1" min="0" max="10" [(ngModel)]="calcTx1" class="form-control-tnvn text-center py-2 rounded-3 fs-7 fw-bold">
+            </div>
+            <div class="col-3">
+              <label class="form-label fs-9 fw-bold text-muted mb-1">ĐĐGtx 2</label>
+              <input type="number" step="0.1" min="0" max="10" [(ngModel)]="calcTx2" class="form-control-tnvn text-center py-2 rounded-3 fs-7 fw-bold">
+            </div>
+            <div class="col-3">
+              <label class="form-label fs-9 fw-bold text-muted mb-1">ĐĐGtx 3</label>
+              <input type="number" step="0.1" min="0" max="10" [(ngModel)]="calcTx3" class="form-control-tnvn text-center py-2 rounded-3 fs-7 fw-bold">
+            </div>
+            <div class="col-3">
+              <label class="form-label fs-9 fw-bold text-muted mb-1">ĐĐGtx 4</label>
+              <input type="number" step="0.1" min="0" max="10" [(ngModel)]="calcTx4" class="form-control-tnvn text-center py-2 rounded-3 fs-7 fw-bold">
+            </div>
+          </div>
+
+          <div class="row g-2 pt-1 border-top border-gray-100">
+            <div class="col-6">
+              <label class="form-label fs-9 fw-bold text-primary mb-1">ĐĐGgk (Hệ số 2)</label>
+              <input type="number" step="0.1" min="0" max="10" [(ngModel)]="calcGk" class="form-control-tnvn text-center py-2 rounded-3 fs-7 fw-bold border-primary-subtle bg-light-primary text-primary">
+            </div>
+            <div class="col-6">
+              <label class="form-label fs-9 fw-bold text-primary mb-1">ĐĐGck (Hệ số 3)</label>
+              <input type="number" step="0.1" min="0" max="10" [(ngModel)]="calcCk" class="form-control-tnvn text-center py-2 rounded-3 fs-7 fw-bold border-primary-subtle bg-light-primary text-primary">
+            </div>
+          </div>
+          <div class="text-muted fs-9 mt-2 text-center">
+            Công thức: <em>ĐTBm = (Tổng ĐĐGtx + 2 × ĐĐGgk + 3 × ĐĐGck) ÷ (Số ĐĐGtx + 5)</em>
+          </div>
+        </div>
+
+        <!-- Card 2: Ngân hàng Nhận xét Sổ Đầu Bài AI (Sao chép 1 chạm) -->
+        <div class="tool-card p-3 bg-white rounded-4 shadow-xs">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <span class="fs-4">✍️</span>
+              <div>
+                <h3 class="mb-0 fw-bold fs-6 text-gray-900">Kho Nhận Xét SĐB Gợi Ý</h3>
+                <span class="text-muted fs-8">Nhấp để sao chép dán trực tiếp vào SĐB</span>
+              </div>
+            </div>
+            <span class="badge bg-light text-muted fw-bold fs-8">1 Chạm</span>
+          </div>
+
+          <div class="d-flex flex-column gap-2 mt-2">
+            <div *ngFor="let comment of sampleCommentsList; let idx = index"
+                 class="comment-sample-item p-2.5 rounded-3 border d-flex align-items-center justify-content-between gap-2"
+                 [class.border-primary-subtle]="copiedCommentIndex === idx"
+                 [class.bg-light-primary]="copiedCommentIndex === idx">
+              <div class="min-w-0">
+                <span class="badge rounded-pill px-2 py-0.5 fs-9 fw-bold mb-1" [ngClass]="comment.badge">
+                  {{ comment.tag }}
+                </span>
+                <div class="text-gray-900 fs-8">{{ comment.text }}</div>
+              </div>
+
+              <button type="button"
+                      class="btn-copy-comment rounded-pill px-2.5 py-1.5 fs-9 fw-bold flex-shrink-0"
+                      [class.btn-success]="copiedCommentIndex === idx"
+                      [class.btn-light]="copiedCommentIndex !== idx"
+                      (click)="copyComment(comment.text, idx)">
+                {{ copiedCommentIndex === idx ? '✓ Đã chép' : 'Sao chép' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================================================== -->
+      <!-- PHÂN ĐOẠN 3: BẢN TIN GIÁO DỤC (CHUẨN ẢNH 96abbc49)    -->
+      <!-- ==================================================== -->
+      <div *ngIf="discoverSubTab === 'news'" class="discover-news-view d-flex flex-column gap-3">
+        <!-- Hero Featured Banner -->
+        <div class="news-hero-banner p-3 rounded-4 shadow-xs text-white position-relative"
+             style="background: linear-gradient(135deg, #1d4ae8 0%, #2b59ff 60%, #00d2ff 100%);">
+          <span class="badge bg-white text-primary fw-bold px-2.5 py-1 rounded-pill fs-9 mb-2">
+            ⭐ TIÊU ĐIỂM GIÁO DỤC
+          </span>
+          <h3 class="text-white fw-bold fs-6 mb-1.5 leading-tight">
+            Chuyển đổi số trường học: Sổ Đầu Bài điện tử vnEdu giúp giáo viên tiết kiệm 80% thời gian hành chính
+          </h3>
+          <div class="text-white-50 fs-9 mt-2 d-flex align-items-center gap-2">
+            <span>📅 11/11/2026</span>
+            <span>•</span>
+            <span>Trường THCS An Lập</span>
+          </div>
+        </div>
+
+        <!-- Danh sách tin tức -->
+        <div class="d-flex flex-column gap-2.5">
+          <div *ngFor="let news of discoverNewsList"
+               class="news-item-card p-3 bg-white rounded-4 shadow-xs d-flex align-items-center justify-content-between gap-3">
+            <div class="min-w-0 flex-grow-1">
+              <span class="badge bg-light-primary text-primary fw-bold rounded-pill px-2 py-0.5 fs-9 mb-1">
+                {{ news.badge }}
+              </span>
+              <h4 class="news-item-title mb-1 fw-bold text-gray-900 fs-7">
+                {{ news.title }}
+              </h4>
+              <div class="text-muted fs-9 d-flex align-items-center gap-2">
+                <span>{{ news.sub }}</span>
+                <span>•</span>
+                <span>{{ news.date }}</span>
+              </div>
+            </div>
+
+            <div class="news-item-thumb rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                 style="width: 48px; height: 48px; background: #eef4ff; font-size: 24px;">
+              {{ news.image }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL PREVIEW TÀI LIỆU -->
+      <div *ngIf="activeDocPreview" class="modal-backdrop-mobile d-flex align-items-center justify-content-center p-3">
+        <div class="preview-dialog p-4 bg-white rounded-4 shadow-lg w-100 max-w-sm text-center">
+          <div class="fs-1 mb-2">{{ activeDocPreview.type === 'pdf' ? '📕' : (activeDocPreview.type === 'xlsx' ? '📗' : '📘') }}</div>
+          <h3 class="fw-bold fs-6 text-gray-900 mb-1">{{ activeDocPreview.name }}</h3>
+          <p class="text-muted fs-8 mb-3">{{ activeDocPreview.size }} • Cập nhật: {{ activeDocPreview.date }}</p>
+          <div class="p-2.5 rounded-3 bg-light-success text-success fs-8 fw-semibold mb-3">
+            ✓ Đã chuẩn bị sẵn file tải về trực tuyến
+          </div>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-light rounded-pill flex-fill py-2 fs-8 fw-bold" (click)="closeDocPreview()">
+              Đóng
+            </button>
+            <button type="button" class="btn btn-primary rounded-pill flex-fill py-2 fs-8 fw-bold" (click)="closeDocPreview()">
+              ⬇️ Tải xuống
+            </button>
+          </div>
+        </div>
+      </div>
+
     </main>
   </ng-container>
 

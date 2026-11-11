@@ -1173,3 +1173,75 @@ $tnvn-text-muted: #64748b;
     }
   }
 }
+
+// ========================================================
+// 13. GIAO DIỆN KHÁM PHÁ & THƯ VIỆN TÀI LIỆU
+// ========================================================
+.mobile-discover-screen {
+  .discover-subtabs-card {
+    border: 1px solid #e2e8f0;
+
+    .discover-subtab-btn {
+      border: none;
+      background: transparent;
+      color: #64748b;
+      transition: all 0.2s ease;
+      cursor: pointer;
+
+      &.active {
+        background: #2b59ff;
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(43, 89, 255, 0.25);
+      }
+    }
+  }
+
+  .doc-category-card {
+    border: 1px solid #eef2f6;
+
+    .doc-cat-icon {
+      width: 44px;
+      height: 44px;
+    }
+
+    .doc-file-item {
+      border: 1px solid #f1f5f9;
+      transition: all 0.15s ease;
+      &:active {
+        background: #e2e8f0 !important;
+      }
+
+      .btn-doc-download {
+        background: #2b59ff;
+        white-space: nowrap;
+        &:active {
+          background: #1a47e8;
+        }
+      }
+    }
+  }
+
+  .tool-card {
+    border: 1px solid #eef2f6;
+
+    .score-result-box {
+      box-shadow: 0 6px 20px rgba(43, 89, 255, 0.25);
+    }
+
+    .comment-sample-item {
+      border-color: #e2e8f0 !important;
+      transition: all 0.15s ease;
+      &:hover {
+        background: #f8fafc;
+      }
+    }
+  }
+
+  .news-hero-banner {
+    box-shadow: 0 8px 24px rgba(43, 89, 255, 0.25);
+  }
+
+  .news-item-card {
+    border: 1px solid #eef2f6;
+  }
+}
