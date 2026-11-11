@@ -767,6 +767,26 @@
       </div>
     </div>
 
+    <!-- THANH ĐIỀU KHIỂN CHỌN DẠNG XEM TRÊN DI ĐỘNG (DUY NHẤT 1 VỊ TRÍ, GỌN GÀNG & THOÁNG) -->
+    <div class="mobile-schedule-controls d-flex d-md-none align-items-center justify-content-between mb-3 px-1 py-1">
+      <div class="d-flex align-items-center gap-2">
+        <span class="fs-7 fw-bold text-gray-800">Lịch Dạy Tuần {{ currentWeek }}</span>
+        <span class="badge badge-light-primary fs-9 px-2 py-0.5 rounded-pill fw-bold">{{ totalSlotsCount }} tiết</span>
+      </div>
+      <div class="mobile-view-toggle">
+        <button type="button" class="btn-toggle-view"
+                [class.active]="mobileViewMode === 'cards'"
+                (click)="setMobileViewMode('cards')">
+          📱 Dạng thẻ
+        </button>
+        <button type="button" class="btn-toggle-view"
+                [class.active]="mobileViewMode === 'table'"
+                (click)="setMobileViewMode('table')">
+          📊 Dạng bảng
+        </button>
+      </div>
+    </div>
+
     <div *ngFor="let group of dayGroups; trackBy: trackByThu"
          class="day-card"
          [class.is-today]="group.isToday"
@@ -819,20 +839,6 @@
                [title]="'Tổng số ' + group.slots.length + ' tiết giảng dạy được phân công vào ngày ' + group.thuText">
             {{ group.slots.length }} tiết giảng dạy
           </div>
-
-          <!-- Nút chuyển đổi giao diện Thẻ / Bảng trên Di động -->
-          <div class="mobile-view-toggle d-inline-flex d-md-none align-items-center ms-auto">
-            <button type="button" class="btn-toggle-view"
-                    [class.active]="mobileViewMode === 'cards'"
-                    (click)="setMobileViewMode('cards')">
-              📱 Dạng thẻ
-            </button>
-            <button type="button" class="btn-toggle-view"
-                    [class.active]="mobileViewMode === 'table'"
-                    (click)="setMobileViewMode('table')">
-              📊 Dạng bảng
-            </button>
-          </div>
         </div>
       </div>
 
@@ -846,14 +852,14 @@
              [class.slot-card-future]="group.isFutureDay || slot.isFutureSlot || isFutureWeek">
           
           <!-- Hàng 1: Tiết học, Khung giờ, Lớp & Điểm danh -->
-          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2.5 pb-2 border-bottom">
-            <div class="d-flex align-items-center gap-2">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2 pb-2 border-bottom">
+            <div class="d-flex align-items-center gap-1.5">
               <span class="badge-session" [ngClass]="slot.tiet <= 5 ? 'morning' : 'afternoon'">
                 {{ slot.tiet <= 5 ? 'Sáng' : 'Chiều' }}
               </span>
               <span class="fw-bolder text-gray-900 fs-7">Tiết {{ slot.tiet }}</span>
               <span class="fs-9 text-gray-500 font-monospace">
-                ({{ slot.tiet <= 5 ? (slot.tiet === 1 ? '07:05 - 07:50' : slot.tiet === 2 ? '07:55 - 08:40' : slot.tiet === 3 ? '08:50 - 09:35' : slot.tiet === 4 ? '09:45 - 10:30' : '10:35 - 11:20') : '' }})
+                ({{ slot.tiet <= 5 ? (slot.tiet === 1 ? '07:05' : slot.tiet === 2 ? '07:55' : slot.tiet === 3 ? '08:50' : slot.tiet === 4 ? '09:45' : '10:35') : '' }})
               </span>
             </div>
 
@@ -867,51 +873,51 @@
                    (click)="openAttendanceModal(slot)"
                    title="Nhấp để xem/sửa điểm danh chi tiết">
                 <ng-container *ngIf="isFutureWeek || slot.isFutureSlot">
-                  <span class="text-future-plan">📅 Chưa tới ngày</span>
+                  <span class="text-future-plan">📅 Kế hoạch</span>
                 </ng-container>
                 <ng-container *ngIf="!isFutureWeek && !slot.isFutureSlot && isCanDoiChieu(slot)">
-                  <span>⚠️ Lệch Giám thị ({{ slot.giamThiSoLuongNghi || 0 }} vắng)</span>
+                  <span>⚠️ Lệch GT ({{ slot.giamThiSoLuongNghi || 0 }} vắng)</span>
                 </ng-container>
                 <ng-container *ngIf="!isFutureWeek && !slot.isFutureSlot && !isCanDoiChieu(slot) && getDisplayAbsentCount(slot) > 0">
-                  <span>✓ {{ getDisplayAbsentCount(slot) }} vắng (Đã khớp)</span>
+                  <span>✓ {{ getDisplayAbsentCount(slot) }} vắng</span>
                 </ng-container>
                 <ng-container *ngIf="!isFutureWeek && !slot.isFutureSlot && !isCanDoiChieu(slot) && getDisplayAbsentCount(slot) === 0">
-                  <span>👥 ✓ Đủ (0 vắng)</span>
+                  <span>✓ Đủ (0 vắng)</span>
                 </ng-container>
               </div>
             </div>
           </div>
 
           <!-- Hàng 2: Môn học & Tiết PPCT -->
-          <div class="d-flex align-items-center justify-content-between mb-2">
-            <span class="fw-bold text-gray-900 fs-7 d-flex align-items-center gap-1">
+          <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+            <span class="fw-bold text-gray-900 fs-7 d-flex align-items-center gap-1 text-truncate">
               <span>📚</span>
               <span>{{ slot.mon }}</span>
             </span>
-            <div class="d-flex align-items-center gap-1 fs-8 text-gray-600">
-              <span>Tiết PPCT:</span>
+            <div class="d-flex align-items-center gap-1 fs-9 text-gray-600 flex-shrink-0">
+              <span class="fw-medium">Tiết PPCT:</span>
               <input type="number"
-                     class="form-control form-control-sm form-control-solid w-55px py-0 px-1 text-center fw-bold text-primary border border-gray-300"
+                     class="form-control form-control-sm form-control-solid w-50px py-0.5 px-1 text-center fw-bold text-primary border border-gray-300 fs-8"
                      [(ngModel)]="slot.ppct" min="1" max="150"
                      title="Tiết PPCT (Nhấp để sửa)">
             </div>
           </div>
 
-          <!-- Hàng 3: Tên bài dạy (FULL WIDTH TRỰC QUAN CHO NGƯỜI DÙNG MOBILE) -->
-          <div class="mb-2.5">
-            <div class="text-gray-500 fs-9 fw-bold text-uppercase mb-1 d-flex align-items-center gap-1">
-              <span>📖</span> Tên bài dạy:
+          <!-- Hàng 3: Tên bài dạy (Thanh lịch, không nhãn hoa chữ to choán chỗ) -->
+          <div class="mb-2">
+            <div class="d-flex align-items-center justify-content-between mb-1">
+              <span class="text-gray-500 fs-9 fw-semibold">Tên bài dạy:</span>
             </div>
             <input type="text"
-                   class="form-control form-control-sm form-control-solid fw-semibold rounded-2 border border-gray-300 text-gray-900 w-100 py-2 px-2.5 fs-7"
+                   class="form-control form-control-sm form-control-solid fw-semibold rounded-2 border border-gray-300 text-gray-900 w-100 py-1.5 px-2.5 fs-8"
                    [(ngModel)]="slot.baiDay"
                    placeholder="Nhập tên bài dạy...">
           </div>
 
-          <!-- Hàng 4: Nhận xét tiết học (FULL WIDTH DROPDOWN) -->
-          <div class="mb-3">
-            <div class="text-gray-500 fs-9 fw-bold text-uppercase mb-1 d-flex align-items-center gap-1">
-              <span>📝</span> Nhận xét tiết dạy:
+          <!-- Hàng 4: Nhận xét tiết học -->
+          <div class="mb-2.5">
+            <div class="d-flex align-items-center justify-content-between mb-1">
+              <span class="text-gray-500 fs-9 fw-semibold">Nhận xét:</span>
             </div>
             <select class="form-select form-select-sm form-select-solid fs-8 text-gray-800 rounded-2 border border-gray-300 py-1.5 px-2.5 w-100"
                     [(ngModel)]="slot.nhanXet">
@@ -927,7 +933,7 @@
           <div class="d-flex align-items-center justify-content-between pt-2 border-top">
             <div>
               <span *ngIf="isFutureWeek || slot.isFutureSlot" class="status-badge-vnedu future fs-9">
-                📅 Kế hoạch bài dạy
+                📅 Kế hoạch
               </span>
               <span *ngIf="!isFutureWeek && !slot.isFutureSlot && slot.isSynced" class="status-badge-vnedu synced fs-9">
                 ✓ Đã lưu vnEdu
@@ -938,7 +944,7 @@
             </div>
 
             <button type="button"
-                    class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold d-flex align-items-center gap-1.5 shadow-xs"
+                    class="btn btn-sm rounded-pill px-3 py-1 fw-bold d-flex align-items-center gap-1.5 fs-8 shadow-xs"
                     [ngClass]="(isFutureWeek || slot.isFutureSlot) ? 'btn-light-primary text-primary' : (slot.isSynced ? 'btn-light-success text-success' : 'btn-primary text-white')"
                     [disabled]="slot.isSaving"
                     (click)="syncSingle(slot)">
