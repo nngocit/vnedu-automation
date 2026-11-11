@@ -29,6 +29,8 @@
   [isFutureWeek]="isFutureWeek"
   [isSavingBatch]="isSavingBatch"
   [appVersion]="appVersion"
+  [notifications]="notifications"
+  [unreadNotificationsCount]="unreadNotificationsCount"
   (weekChange)="onWeekChangeMobile($event)"
   (prevWeek)="prevWeek()"
   (nextWeek)="nextWeek()"
@@ -38,6 +40,7 @@
   (openAttendance)="openAttendanceModal($event)"
   (scanSupervisor)="scanAllSupervisorAttendance()"
   (switchTeacher)="openTeacherSwitcherModal()"
+  (logout)="onLogout()"
 ></app-so-dau-bai-mobile>
 
 <!-- GIAO DIỆN DESKTOP ĐẦY ĐỦ TÍNH NĂNG (BẢNG, LIEFLAT ANALYTICS, RADAR...) -->

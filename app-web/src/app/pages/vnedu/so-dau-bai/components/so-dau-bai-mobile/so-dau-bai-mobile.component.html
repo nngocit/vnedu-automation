@@ -4,44 +4,89 @@
   <!-- ======================================================== -->
   <header class="mobile-youth-header">
     <div class="header-top-row d-flex align-items-center justify-content-between px-3 pt-3 pb-2">
-      <!-- Nút đổi giáo viên / Cài đặt góc trái (SVG Outline Icon) -->
-      <button type="button" class="header-nav-btn" (click)="switchTeacher.emit()" title="Đổi giáo viên">
+      <!-- Nút góc trái: Nếu ở tab con thì thành nút Back ←, nếu ở Lịch dạy thì thành icon Cá nhân -->
+      <button *ngIf="activeTab === 'schedule'"
+              type="button"
+              class="header-nav-btn"
+              (click)="activeTab = 'profile'"
+              title="Thông tin cá nhân & Tài khoản">
         <svg class="header-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-          <circle cx="9" cy="7" r="4"></circle>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
         </svg>
       </button>
 
-      <!-- Tiêu đề trung tâm -->
+      <button *ngIf="activeTab !== 'schedule'"
+              type="button"
+              class="header-nav-btn"
+              (click)="activeTab = 'schedule'"
+              title="Quay lại Lịch dạy">
+        <svg class="header-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+      </button>
+
+      <!-- Tiêu đề trung tâm linh hoạt theo từng tab -->
       <div class="header-title-box text-center">
-        <h1 class="header-app-title mb-0">Sổ Đầu Bài & Lịch Dạy</h1>
-        <span class="header-app-sub">Hệ thống đồng bộ vnEdu</span>
+        <ng-container [ngSwitch]="activeTab">
+          <ng-container *ngSwitchCase="'schedule'">
+            <h1 class="header-app-title mb-0">Sổ Đầu Bài & Lịch Dạy</h1>
+            <span class="header-app-sub">Hệ thống đồng bộ vnEdu</span>
+          </ng-container>
+          <ng-container *ngSwitchCase="'sync'">
+            <h1 class="header-app-title mb-0">Trung Tâm Đồng Bộ</h1>
+            <span class="header-app-sub">Quản lý CSDL vnEdu & Giám thị</span>
+          </ng-container>
+          <ng-container *ngSwitchCase="'profile'">
+            <h1 class="header-app-title mb-0">Cá Nhân</h1>
+            <span class="header-app-sub">Hồ sơ giáo viên & Đăng xuất</span>
+          </ng-container>
+          <ng-container *ngSwitchCase="'messages'">
+            <h1 class="header-app-title mb-0">Tin Nhắn</h1>
+            <span class="header-app-sub">Hộp thư nội bộ</span>
+          </ng-container>
+          <ng-container *ngSwitchCase="'discover'">
+            <h1 class="header-app-title mb-0">Khám Phá</h1>
+            <span class="header-app-sub">Tiện ích giáo dục</span>
+          </ng-container>
+        </ng-container>
       </div>
 
-      <!-- Cụm góc phải: Quét Giám thị / Thông báo -->
-      <button type="button" class="header-nav-btn" (click)="scanSupervisor.emit()" title="Quét SĐĐ Giám thị">
+      <!-- Nút góc phải: Chuông thông báo 🔔 với chấm đỏ -->
+      <button type="button"
+              class="header-nav-btn position-relative"
+              (click)="showNotificationSheet = !showNotificationSheet"
+              title="Thông báo hệ thống">
         <svg class="header-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
         </svg>
+        <span *ngIf="unreadNotificationsCount > 0"
+              class="header-badge-dot position-absolute top-0 end-0 translate-middle p-1 bg-danger border border-light rounded-circle">
+        </span>
       </button>
     </div>
 
     <!-- HÀNG TAB CHUYỂN MỤC VỚI VẠCH CHỈ MỤC VÀNG (#ffd200) CHUẨN MẪU THANH NIÊN -->
-    <div class="header-subtabs-row d-flex align-items-center justify-content-around px-2 pt-1 pb-2">
-      <div class="header-subtab-item active" (click)="selectDay(todayThu || 2)">
-        <span class="subtab-text">Lịch dạy hôm nay</span>
-        <!-- VẠCH VÀNG CHỈ MỤC CHUẨN THEO ẢNH MẪU 1 VÀ 6 -->
-        <div class="subtab-active-yellow-bar"></div>
+    <div *ngIf="activeTab === 'schedule'"
+         class="header-subtabs-row d-flex align-items-center justify-content-around px-2 pt-1 pb-2">
+      <div class="header-subtab-item"
+           [class.active]="selectedThu === todayThu"
+           (click)="selectDay(todayThu)">
+        <span class="subtab-text">Hôm nay</span>
+        <div *ngIf="selectedThu === todayThu" class="subtab-active-yellow-bar"></div>
       </div>
-      <div class="header-subtab-item" (click)="syncAll.emit()">
+      <div class="header-subtab-item"
+           [class.active]="selectedThu !== todayThu"
+           (click)="selectDay(dayGroups[0]?.thu || 2)">
         <span class="subtab-text">Cả tuần</span>
+        <div *ngIf="selectedThu !== todayThu" class="subtab-active-yellow-bar"></div>
       </div>
-      <div class="header-subtab-item" (click)="scanSupervisor.emit()">
-        <span class="subtab-text">Giám thị</span>
+      <div class="header-subtab-item" (click)="activeTab = 'sync'">
+        <span class="subtab-text">Đồng bộ</span>
       </div>
-      <div class="header-subtab-item" (click)="switchTeacher.emit()">
+      <div class="header-subtab-item" (click)="activeTab = 'profile'">
         <span class="subtab-text">Cá nhân</span>
       </div>
     </div>
@@ -51,308 +96,594 @@
   </header>
 
   <!-- ======================================================== -->
-  <!-- 2. OVERLAPPING PROFILE CARD (THẺ CÁ NHÂN CHUẨN ẢNH MẪU 2)-->
+  <!-- TAB 1: MÀN HÌNH LỊCH DẠY & SỔ ĐẦU BÀI                     -->
   <!-- ======================================================== -->
-  <section class="mobile-profile-hero mx-3">
-    <div class="profile-card-content p-3 text-center position-relative">
-      <!-- Avatar tròn nổi với vòng viền cam/vàng & icon máy ảnh -->
-      <div class="avatar-wrapper mx-auto mb-2" (click)="switchTeacher.emit()" title="Đổi giáo viên">
-        <div class="avatar-ring">
-          <div class="avatar-circle">
-            <span class="avatar-emoji">{{ isSuperAdminLoggedIn ? '👑' : '👩‍🏫' }}</span>
-          </div>
-          <span class="avatar-camera-badge" title="Cập nhật ảnh đại diện">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" width="12" height="12">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-              <circle cx="12" cy="13" r="4"></circle>
-            </svg>
-          </span>
-        </div>
-      </div>
-
-      <!-- Lời chào & Tên giáo viên -->
-      <div class="d-flex align-items-center justify-content-center gap-1.5 mb-1.5" (click)="switchTeacher.emit()">
-        <h2 class="teacher-name-heading mb-0 fw-bold text-gray-900">
-          Xin chào, {{ isSuperAdminLoggedIn ? (currentLoggedInUser?.fullname || 'Xuân Ngọc') : teacherTitle }}
-        </h2>
-        <span class="edit-pencil-icon" title="Đổi giáo viên">✏️</span>
-      </div>
-
-      <!-- Badges: Đã xác thực + Phiên bản v2.8.3 -->
-      <div class="d-flex align-items-center justify-content-center gap-2 mb-3 flex-wrap">
-        <span class="badge-verified-tnvn">
-          <span class="check-icon">✓</span>
-          <span>{{ isSuperAdminLoggedIn ? 'Super Admin quản trị' : 'Giáo viên đã xác thực' }}</span>
-        </span>
-        <span class="badge-version-tnvn">
-          {{ appVersion }}
-        </span>
-      </div>
-
-      <!-- Đơn vị công tác & Bộ chọn tuần dạng Capsule -->
-      <div class="school-and-week-row d-flex align-items-center justify-content-between pt-2.5 border-top border-gray-100 flex-wrap gap-2">
-        <div class="text-start">
-          <div class="school-label text-muted">Đơn vị công tác</div>
-          <div class="school-name text-gray-900 fw-bold text-truncate" style="max-width: 160px;">
-            {{ teacherSchool }}
+  <ng-container *ngIf="activeTab === 'schedule'">
+    <!-- 2. OVERLAPPING PROFILE CARD (THẺ CÁ NHÂN CHUẨN ẢNH MẪU 2)-->
+    <section class="mobile-profile-hero mx-3">
+      <div class="profile-card-content p-3 text-center position-relative">
+        <!-- Avatar tròn nổi với vòng viền cam/vàng & icon máy ảnh -->
+        <div class="avatar-wrapper mx-auto mb-2" (click)="activeTab = 'profile'" title="Xem thông tin cá nhân">
+          <div class="avatar-ring">
+            <div class="avatar-circle">
+              <span class="avatar-emoji">{{ isSuperAdminLoggedIn ? '👑' : '👩‍🏫' }}</span>
+            </div>
+            <span class="avatar-camera-badge" title="Cập nhật ảnh đại diện">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" width="12" height="12">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+            </span>
           </div>
         </div>
 
-        <!-- Bộ chọn tuần dạng Capsule viên thuốc -->
-        <div class="week-capsule-picker d-flex align-items-center">
-          <button type="button" class="week-btn-arrow" (click)="prevWeek.emit()" [disabled]="currentWeek <= 1" title="Tuần trước">❮</button>
-          <select class="week-select-tnvn" [ngModel]="currentWeek" (change)="onWeekSelect($event)">
-            <option *ngFor="let opt of weeksList" [value]="opt.weekNumber">
-              Tuần {{ opt.weekNumber }}{{ opt.weekNumber === realCurrentWeek ? ' (Hiện tại)' : '' }}
-            </option>
-          </select>
-          <button type="button" class="week-btn-arrow" (click)="nextWeek.emit()" [disabled]="currentWeek >= 35" title="Tuần sau">›</button>
+        <!-- Lời chào & Tên giáo viên -->
+        <div class="d-flex align-items-center justify-content-center gap-2 mb-1.5" (click)="activeTab = 'profile'">
+          <h2 class="teacher-name-heading mb-0 fw-bold text-gray-900">
+            Xin chào, {{ isSuperAdminLoggedIn ? (currentLoggedInUser?.fullname || 'Xuân Ngọc') : teacherTitle }}
+          </h2>
+          <span class="edit-pencil-icon" title="Hồ sơ cá nhân">✏️</span>
         </div>
-      </div>
-    </div>
-  </section>
 
-  <!-- CẢNH BÁO TUẦN CŨ -->
-  <div *ngIf="currentWeek < realCurrentWeek" class="mobile-notice-strip warning mx-3 mb-3 px-3 py-2.5 rounded-3 d-flex align-items-center gap-2">
-    <span class="fs-5">⚠️</span>
-    <span class="notice-text text-amber-900 fw-semibold">
-      Đang xem <strong>Tuần {{ currentWeek }}</strong> (Tuần cũ đã chốt sổ CSDL). Cẩn thận khi lưu đè dữ liệu!
-    </span>
-  </div>
-
-  <!-- ======================================================== -->
-  <!-- 3. SEGMENTED PILL DAY SWITCHER (CHUẨN ẢNH MẪU 7 - BXH)   -->
-  <!-- ======================================================== -->
-  <div class="day-switcher-container mx-3 mb-3">
-    <div class="day-segmented-track d-flex p-1">
-      <button *ngFor="let g of dayGroups; trackBy: trackByThu"
-              type="button"
-              class="day-pill-btn flex-fill d-flex flex-column align-items-center justify-content-center py-2"
-              [class.active]="selectedThu === g.thu"
-              [class.is-today]="g.isToday"
-              (click)="selectDay(g.thu)">
-        
-        <div class="d-flex align-items-center gap-1">
-          <span class="day-pill-name fw-bold">{{ getDayShort(g.thu) }}</span>
-          <!-- Chấm trạng thái nhỏ -->
-          <span class="status-micro-dot"
-                [class.dot-today]="g.isToday"
-                [class.dot-done]="g.isCompleted"
-                [class.dot-alert]="g.pendingCount > 0 && !g.isFutureDay && currentWeek === realCurrentWeek">
+        <!-- Badges: Đã xác thực + Phiên bản v2.8.4 -->
+        <div class="d-flex align-items-center justify-content-center gap-2 mb-3 flex-wrap">
+          <span class="badge-verified-tnvn">
+            <span class="check-icon">✓</span>
+            <span>{{ isSuperAdminLoggedIn ? 'Super Admin quản trị' : 'Giáo viên đã xác thực' }}</span>
+          </span>
+          <span class="badge-version-tnvn">
+            {{ appVersion }}
           </span>
         </div>
-        <span class="day-pill-date">{{ getDayDate(g.ngay) }}</span>
-      </button>
-    </div>
-  </div>
 
-  <!-- ======================================================== -->
-  <!-- 4. SELECTED DAY BANNER & NÚT CAM THANH NIÊN (ẢNH 1)      -->
-  <!-- ======================================================== -->
-  <section class="selected-day-banner mx-3 mb-3 p-3 rounded-4"
-           [class.is-today-banner]="selectedGroup?.isToday"
-           [class.is-completed-banner]="selectedGroup?.isCompleted">
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-      <div class="d-flex align-items-center gap-2">
-        <h3 class="banner-day-title mb-0 fw-bold text-gray-900">
-          {{ selectedGroup?.thuText || 'Thứ Hai' }}, {{ selectedGroup?.ngay || '' }}
-        </h3>
-        <span *ngIf="selectedGroup?.isToday" class="badge-pill-today">HÔM NAY</span>
-        <span *ngIf="selectedGroup?.isCompleted" class="badge-pill-done">✓ Đã đủ</span>
-        <span *ngIf="selectedGroup?.isFutureDay || currentWeek > realCurrentWeek" class="badge-pill-future">📅 Kế hoạch</span>
+        <!-- Đơn vị công tác & Bộ chọn tuần dạng Capsule -->
+        <div class="school-and-week-row d-flex align-items-center justify-content-between pt-2.5 border-top border-gray-100 flex-wrap gap-2">
+          <div class="text-start">
+            <div class="school-label text-muted">Đơn vị công tác</div>
+            <div class="school-name text-gray-900 fw-bold text-truncate" style="max-width: 160px;">
+              {{ teacherSchool }}
+            </div>
+          </div>
+
+          <!-- Bộ chọn tuần dạng Capsule viên thuốc -->
+          <div class="week-capsule-picker d-flex align-items-center">
+            <button type="button" class="week-btn-arrow" (click)="prevWeek.emit()" [disabled]="currentWeek <= 1" title="Tuần trước">❮</button>
+            <select class="week-select-tnvn" [ngModel]="currentWeek" (change)="onWeekSelect($event)">
+              <option *ngFor="let opt of weeksList" [value]="opt.weekNumber">
+                Tuần {{ opt.weekNumber }}{{ opt.weekNumber === realCurrentWeek ? ' (Hiện tại)' : '' }}
+              </option>
+            </select>
+            <button type="button" class="week-btn-arrow" (click)="nextWeek.emit()" [disabled]="currentWeek >= 35" title="Tuần sau">›</button>
+          </div>
+        </div>
       </div>
+    </section>
 
-      <span class="banner-slots-count fw-bold text-gray-700">
-        {{ selectedGroup?.slots?.length || 0 }} tiết giảng dạy
+    <!-- CẢNH BÁO TUẦN CŨ -->
+    <div *ngIf="currentWeek < realCurrentWeek" class="mobile-notice-strip warning mx-3 mb-3 px-3 py-2.5 rounded-3 d-flex align-items-center gap-2">
+      <span class="fs-5">⚠️</span>
+      <span class="notice-text text-amber-900 fw-semibold">
+        Đang xem <strong>Tuần {{ currentWeek }}</strong> (Tuần cũ đã chốt sổ CSDL). Cẩn thận khi lưu đè dữ liệu!
       </span>
     </div>
 
-    <!-- Nút LƯU NHANH HÔM NAY (Màu Cam Thanh Niên chuẩn theo ảnh mẫu 1) -->
-    <div *ngIf="selectedGroup?.isToday && selectedGroup?.pendingCount > 0" class="mt-2.5 pt-2 border-top border-gray-100 d-flex flex-column gap-2">
-      <div class="d-flex align-items-center justify-content-between">
-        <span class="text-danger fw-bold fs-7">⚠️ Còn {{ selectedGroup.pendingCount }} tiết chưa lưu vnEdu</span>
-        <span class="text-muted fs-8">Cập nhật ngay</span>
-      </div>
-      <button type="button"
-              class="btn-tnvn-orange w-100 py-3 d-flex align-items-center justify-content-center gap-2"
-              (click)="syncToday.emit()"
-              [disabled]="isSavingBatch">
-        <span *ngIf="isSavingBatch" class="spinner-border spinner-border-sm me-1" role="status"></span>
-        <span class="fw-bold">⚡ LƯU NHANH HÔM NAY ({{ selectedGroup.pendingCount }} TIẾT)</span>
-      </button>
-    </div>
-  </section>
-
-  <!-- ======================================================== -->
-  <!-- 5. DANH SÁCH THẺ TIẾT HỌC (CHUẨN FORM ẢNH MẪU 3 & 4)    -->
-  <!-- ======================================================== -->
-  <main class="mobile-slots-list px-3 d-flex flex-column gap-3 pb-5">
-    <!-- Trạng thái trống nếu không có tiết -->
-    <div *ngIf="!selectedGroup || selectedGroup.slots.length === 0" class="empty-day-state text-center py-5 bg-white rounded-4 shadow-xs">
-      <div class="fs-1 mb-2">🏖️</div>
-      <h4 class="fw-bold text-gray-800 mb-1 fs-6">Không có tiết dạy trong ngày này</h4>
-      <p class="text-muted mb-0 fs-7">Cô giáo được nghỉ dạy vào {{ selectedGroup?.thuText }}. Chọn thứ khác trên thanh điều hướng.</p>
-    </div>
-
-    <!-- Từng thẻ tiết học -->
-    <div *ngFor="let slot of selectedGroup?.slots; trackBy: trackBySlot"
-         class="mobile-slot-card p-3 rounded-4 bg-white shadow-xs"
-         [class.slot-pending]="!slot.isSynced && !selectedGroup.isFutureDay && !slot.isFutureSlot && currentWeek <= realCurrentWeek"
-         [class.slot-synced]="slot.isSynced && !selectedGroup.isFutureDay && !slot.isFutureSlot"
-         [class.slot-future]="selectedGroup.isFutureDay || slot.isFutureSlot || currentWeek > realCurrentWeek">
-      
-      <!-- Hàng 1: Tiết học & Điểm danh -->
-      <div class="d-flex align-items-center justify-content-between pb-2.5 mb-2.5 border-bottom border-gray-100">
-        <div class="d-flex align-items-center gap-2">
-          <span class="session-badge" [class.morning]="slot.tiet <= 5" [class.afternoon]="slot.tiet > 5">
-            {{ slot.tiet <= 5 ? 'Sáng' : 'Chiều' }}
-          </span>
-          <span class="slot-tiet-heading fw-bold text-gray-900">Tiết {{ slot.tiet }}</span>
-          <span class="slot-time-text text-muted">({{ getSlotTime(slot) }})</span>
-        </div>
-
-        <div class="d-flex align-items-center gap-2">
-          <span class="class-pill" [ngClass]="getClassBadgeClass(slot.lop)">
-            {{ slot.lop }}
-          </span>
+    <!-- 3. SEGMENTED PILL DAY SWITCHER (CHUẨN ẢNH MẪU 7 - BXH) -->
+    <div class="day-switcher-container mx-3 mb-3">
+      <div class="day-segmented-track d-flex p-1">
+        <button *ngFor="let g of dayGroups; trackBy: trackByThu"
+                type="button"
+                class="day-pill-btn flex-fill d-flex flex-column align-items-center justify-content-center py-2"
+                [class.active]="selectedThu === g.thu"
+                [class.is-today]="g.isToday"
+                (click)="selectDay(g.thu)">
           
-          <!-- Chip Điểm danh có thể nhấp -->
-          <div class="attendance-pill"
-               [ngClass]="getAttendanceChipClass(slot)"
-               (click)="openAttendance.emit(slot)"
-               title="Nhấp để xem/sửa điểm danh chi tiết">
-            <ng-container *ngIf="currentWeek > realCurrentWeek || slot.isFutureSlot">
-              <span>📅 Kế hoạch</span>
-            </ng-container>
-            <ng-container *ngIf="currentWeek <= realCurrentWeek && !slot.isFutureSlot && isCanDoiChieu(slot)">
-              <span>⚠️ Lệch GT ({{ slot.giamThiSoLuongNghi || 0 }} vắng)</span>
-            </ng-container>
-            <ng-container *ngIf="currentWeek <= realCurrentWeek && !slot.isFutureSlot && !isCanDoiChieu(slot) && getDisplayAbsentCount(slot) > 0">
-              <span>✓ {{ getDisplayAbsentCount(slot) }} vắng</span>
-            </ng-container>
-            <ng-container *ngIf="currentWeek <= realCurrentWeek && !slot.isFutureSlot && !isCanDoiChieu(slot) && getDisplayAbsentCount(slot) === 0">
-              <span>✓ Đủ (0 vắng)</span>
-            </ng-container>
+          <div class="d-flex align-items-center gap-1">
+            <span class="day-pill-name fw-bold">{{ getDayShort(g.thu) }}</span>
+            <span class="status-micro-dot"
+                  [class.dot-today]="g.isToday"
+                  [class.dot-done]="g.isCompleted"
+                  [class.dot-alert]="g.pendingCount > 0 && !g.isFutureDay && currentWeek === realCurrentWeek">
+            </span>
           </div>
-        </div>
-      </div>
-
-      <!-- Hàng 2: Môn học & Tiết PPCT -->
-      <div class="d-flex align-items-center justify-content-between mb-3">
-        <span class="subject-title fw-bold text-gray-900 text-truncate d-flex align-items-center gap-1.5">
-          <span>📚</span>
-          <span>{{ slot.mon }}</span>
-        </span>
-        <div class="d-flex align-items-center gap-2 flex-shrink-0">
-          <span class="ppct-label fw-bold text-gray-700">Tiết PPCT:</span>
-          <input type="number"
-                 class="input-ppct-tnvn text-center fw-bold"
-                 [(ngModel)]="slot.ppct" min="1" max="150">
-        </div>
-      </div>
-
-      <!-- Hàng 3: Tên bài dạy (Input form style Ảnh 3) -->
-      <div class="mb-3">
-        <label class="form-field-label">Tên bài dạy *</label>
-        <input type="text"
-               class="input-form-tnvn w-100"
-               [(ngModel)]="slot.baiDay"
-               placeholder="Nhập tên bài dạy...">
-      </div>
-
-      <!-- Hàng 4: Nhận xét tiết học (Select form style Ảnh 3 với mũi tên xanh) -->
-      <div class="mb-3">
-        <label class="form-field-label">Nhận xét tiết dạy</label>
-        <div class="select-wrapper-tnvn position-relative">
-          <select class="select-form-tnvn w-100"
-                  [(ngModel)]="slot.nhanXet">
-            <option value="Lớp học nghiêm túc, tích cực">Lớp học nghiêm túc, tích cực</option>
-            <option value="Lớp sôi nổi, phát biểu hăng hái">Lớp sôi nổi, phát biểu hăng hái</option>
-            <option value="Lớp ngoan, chú ý nghe giảng">Lớp ngoan, chú ý nghe giảng</option>
-            <option value="Lớp còn vài em chưa tập trung">Lớp còn vài em chưa tập trung</option>
-            <option value="Kiểm tra nghiêm túc">Kiểm tra nghiêm túc</option>
-          </select>
-          <!-- SVG Chevron Down màu xanh Thanh Niên chuẩn theo ảnh 3 -->
-          <svg class="select-chevron-icon" viewBox="0 0 24 24" fill="none" stroke="#2b59ff" stroke-width="2.5">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
-        </div>
-      </div>
-
-      <!-- Hàng 5: Footer trạng thái & Nút thao tác CTA -->
-      <div class="d-flex align-items-center justify-content-between pt-3 border-top border-gray-100">
-        <div>
-          <span *ngIf="currentWeek > realCurrentWeek || slot.isFutureSlot" class="badge-slot-status future">
-            📅 Kế hoạch bài dạy
-          </span>
-          <span *ngIf="currentWeek <= realCurrentWeek && !slot.isFutureSlot && slot.isSynced" class="badge-slot-status synced">
-            ✓ Đã lưu vnEdu
-          </span>
-          <span *ngIf="currentWeek <= realCurrentWeek && !slot.isFutureSlot && !slot.isSynced" class="badge-slot-status pending">
-            ⏰ Cần nhập SĐB
-          </span>
-        </div>
-
-        <!-- Nút thao tác: Màu cam nếu chưa lưu (Chuẩn ảnh 1 "CHỈNH SỬA"), Xanh nếu đã lưu -->
-        <button type="button"
-                class="btn-slot-action"
-                [ngClass]="(currentWeek > realCurrentWeek || slot.isFutureSlot) ? 'btn-future' : (slot.isSynced ? 'btn-synced' : 'btn-orange-action')"
-                [disabled]="slot.isSaving"
-                (click)="syncSingle.emit(slot)">
-          <span *ngIf="slot.isSaving" class="spinner-border spinner-border-sm me-1" role="status"></span>
-          <span>
-            {{ (currentWeek > realCurrentWeek || slot.isFutureSlot) ? '📋 Chuẩn bị KHGD' : (slot.isSynced ? '✓ Cập nhật lại' : '💾 LƯU SĐB') }}
-          </span>
+          <span class="day-pill-date">{{ getDayDate(g.ngay) }}</span>
         </button>
       </div>
     </div>
-  </main>
+
+    <!-- 4. SELECTED DAY BANNER & NÚT CAM THANH NIÊN (ẢNH 1) -->
+    <section class="selected-day-banner mx-3 mb-3 p-3 rounded-4"
+             [class.is-today-banner]="selectedGroup?.isToday"
+             [class.is-completed-banner]="selectedGroup?.isCompleted">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <h3 class="banner-day-title mb-0 fw-bold text-gray-900">
+            {{ selectedGroup?.thuText || 'Thứ Hai' }}, {{ selectedGroup?.ngay || '' }}
+          </h3>
+          <span *ngIf="selectedGroup?.isToday" class="badge-pill-today">HÔM NAY</span>
+          <span *ngIf="selectedGroup?.isCompleted" class="badge-pill-done">✓ Đã đủ</span>
+          <span *ngIf="selectedGroup?.isFutureDay || currentWeek > realCurrentWeek" class="badge-pill-future">📅 Kế hoạch</span>
+        </div>
+
+        <span class="banner-slots-count fw-bold text-gray-700">
+          {{ selectedGroup?.slots?.length || 0 }} tiết giảng dạy
+        </span>
+      </div>
+
+      <!-- Nút LƯU NHANH HÔM NAY (Màu Cam Thanh Niên chuẩn theo ảnh mẫu 1) -->
+      <div *ngIf="selectedGroup?.isToday && selectedGroup?.pendingCount > 0" class="mt-2.5 pt-2 border-top border-gray-100 d-flex flex-column gap-2">
+        <div class="d-flex align-items-center justify-content-between">
+          <span class="text-danger fw-bold fs-7">⚠️ Còn {{ selectedGroup.pendingCount }} tiết chưa lưu vnEdu</span>
+          <span class="text-muted fs-8">Cập nhật ngay</span>
+        </div>
+        <button type="button"
+                class="btn-tnvn-orange w-100 py-3 d-flex align-items-center justify-content-center gap-2"
+                (click)="syncToday.emit()"
+                [disabled]="isSavingBatch">
+          <span *ngIf="isSavingBatch" class="spinner-border spinner-border-sm me-1" role="status"></span>
+          <span class="fw-bold">⚡ LƯU NHANH HÔM NAY ({{ selectedGroup.pendingCount }} TIẾT)</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 5. DANH SÁCH THẺ TIẾT HỌC (CHUẨN FORM ẢNH MẪU 3 & 4) -->
+    <main class="mobile-slots-list px-3 d-flex flex-column gap-3 pb-4">
+      <div *ngIf="!selectedGroup || selectedGroup.slots.length === 0" class="empty-day-state text-center py-5 bg-white rounded-4 shadow-xs">
+        <div class="fs-1 mb-2">🏖️</div>
+        <h4 class="fw-bold text-gray-800 mb-1 fs-6">Không có tiết dạy trong ngày này</h4>
+        <p class="text-muted mb-0 fs-7">Cô giáo được nghỉ dạy vào {{ selectedGroup?.thuText }}. Chọn thứ khác trên thanh điều hướng.</p>
+      </div>
+
+      <div *ngFor="let slot of selectedGroup?.slots; trackBy: trackBySlot"
+           class="mobile-slot-card p-3 rounded-4 bg-white shadow-xs"
+           [class.slot-pending]="!slot.isSynced && !selectedGroup.isFutureDay && !slot.isFutureSlot && currentWeek <= realCurrentWeek"
+           [class.slot-synced]="slot.isSynced && !selectedGroup.isFutureDay && !slot.isFutureSlot"
+           [class.slot-future]="selectedGroup.isFutureDay || slot.isFutureSlot || currentWeek > realCurrentWeek">
+        
+        <!-- Hàng 1: Tiết học & Điểm danh -->
+        <div class="d-flex align-items-center justify-content-between pb-2.5 mb-2.5 border-bottom border-gray-100">
+          <div class="d-flex align-items-center gap-2">
+            <span class="session-badge" [class.morning]="slot.tiet <= 5" [class.afternoon]="slot.tiet > 5">
+              {{ slot.tiet <= 5 ? 'Sáng' : 'Chiều' }}
+            </span>
+            <span class="slot-tiet-heading fw-bold text-gray-900">Tiết {{ slot.tiet }}</span>
+            <span class="slot-time-text text-muted">({{ getSlotTime(slot) }})</span>
+          </div>
+
+          <div class="d-flex align-items-center gap-2">
+            <span class="class-pill" [ngClass]="getClassBadgeClass(slot.lop)">
+              {{ slot.lop }}
+            </span>
+            
+            <div class="attendance-pill"
+                 [ngClass]="getAttendanceChipClass(slot)"
+                 (click)="openAttendance.emit(slot)"
+                 title="Nhấp để xem/sửa điểm danh chi tiết">
+              <ng-container *ngIf="currentWeek > realCurrentWeek || slot.isFutureSlot">
+                <span>📅 Kế hoạch</span>
+              </ng-container>
+              <ng-container *ngIf="currentWeek <= realCurrentWeek && !slot.isFutureSlot && isCanDoiChieu(slot)">
+                <span>⚠️ Lệch GT ({{ slot.giamThiSoLuongNghi || 0 }} vắng)</span>
+              </ng-container>
+              <ng-container *ngIf="currentWeek <= realCurrentWeek && !slot.isFutureSlot && !isCanDoiChieu(slot) && getDisplayAbsentCount(slot) > 0">
+                <span>✓ {{ getDisplayAbsentCount(slot) }} vắng</span>
+              </ng-container>
+              <ng-container *ngIf="currentWeek <= realCurrentWeek && !slot.isFutureSlot && !isCanDoiChieu(slot) && getDisplayAbsentCount(slot) === 0">
+                <span>✓ Đủ (0 vắng)</span>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hàng 2: Môn học & Tiết PPCT -->
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <span class="subject-title fw-bold text-gray-900 text-truncate d-flex align-items-center gap-1.5">
+            <span>📚</span>
+            <span>{{ slot.mon }}</span>
+          </span>
+          <div class="d-flex align-items-center gap-2 flex-shrink-0">
+            <span class="ppct-label fw-bold text-gray-700">Tiết PPCT:</span>
+            <input type="number"
+                   class="input-ppct-tnvn text-center fw-bold"
+                   [(ngModel)]="slot.ppct" min="1" max="150">
+          </div>
+        </div>
+
+        <!-- Hàng 3: Tên bài dạy -->
+        <div class="mb-3">
+          <label class="form-field-label">Tên bài dạy *</label>
+          <input type="text"
+                 class="input-form-tnvn w-100"
+                 [(ngModel)]="slot.baiDay"
+                 placeholder="Nhập tên bài dạy...">
+        </div>
+
+        <!-- Hàng 4: Nhận xét tiết dạy -->
+        <div class="mb-3">
+          <label class="form-field-label">Nhận xét tiết dạy</label>
+          <div class="select-wrapper-tnvn position-relative">
+            <select class="select-form-tnvn w-100"
+                    [(ngModel)]="slot.nhanXet">
+              <option value="Lớp học nghiêm túc, tích cực">Lớp học nghiêm túc, tích cực</option>
+              <option value="Lớp sôi nổi, phát biểu hăng hái">Lớp sôi nổi, phát biểu hăng hái</option>
+              <option value="Lớp ngoan, chú ý nghe giảng">Lớp ngoan, chú ý nghe giảng</option>
+              <option value="Lớp còn vài em chưa tập trung">Lớp còn vài em chưa tập trung</option>
+              <option value="Kiểm tra nghiêm túc">Kiểm tra nghiêm túc</option>
+            </select>
+            <svg class="select-chevron-icon" viewBox="0 0 24 24" fill="none" stroke="#2b59ff" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Hàng 5: Footer trạng thái & Nút thao tác CTA -->
+        <div class="d-flex align-items-center justify-content-between pt-3 border-top border-gray-100">
+          <div>
+            <span *ngIf="currentWeek > realCurrentWeek || slot.isFutureSlot" class="badge-slot-status future">
+              📅 Kế hoạch bài dạy
+            </span>
+            <span *ngIf="currentWeek <= realCurrentWeek && !slot.isFutureSlot && slot.isSynced" class="badge-slot-status synced">
+              ✓ Đã lưu vnEdu
+            </span>
+            <span *ngIf="currentWeek <= realCurrentWeek && !slot.isFutureSlot && !slot.isSynced" class="badge-slot-status pending">
+              ⏰ Cần nhập SĐB
+            </span>
+          </div>
+
+          <button type="button"
+                  class="btn-slot-action"
+                  [ngClass]="(currentWeek > realCurrentWeek || slot.isFutureSlot) ? 'btn-future' : (slot.isSynced ? 'btn-synced' : 'btn-orange-action')"
+                  [disabled]="slot.isSaving"
+                  (click)="syncSingle.emit(slot)">
+            <span *ngIf="slot.isSaving" class="spinner-border spinner-border-sm me-1" role="status"></span>
+            <span>
+              {{ (currentWeek > realCurrentWeek || slot.isFutureSlot) ? '📋 Chuẩn bị KHGD' : (slot.isSynced ? '✓ Cập nhật lại' : '💾 LƯU SĐB') }}
+            </span>
+          </button>
+        </div>
+      </div>
+    </main>
+  </ng-container>
 
   <!-- ======================================================== -->
-  <!-- 6. BOTTOM NAVIGATION BAR (5 TABS CHUẨN ẢNH MẪU 1, 2, 5)  -->
-  <!-- Icon CHƯA CHỌN: nét mảnh màu xám (#8a94a6)               -->
-  <!-- Icon ĐANG CHỌN: đặc khối màu xanh (#2b59ff)               -->
+  <!-- TAB 2: TRANG ĐỒNG BỘ RIÊNG BIỆT (KHÔNG BẬT MODAL)         -->
+  <!-- ======================================================== -->
+  <ng-container *ngIf="activeTab === 'sync'">
+    <main class="mobile-sync-screen px-3 pt-3 pb-5 d-flex flex-column gap-3">
+      <!-- Card Tiến độ Đồng bộ Tuần -->
+      <section class="sync-summary-card p-3 bg-white rounded-4 shadow-xs">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div>
+            <span class="badge-week-tag">Tuần {{ currentWeek }}</span>
+            <h3 class="fw-bold fs-5 text-gray-900 mt-1 mb-0">Tiến độ lưu SĐB tuần</h3>
+          </div>
+          <div class="sync-percent-pill">
+            {{ syncPercentage }}%
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress mb-3" style="height: 10px; border-radius: 9999px; background: #e2e8f0;">
+          <div class="progress-bar"
+               role="progressbar"
+               [style.width.%]="syncPercentage"
+               style="background: linear-gradient(90deg, #2b59ff 0%, #10b981 100%); border-radius: 9999px;">
+          </div>
+        </div>
+
+        <!-- 3 Thống kê chi tiết -->
+        <div class="row g-2 text-center">
+          <div class="col-4">
+            <div class="p-2.5 rounded-3 bg-light-success border border-success-subtle">
+              <div class="fs-4 fw-bold text-success">{{ syncedSlotsCount }}</div>
+              <div class="fs-8 text-muted fw-bold">Đã lưu vnEdu</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="p-2.5 rounded-3 bg-light-warning border border-warning-subtle">
+              <div class="fs-4 fw-bold text-warning">{{ pendingSlotsCount }}</div>
+              <div class="fs-8 text-muted fw-bold">Cần lưu SĐB</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="p-2.5 rounded-3 bg-light-info border border-info-subtle">
+              <div class="fs-4 fw-bold text-info">{{ mismatchedSlotsCount }}</div>
+              <div class="fs-8 text-muted fw-bold">Lệch Giám thị</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Card Hành động đồng bộ cấp tốc -->
+      <section class="sync-actions-card p-3 bg-white rounded-4 shadow-xs d-flex flex-column gap-2.5">
+        <h4 class="fw-bold fs-6 text-gray-800 mb-1">Thao tác đồng bộ CSDL</h4>
+        
+        <!-- Nút Cam: Lưu toàn bộ tuần -->
+        <button type="button"
+                class="btn-tnvn-orange w-100 py-3 d-flex align-items-center justify-content-center gap-2"
+                (click)="syncAll.emit()"
+                [disabled]="isSavingBatch">
+          <span *ngIf="isSavingBatch" class="spinner-border spinner-border-sm" role="status"></span>
+          <span class="fw-bold fs-6">⚡ LƯU TẤT CẢ TIẾT TRONG TUẦN ({{ pendingSlotsCount }} TIẾT)</span>
+        </button>
+
+        <!-- Nút Xanh: Quét đối chiếu Giám thị -->
+        <button type="button"
+                class="btn-sync-action-blue w-100 py-2.5 d-flex align-items-center justify-content-center gap-2"
+                (click)="scanSupervisor.emit()">
+          <span>🛡️</span>
+          <span class="fw-bold">Quét & Đối chiếu SĐĐ Giám thị</span>
+        </button>
+      </section>
+
+      <!-- Danh sách trạng thái theo từng ngày trong tuần -->
+      <section class="sync-days-card p-3 bg-white rounded-4 shadow-xs">
+        <h4 class="fw-bold fs-6 text-gray-800 mb-3">Tình trạng từng ngày trong tuần</h4>
+        <div class="d-flex flex-column gap-2.5">
+          <div *ngFor="let g of dayGroups; trackBy: trackByThu"
+               class="sync-day-item p-2.5 rounded-3 border d-flex align-items-center justify-content-between"
+               [class.border-success-subtle]="g.isCompleted"
+               [class.bg-light-success]="g.isCompleted">
+            <div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="fw-bold text-gray-900 fs-6">{{ g.thuText }}</span>
+                <span class="text-muted fs-7">({{ g.ngay }})</span>
+                <span *ngIf="g.isToday" class="badge-pill-today fs-8">Hôm nay</span>
+              </div>
+              <div class="text-muted fs-8 mt-0.5">
+                {{ g.slots?.length || 0 }} tiết dạy • 
+                <span [class.text-success]="g.isCompleted" [class.text-warning]="!g.isCompleted && g.pendingCount > 0">
+                  {{ g.isCompleted ? '✓ Đã hoàn tất' : (g.pendingCount + ' tiết chưa lưu') }}
+                </span>
+              </div>
+            </div>
+
+            <button type="button"
+                    class="btn-view-day-schedule"
+                    (click)="goToScheduleDay(g.thu)">
+              Xem lịch ❯
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Trạng thái kết nối Server & CSDL -->
+      <section class="p-3 bg-white rounded-4 shadow-xs d-flex align-items-center justify-content-between text-muted fs-7">
+        <div class="d-flex align-items-center gap-2">
+          <span class="status-live-dot"></span>
+          <span>CSDL vnEdu: <strong>Đang kết nối trực tuyến</strong></span>
+        </div>
+        <span class="badge bg-light text-primary fw-bold">{{ appVersion }}</span>
+      </section>
+    </main>
+  </ng-container>
+
+  <!-- ======================================================== -->
+  <!-- TAB 3: TRANG CÁ NHÂN & ĐĂNG XUẤT (CHUẨN ẢNH MẪU 2 & 5)   -->
+  <!-- ======================================================== -->
+  <ng-container *ngIf="activeTab === 'profile'">
+    <main class="mobile-profile-screen px-3 pt-3 pb-5 d-flex flex-column gap-3">
+      <!-- Profile Hero Card lớn -->
+      <section class="profile-main-hero p-3 text-center bg-white rounded-4 shadow-xs position-relative">
+        <div class="avatar-wrapper mx-auto mb-2" (click)="switchTeacher.emit()" title="Đổi giáo viên">
+          <div class="avatar-ring">
+            <div class="avatar-circle">
+              <span class="avatar-emoji">{{ isSuperAdminLoggedIn ? '👑' : '👩‍🏫' }}</span>
+            </div>
+            <span class="avatar-camera-badge" title="Đổi ảnh đại diện">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" width="12" height="12">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+            </span>
+          </div>
+        </div>
+
+        <h2 class="teacher-name-heading mb-1 fw-bold text-gray-900">
+          {{ isSuperAdminLoggedIn ? (currentLoggedInUser?.fullname || 'Xuân Ngọc') : teacherTitle }}
+        </h2>
+        <div class="text-muted fs-7 mb-2">
+          {{ isSuperAdminLoggedIn ? 'Tài khoản Quản Trị Viên' : 'Giáo viên THCS An Lập' }} • 051197003685@vnedu.vn
+        </div>
+
+        <div class="d-flex align-items-center justify-content-center gap-2 flex-wrap mb-2">
+          <span class="badge-verified-tnvn">
+            <span class="check-icon">✓</span>
+            <span>Tài khoản đã xác thực</span>
+          </span>
+          <span class="badge-version-tnvn">
+            {{ appVersion }}
+          </span>
+        </div>
+      </section>
+
+      <!-- Danh sách tiện ích tài khoản -->
+      <section class="profile-menu-card bg-white rounded-4 shadow-xs overflow-hidden">
+        <div class="menu-item-row p-3 d-flex align-items-center justify-content-between border-bottom"
+             (click)="switchTeacher.emit()">
+          <div class="d-flex align-items-center gap-3">
+            <div class="menu-icon-box bg-light-primary text-primary">👥</div>
+            <div>
+              <div class="fw-bold text-gray-900 fs-6">Đổi tài khoản giáo viên</div>
+              <div class="text-muted fs-8">Chuyển sang giáo viên khác trong trường</div>
+            </div>
+          </div>
+          <span class="text-muted fs-6">❯</span>
+        </div>
+
+        <div class="menu-item-row p-3 d-flex align-items-center justify-content-between border-bottom"
+             (click)="goToScheduleDay(todayThu)">
+          <div class="d-flex align-items-center gap-3">
+            <div class="menu-icon-box bg-light-success text-success">📚</div>
+            <div>
+              <div class="fw-bold text-gray-900 fs-6">Phân công chuyên môn</div>
+              <div class="text-muted fs-8">Môn Toán • Các lớp 7A2, 7A3, 9A2</div>
+            </div>
+          </div>
+          <span class="text-muted fs-6">❯</span>
+        </div>
+
+        <div class="menu-item-row p-3 d-flex align-items-center justify-content-between border-bottom"
+             (click)="activeTab = 'sync'">
+          <div class="d-flex align-items-center gap-3">
+            <div class="menu-icon-box bg-light-warning text-warning">⚡</div>
+            <div>
+              <div class="fw-bold text-gray-900 fs-6">Trung tâm đồng bộ CSDL</div>
+              <div class="text-muted fs-8">Quản lý đồng bộ SĐB và Giám thị</div>
+            </div>
+          </div>
+          <span class="text-muted fs-6">❯</span>
+        </div>
+
+        <div class="menu-item-row p-3 d-flex align-items-center justify-content-between border-bottom"
+             (click)="showNotificationSheet = true">
+          <div class="d-flex align-items-center gap-3">
+            <div class="menu-icon-box bg-light-info text-info">🔔</div>
+            <div>
+              <div class="fw-bold text-gray-900 fs-6">Thông báo & Nhắc nhở</div>
+              <div class="text-muted fs-8">Cảnh báo chưa nhập SĐB & lịch học</div>
+            </div>
+          </div>
+          <span class="text-muted fs-6">❯</span>
+        </div>
+
+        <div class="menu-item-row p-3 d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-3">
+            <div class="menu-icon-box bg-light-secondary text-gray-700">🛡️</div>
+            <div>
+              <div class="fw-bold text-gray-900 fs-6">Trạng thái bảo mật phiên</div>
+              <div class="text-muted fs-8">Mã hóa an toàn • vnEdu Session Live</div>
+            </div>
+          </div>
+          <span class="badge bg-light-success text-success fw-bold fs-8">An toàn</span>
+        </div>
+      </section>
+
+      <!-- NÚT ĐĂNG XUẤT TÀI KHOẢN (MÀU ĐỎ NỔI BẬT THEO YÊU CẦU NGƯỜI DÙNG) -->
+      <section class="logout-section">
+        <button type="button"
+                class="btn-mobile-logout w-100 py-3.5 d-flex align-items-center justify-content-center gap-2"
+                (click)="onPromptLogout()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span class="fw-bold fs-6">ĐĂNG XUẤT TÀI KHOẢN</span>
+        </button>
+      </section>
+
+      <!-- Footer phiên bản ứng dụng -->
+      <div class="text-center text-muted fs-8 pt-2">
+        vnEdu Smart Sync Automation • Phiên bản {{ appVersion }}
+      </div>
+    </main>
+  </ng-container>
+
+  <!-- ======================================================== -->
+  <!-- TAB 4: TIN NHẮN (TÍNH NĂNG ĐANG PHÁT TRIỂN)              -->
+  <!-- ======================================================== -->
+  <ng-container *ngIf="activeTab === 'messages'">
+    <main class="mobile-coming-soon px-4 py-5 text-center d-flex flex-column align-items-center justify-content-center">
+      <div class="coming-soon-icon mb-3">💬</div>
+      <h3 class="fw-bold text-gray-900 fs-5 mb-2">Tính năng đang phát triển</h3>
+      <p class="text-muted fs-7 mb-4 px-3">
+        Kênh Tin nhắn nội bộ vnEdu giúp trao đổi trực tiếp giữa Giáo viên và Ban Giám hiệu đang được hoàn thiện và sẽ ra mắt ở phiên bản tiếp theo.
+      </p>
+      <button type="button"
+              class="btn-return-schedule px-4 py-2.5 rounded-pill"
+              (click)="activeTab = 'schedule'">
+        ← Quay lại Sổ Đầu Bài
+      </button>
+    </main>
+  </ng-container>
+
+  <!-- ======================================================== -->
+  <!-- TAB 5: KHÁM PHÁ (TÍNH NĂNG ĐANG PHÁT TRIỂN)              -->
+  <!-- ======================================================== -->
+  <ng-container *ngIf="activeTab === 'discover'">
+    <main class="mobile-coming-soon px-4 py-5 text-center d-flex flex-column align-items-center justify-content-center">
+      <div class="coming-soon-icon mb-3">🧭</div>
+      <h3 class="fw-bold text-gray-900 fs-5 mb-2">Tính năng đang phát triển</h3>
+      <p class="text-muted fs-7 mb-4 px-3">
+        Kho tiện ích Khám phá: Ngân hàng đề kiểm tra, Giáo án điện tử AI và Thư viện tài liệu giảng dạy sẽ sớm có mặt trên ứng dụng.
+      </p>
+      <button type="button"
+              class="btn-return-schedule px-4 py-2.5 rounded-pill"
+              (click)="activeTab = 'schedule'">
+        ← Quay lại Sổ Đầu Bài
+      </button>
+    </main>
+  </ng-container>
+
+  <!-- ======================================================== -->
+  <!-- 6. BOTTOM NAVIGATION BAR (CHUẨN 5 TABS APP THANH NIÊN)   -->
+  <!-- ICON CHƯA CHỌN: nét mảnh màu xám (#8a94a6)               -->
+  <!-- ICON ĐANG CHỌN: đặc khối màu xanh (#2b59ff)               -->
   <!-- ======================================================== -->
   <nav class="mobile-bottom-nav d-flex align-items-center justify-content-around">
-    <!-- Tab 1: Lịch dạy / Sổ đầu bài (ĐANG CHỌN - ACTIVE) -->
-    <button type="button" class="bottom-nav-item active" (click)="activeTab = 'schedule'">
+    <!-- Tab 1: Lịch dạy -->
+    <button type="button"
+            class="bottom-nav-item"
+            [class.active]="activeTab === 'schedule'"
+            (click)="activeTab = 'schedule'">
       <div class="nav-icon-box">
-        <!-- SVG SOLID BLUE (ĐANG CHỌN) -->
-        <svg viewBox="0 0 24 24" fill="#2b59ff" width="24" height="24">
+        <svg *ngIf="activeTab === 'schedule'" viewBox="0 0 24 24" fill="#2b59ff" width="24" height="24">
           <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/>
+        </svg>
+        <svg *ngIf="activeTab !== 'schedule'" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" width="24" height="24">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
         </svg>
       </div>
       <span class="nav-label">Lịch dạy</span>
     </button>
 
-    <!-- Tab 2: Công tác tuần / Đồng bộ (CHƯA CHỌN - OUTLINE GRAY) -->
-    <button type="button" class="bottom-nav-item" (click)="syncAll.emit()">
+    <!-- Tab 2: Đồng bộ (TRANG RIÊNG, KHÔNG PHẢI MODAL) -->
+    <button type="button"
+            class="bottom-nav-item"
+            [class.active]="activeTab === 'sync'"
+            (click)="activeTab = 'sync'">
       <div class="nav-icon-box">
-        <!-- SVG OUTLINE GRAY (CHƯA CHỌN) -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="#8a94a6" stroke-width="2" width="24" height="24">
-          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+        <svg *ngIf="activeTab === 'sync'" viewBox="0 0 24 24" fill="#2b59ff" width="24" height="24">
+          <path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C8.97 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C15.03 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/>
+        </svg>
+        <svg *ngIf="activeTab !== 'sync'" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" width="24" height="24">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
         </svg>
       </div>
       <span class="nav-label">Đồng bộ</span>
     </button>
 
-    <!-- Tab 3: Tin nhắn / Trợ lý AI (CHƯA CHỌN - OUTLINE GRAY) -->
-    <button type="button" class="bottom-nav-item" (click)="scanSupervisor.emit()">
+    <!-- Tab 3: Tin nhắn (TÍNH NĂNG ĐANG PHÁT TRIỂN) -->
+    <button type="button"
+            class="bottom-nav-item"
+            [class.active]="activeTab === 'messages'"
+            (click)="activeTab = 'messages'">
       <div class="nav-icon-box">
-        <!-- SVG OUTLINE GRAY (CHƯA CHỌN) -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="#8a94a6" stroke-width="2" width="24" height="24">
+        <svg *ngIf="activeTab === 'messages'" viewBox="0 0 24 24" fill="#2b59ff" width="24" height="24">
+          <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+        </svg>
+        <svg *ngIf="activeTab !== 'messages'" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" width="24" height="24">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
         </svg>
       </div>
       <span class="nav-label">Tin nhắn</span>
     </button>
 
-    <!-- Tab 4: Giám thị / Khám phá (CHƯA CHỌN - OUTLINE GRAY) -->
-    <button type="button" class="bottom-nav-item" (click)="scanSupervisor.emit()">
+    <!-- Tab 4: Khám phá (TÍNH NĂNG ĐANG PHÁT TRIỂN) -->
+    <button type="button"
+            class="bottom-nav-item"
+            [class.active]="activeTab === 'discover'"
+            (click)="activeTab = 'discover'">
       <div class="nav-icon-box">
-        <!-- SVG OUTLINE GRAY (CHƯA CHỌN) -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="#8a94a6" stroke-width="2" width="24" height="24">
+        <svg *ngIf="activeTab === 'discover'" viewBox="0 0 24 24" fill="#2b59ff" width="24" height="24">
+          <path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/>
+        </svg>
+        <svg *ngIf="activeTab !== 'discover'" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" width="24" height="24">
           <rect x="3" y="3" width="7" height="7"></rect>
           <rect x="14" y="3" width="7" height="7"></rect>
           <rect x="14" y="14" width="7" height="7"></rect>
@@ -362,11 +693,16 @@
       <span class="nav-label">Khám phá</span>
     </button>
 
-    <!-- Tab 5: Cá nhân (CHƯA CHỌN - OUTLINE GRAY) -->
-    <button type="button" class="bottom-nav-item" (click)="switchTeacher.emit()">
+    <!-- Tab 5: Cá nhân (TRANG CÁ NHÂN & ĐĂNG XUẤT) -->
+    <button type="button"
+            class="bottom-nav-item"
+            [class.active]="activeTab === 'profile'"
+            (click)="activeTab = 'profile'">
       <div class="nav-icon-box">
-        <!-- SVG OUTLINE GRAY (CHƯA CHỌN) -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="#8a94a6" stroke-width="2" width="24" height="24">
+        <svg *ngIf="activeTab === 'profile'" viewBox="0 0 24 24" fill="#2b59ff" width="24" height="24">
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+        </svg>
+        <svg *ngIf="activeTab !== 'profile'" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" width="24" height="24">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
           <circle cx="12" cy="7" r="4"></circle>
         </svg>
@@ -374,4 +710,60 @@
       <span class="nav-label">Cá nhân</span>
     </button>
   </nav>
+
+  <!-- ======================================================== -->
+  <!-- MODAL XÁC NHẬN ĐĂNG XUẤT TÀI KHOẢN (LOGOUT CONFIRM)       -->
+  <!-- ======================================================== -->
+  <div *ngIf="showLogoutConfirmModal"
+       class="modal-backdrop-mobile d-flex align-items-center justify-content-center p-4">
+    <div class="logout-confirm-dialog p-4 bg-white rounded-4 shadow-lg text-center w-100" style="max-width: 360px;">
+      <div class="logout-dialog-icon mb-3">🚪</div>
+      <h3 class="fw-bold text-gray-900 fs-5 mb-2">Xác nhận đăng xuất</h3>
+      <p class="text-muted fs-7 mb-4">
+        Cô giáo có chắc chắn muốn đăng xuất tài khoản <strong>{{ teacherTitle }}</strong> khỏi hệ thống vnEdu Smart Sync không?
+      </p>
+      <div class="d-flex gap-2">
+        <button type="button"
+                class="btn btn-light flex-fill py-2.5 rounded-pill fw-bold text-gray-700"
+                (click)="cancelLogout()">
+          Hủy bỏ
+        </button>
+        <button type="button"
+                class="btn btn-danger flex-fill py-2.5 rounded-pill fw-bold"
+                (click)="confirmLogout()">
+          Đăng xuất
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL BOTTOM SHEET THÔNG BÁO                             -->
+  <!-- ======================================================== -->
+  <div *ngIf="showNotificationSheet"
+       class="modal-backdrop-mobile d-flex align-items-end"
+       (click)="showNotificationSheet = false">
+    <div class="notification-sheet bg-white w-100 rounded-top-4 p-4 shadow-lg"
+         (click)="$event.stopPropagation()">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h3 class="fw-bold text-gray-900 fs-5 mb-0">Thông Báo & Cảnh Báo</h3>
+        <button type="button" class="btn-close" (click)="showNotificationSheet = false"></button>
+      </div>
+
+      <div class="notification-list d-flex flex-column gap-2.5" style="max-height: 50vh; overflow-y: auto;">
+        <div class="p-3 rounded-3 bg-light-primary border border-primary-subtle">
+          <div class="fw-bold text-primary fs-7 mb-1">📢 Hệ thống vnEdu Smart Sync v{{ appVersion }}</div>
+          <div class="text-muted fs-8">Giao diện đã cập nhật theo phong cách App Thanh niên Việt Nam, đồng bộ dữ liệu thời gian thực.</div>
+        </div>
+        <div *ngIf="pendingSlotsCount > 0" class="p-3 rounded-3 bg-light-warning border border-warning-subtle">
+          <div class="fw-bold text-warning fs-7 mb-1">⚠️ Còn {{ pendingSlotsCount }} tiết chưa lưu vnEdu</div>
+          <div class="text-muted fs-8">Tuần {{ currentWeek }} có {{ pendingSlotsCount }} tiết chưa được ghi nhận vào CSDL sổ đầu bài chính thức.</div>
+        </div>
+        <div *ngIf="mismatchedSlotsCount > 0" class="p-3 rounded-3 bg-light-danger border border-danger-subtle">
+          <div class="fw-bold text-danger fs-7 mb-1">⚠️ Có {{ mismatchedSlotsCount }} tiết lệch điểm danh với Giám thị</div>
+          <div class="text-muted fs-8">Vui lòng kiểm tra và quét đối chiếu để tránh sai lệch số buổi nghỉ của học sinh.</div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

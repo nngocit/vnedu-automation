@@ -50,7 +50,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   currentWeek = 10;
   realCurrentWeek = 10; // Tuần thực tế đang diễn ra trong năm học
   isMobile: boolean = false;
-  appVersion: string = 'v2.8.3';
+  appVersion: string = 'v2.8.4';
   dataSource: 'vnedu' | 'excel' = 'vnedu';
   todayStr = '';
   selectedClassFilter: string = 'all';
@@ -657,6 +657,10 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   onWeekChangeMobile(week: number): void {
     this.currentWeek = week;
     this.loadSchedule(week);
+  }
+
+  onLogout(): void {
+    this.authService.logout();
   }
 
   onWeekChange(event: any): void {

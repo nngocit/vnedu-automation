@@ -18,7 +18,9 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
   @Input() currentLoggedInUser: any = null;
   @Input() isFutureWeek: boolean = false;
   @Input() isSavingBatch: boolean = false;
-  @Input() appVersion: string = 'v2.8.3';
+  @Input() appVersion: string = 'v2.8.4';
+  @Input() notifications: any[] = [];
+  @Input() unreadNotificationsCount: number = 0;
 
   @Output() weekChange = new EventEmitter<number>();
   @Output() prevWeek = new EventEmitter<void>();
@@ -29,13 +31,44 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
   @Output() openAttendance = new EventEmitter<VnEduSlot>();
   @Output() scanSupervisor = new EventEmitter<void>();
   @Output() switchTeacher = new EventEmitter<void>();
+  @Output() logout = new EventEmitter<void>();
 
   selectedThu: number = 0;
-  activeTab: string = 'schedule';
+  activeTab: 'schedule' | 'sync' | 'messages' | 'discover' | 'profile' = 'schedule';
+  syncSubTab: 'overview' | 'days' = 'overview';
+  showLogoutConfirmModal: boolean = false;
+  showNotificationSheet: boolean = false;
 
   get todayThu(): number {
     const today = this.dayGroups?.find(g => g.isToday);
     return today ? today.thu : (this.dayGroups?.[0]?.thu || 2);
+  }
+
+  // Thống kê đồng bộ toàn tuần
+  get totalSlotsCount(): number {
+    if (!this.dayGroups) return 0;
+    return this.dayGroups.reduce((acc, g) => acc + (g.slots?.length || 0), 0);
+  }
+
+  get syncedSlotsCount(): number {
+    if (!this.dayGroups) return 0;
+    return this.dayGroups.reduce((acc, g) => acc + (g.slots?.filter((s: any) => s.isSynced).length || 0), 0);
+  }
+
+  get pendingSlotsCount(): number {
+    if (!this.dayGroups) return 0;
+    return this.dayGroups.reduce((acc, g) => acc + (g.slots?.filter((s: any) => !s.isSynced && !s.isFutureSlot && this.currentWeek <= this.realCurrentWeek).length || 0), 0);
+  }
+
+  get mismatchedSlotsCount(): number {
+    if (!this.dayGroups) return 0;
+    return this.dayGroups.reduce((acc, g) => acc + (g.slots?.filter((s: any) => this.isCanDoiChieu(s)).length || 0), 0);
+  }
+
+  get syncPercentage(): number {
+    const total = this.totalSlotsCount;
+    if (total === 0) return 100;
+    return Math.min(100, Math.round((this.syncedSlotsCount / total) * 100));
   }
 
   ngOnInit(): void {
@@ -62,6 +95,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
 
   selectDay(thu: number): void {
     this.selectedThu = thu;
+    this.activeTab = 'schedule';
   }
 
   get selectedGroup(): any {
@@ -154,6 +188,26 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
     if (val) {
       this.weekChange.emit(val);
     }
+  }
+
+  // Chuyển trực tiếp từ trang Đồng Bộ về ngày trong Lịch Dạy
+  goToScheduleDay(thu: number): void {
+    this.selectedThu = thu;
+    this.activeTab = 'schedule';
+  }
+
+  // Thao tác đăng xuất
+  onPromptLogout(): void {
+    this.showLogoutConfirmModal = true;
+  }
+
+  confirmLogout(): void {
+    this.showLogoutConfirmModal = false;
+    this.logout.emit();
+  }
+
+  cancelLogout(): void {
+    this.showLogoutConfirmModal = false;
   }
 
   trackBySlot(index: number, slot: any): any {
