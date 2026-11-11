@@ -8,41 +8,8 @@
   z-index: 1040;
 
   @media (max-width: 767.98px) {
-    bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important; // Nằm cách trên Bottom Dock thoải mái, không che nút
-    right: calc(20px + env(safe-area-inset-right, 0px)) !important; // Không bị ép sát góc mép màn hình
-    z-index: 1045 !important;
-
-    .btn-ai-launcher {
-      width: 48px !important;
-      height: 48px !important;
-      padding: 0 !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      border-radius: 50% !important;
-
-      .launcher-icon-inner {
-        width: 32px !important;
-        height: 32px !important;
-        font-size: 1.15rem !important;
-        margin: 0 !important;
-      }
-
-      .launcher-pulse-ring {
-        border-radius: 50% !important;
-        inset: -3px !important;
-      }
-
-      .badge-reminder-count {
-        top: -3px !important;
-        right: -2px !important;
-        min-width: 18px !important;
-        height: 18px !important;
-        font-size: 0.65rem !important;
-        padding: 0 4px !important;
-        border: 2px solid #ffffff !important;
-      }
-    }
+    // Ẩn hoàn toàn nút nổi trợ lý AI trên mobile để tránh che khuất nút Tải về, Sao chép và các tab ở Bottom Dock
+    display: none !important;
   }
 
   .btn-ai-launcher {

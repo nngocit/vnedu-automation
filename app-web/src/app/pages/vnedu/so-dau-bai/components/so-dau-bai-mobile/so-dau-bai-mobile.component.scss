@@ -972,10 +972,102 @@ $tnvn-text-muted: #64748b;
 }
 
 // ========================================================
+// THANH TÌM KIẾM DÙNG CHUNG (CHAT & KHÁM PHÁ) - UI/UX PRO MAX
+// Loại bỏ hoàn toàn hiệu ứng 3D chìm (inset/bevel) của trình duyệt
+// Thiết kế phẳng (Flat), viền sắc nét, bo tròn hiện đại chuẩn App Thanh Niên
+// ========================================================
+.chat-search-box {
+  width: 100% !important;
+  display: block !important;
+  position: relative !important;
+  box-sizing: border-box !important;
+
+  .chat-search-icon {
+    position: absolute !important;
+    top: 50% !important;
+    left: 14px !important;
+    transform: translateY(-50%) !important;
+    font-size: 15px !important;
+    line-height: 1 !important;
+    pointer-events: none !important;
+    z-index: 2 !important;
+    color: #94a3b8 !important;
+  }
+
+  .chat-search-input {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    display: block !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding-left: 42px !important;
+    padding-right: 38px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    font-size: 13.5px !important;
+    line-height: 1.4 !important;
+    border: 1px solid #cbd5e1 !important; // Viền phẳng hiện đại, KHÔNG bị chìm 3D
+    border-radius: 9999px !important;
+    background-color: #ffffff !important;
+    color: #1e293b !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important; // Shadow nhẹ nhàng phẳng, không inset
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+
+    &::placeholder {
+      color: #94a3b8 !important;
+      font-size: 13px !important;
+    }
+
+    &:focus {
+      border-color: #2b59ff !important;
+      background-color: #ffffff !important;
+      box-shadow: 0 0 0 3px rgba(43, 89, 255, 0.12), 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+      outline: none !important;
+    }
+  }
+
+  .btn-clear-search {
+    position: absolute !important;
+    top: 50% !important;
+    right: 12px !important;
+    transform: translateY(-50%) !important;
+    border: none !important;
+    background: transparent !important;
+    color: #94a3b8 !important;
+    padding: 4px !important;
+    line-height: 1 !important;
+    z-index: 2 !important;
+    cursor: pointer !important;
+  }
+}
+
+// Chuẩn hóa ô nhập liệu form (không bị chìm 3D)
+.form-control-tnvn,
+.form-control-calc {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 10px !important;
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+  box-shadow: none !important;
+  outline: none !important;
+  transition: all 0.15s ease !important;
+
+  &:focus {
+    border-color: #2b59ff !important;
+    box-shadow: 0 0 0 3px rgba(43, 89, 255, 0.12) !important;
+  }
+}
+
+// ========================================================
 // 12. GIAO DIỆN TIN NHẮN NỘI BỘ GIÁO VIÊN (TEXT CHAT)
 // ========================================================
 .mobile-chat-screen {
   min-height: 520px;
+  padding-bottom: 96px !important; // Chừa an toàn cho Bottom Nav 66px
 
   .chat-school-icon-badge {
     width: 44px;
@@ -987,13 +1079,6 @@ $tnvn-text-muted: #64748b;
     justify-content: center;
     font-size: 22px;
     border: 1px solid rgba(43, 89, 255, 0.15);
-  }
-
-  .chat-search-input {
-    width: 100% !important;
-    display: block;
-    border: 1px solid #e2e8f0;
-    font-size: 14px !important;
   }
 
   .chat-filter-scroll {
@@ -1175,10 +1260,20 @@ $tnvn-text-muted: #64748b;
 }
 
 // ========================================================
-// 13. GIAO DIỆN KHÁM PHÁ & THƯ VIỆN TÀI LIỆU
+// 13. GIAO DIỆN KHÁM PHÁ & THƯ VIỆN TÀI LIỆU (UI/UX PRO MAX)
 // ========================================================
 .mobile-discover-screen {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow-x: hidden !important;
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+  padding-bottom: 96px !important; // Chừa khoảng trống an toàn tuyệt đối cho Bottom Nav 66px
+
   .discover-subtabs-card {
+    width: 100% !important;
+    box-sizing: border-box !important;
     border: 1px solid #e2e8f0;
 
     .discover-subtab-btn {
@@ -1196,17 +1291,38 @@ $tnvn-text-muted: #64748b;
     }
   }
 
+  .discover-docs-view,
+  .discover-tools-view,
+  .discover-news-view {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
   .doc-category-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
     border: 1px solid #eef2f6;
+    overflow: hidden;
 
     .doc-cat-icon {
       width: 44px;
       height: 44px;
+      flex-shrink: 0;
+    }
+
+    .doc-cat-title {
+      font-size: 13.5px !important;
     }
 
     .doc-file-item {
+      width: 100% !important;
+      box-sizing: border-box !important;
       border: 1px solid #f1f5f9;
       transition: all 0.15s ease;
+      overflow: hidden;
+
       &:active {
         background: #e2e8f0 !important;
       }
@@ -1214,6 +1330,10 @@ $tnvn-text-muted: #64748b;
       .btn-doc-download {
         background: #2b59ff;
         white-space: nowrap;
+        flex-shrink: 0;
+        font-size: 12px !important;
+        padding: 5px 12px !important;
+
         &:active {
           background: #1a47e8;
         }
@@ -1222,26 +1342,60 @@ $tnvn-text-muted: #64748b;
   }
 
   .tool-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
     border: 1px solid #eef2f6;
+    overflow: hidden;
 
     .score-result-box {
       box-shadow: 0 6px 20px rgba(43, 89, 255, 0.25);
     }
 
     .comment-sample-item {
+      width: 100% !important;
+      box-sizing: border-box !important;
       border-color: #e2e8f0 !important;
       transition: all 0.15s ease;
+      overflow: hidden;
+
       &:hover {
         background: #f8fafc;
+      }
+
+      .btn-copy-comment {
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        color: #334155;
+        font-size: 11.5px !important;
+        padding: 5px 12px !important;
+        white-space: nowrap;
+        flex-shrink: 0;
+        transition: all 0.15s ease;
+
+        &.btn-success {
+          background: #10b981 !important;
+          color: #ffffff !important;
+          border-color: #10b981 !important;
+        }
+
+        &:active {
+          opacity: 0.85;
+        }
       }
     }
   }
 
   .news-hero-banner {
     box-shadow: 0 8px 24px rgba(43, 89, 255, 0.25);
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .news-item-card {
+    width: 100% !important;
+    box-sizing: border-box !important;
     border: 1px solid #eef2f6;
+    overflow: hidden;
   }
 }

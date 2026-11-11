@@ -561,6 +561,15 @@ textarea {
     display: none !important;
   }
 
+  // Ẩn hoàn toàn nút nổi trợ lý AI trên mobile để không che khuất các nút tải về, sao chép và bottom nav
+  .ai-launcher-wrapper,
+  .btn-ai-launcher,
+  #kt_drawer_chat_toggle,
+  .drawer-chat-toggle,
+  [data-kt-drawer-target="#kt_drawer_chat"] {
+    display: none !important;
+  }
+
   // Loại bỏ padding thừa của Metronic container trên mobile
   #kt_app_content_container,
   .app-container {

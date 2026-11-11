@@ -647,12 +647,12 @@
         </div>
 
         <!-- Thanh tìm kiếm giáo viên -->
-        <div class="chat-search-box position-relative">
-          <span class="chat-search-icon position-absolute top-50 start-0 translate-middle-y ms-3 text-muted">
+        <div class="chat-search-box position-relative w-100">
+          <span class="chat-search-icon position-absolute top-50 start-0 translate-middle-y ms-3.5 text-muted">
             🔍
           </span>
           <input type="text"
-                 class="form-control-tnvn chat-search-input ps-5 pe-4 py-2.5 rounded-pill bg-white shadow-xs"
+                 class="form-control chat-search-input w-100 rounded-pill bg-white shadow-xs"
                  [(ngModel)]="searchTeacherQuery"
                  placeholder="Tìm theo tên giáo viên, tổ bộ môn..."
                  title="Tìm kiếm">
@@ -916,12 +916,12 @@
         </div>
 
         <!-- Ô tìm kiếm tài liệu chuẩn ảnh mẫu -->
-        <div class="chat-search-box position-relative">
-          <span class="chat-search-icon position-absolute top-50 start-0 translate-middle-y ms-3 text-muted">
+        <div class="chat-search-box position-relative w-100">
+          <span class="chat-search-icon position-absolute top-50 start-0 translate-middle-y ms-3.5 text-muted">
             🔍
           </span>
           <input type="text"
-                 class="form-control-tnvn chat-search-input ps-5 pe-4 py-2.5 rounded-pill bg-white shadow-xs"
+                 class="form-control chat-search-input w-100 rounded-pill bg-white shadow-xs"
                  [(ngModel)]="searchDocQuery"
                  placeholder="Tìm kiếm mẫu giáo án, ma trận đề, biểu mẫu..."
                  title="Tìm tài liệu">
@@ -934,51 +934,51 @@
         </div>
 
         <!-- Danh sách thư viện tài liệu dạng Card (giống hệt ảnh mẫu 7cce5eef) -->
-        <div class="d-flex flex-column gap-2.5">
+        <div class="d-flex flex-column gap-2.5 w-100">
           <div *ngIf="filteredCategories.length === 0" class="text-center py-5 bg-white rounded-4 shadow-xs">
             <div class="fs-1 mb-2">📁</div>
             <div class="fw-bold text-gray-800 fs-6">Không tìm thấy tài liệu phù hợp</div>
             <div class="text-muted fs-8">Thử tìm theo từ khóa: 'toán', 'kế hoạch', 'quy chế'...</div>
           </div>
 
-          <div *ngFor="let cat of filteredCategories" class="doc-category-card p-3 bg-white rounded-4 shadow-xs">
+          <div *ngFor="let cat of filteredCategories" class="doc-category-card p-3 bg-white rounded-4 shadow-xs w-100">
             <!-- Header chuyên mục -->
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <div class="d-flex align-items-center gap-2.5 min-w-0">
+            <div class="d-flex align-items-center justify-content-between gap-2 mb-2 w-100">
+              <div class="d-flex align-items-center gap-2.5 flex-grow-1 min-w-0" style="overflow: hidden;">
                 <div class="doc-cat-icon rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
                      [style.background]="cat.iconBg">
                   <span style="font-size: 20px;">{{ cat.icon }}</span>
                 </div>
-                <div class="min-w-0">
-                  <h3 class="doc-cat-title mb-0 fw-bold text-gray-900 fs-7 text-truncate">
+                <div class="flex-grow-1 min-w-0" style="overflow: hidden;">
+                  <h3 class="doc-cat-title mb-0 fw-bold text-gray-900 fs-7" style="line-height: 1.35; word-break: break-word;">
                     {{ cat.title }}
                   </h3>
                   <span class="doc-cat-date text-muted fs-9">{{ cat.date }}</span>
                 </div>
               </div>
 
-              <div class="d-flex align-items-center gap-1.5 flex-shrink-0 text-muted fs-9 fw-bold">
+              <div class="d-flex align-items-center gap-1 flex-shrink-0 text-muted fs-9 fw-bold px-2 py-1 bg-light rounded-pill">
                 <span>📎</span>
                 <span>{{ cat.docs?.length || cat.count }}</span>
               </div>
             </div>
 
             <!-- Danh sách file tài liệu bên trong -->
-            <div class="doc-files-list pt-2 border-top border-gray-100 d-flex flex-column gap-2">
+            <div class="doc-files-list pt-2 border-top border-gray-100 d-flex flex-column gap-2 w-100">
               <div *ngFor="let doc of cat.docs"
-                   class="doc-file-item p-2.5 rounded-3 bg-light d-flex align-items-center justify-content-between gap-2">
-                <div class="d-flex align-items-center gap-2 min-w-0">
-                  <span class="file-type-badge fs-8">{{ doc.type === 'pdf' ? '📕' : (doc.type === 'xlsx' ? '📗' : '📘') }}</span>
-                  <div class="min-w-0">
+                   class="doc-file-item p-2.5 rounded-3 bg-light d-flex align-items-center justify-content-between gap-2 w-100">
+                <div class="d-flex align-items-center gap-2 flex-grow-1 min-w-0" style="overflow: hidden;">
+                  <span class="file-type-badge fs-8 flex-shrink-0">{{ doc.type === 'pdf' ? '📕' : (doc.type === 'xlsx' ? '📗' : '📘') }}</span>
+                  <div class="flex-grow-1 min-w-0" style="overflow: hidden;">
                     <div class="doc-file-name text-gray-900 fw-semibold fs-8 text-truncate">{{ doc.name }}</div>
-                    <div class="doc-file-meta text-muted fs-9">
+                    <div class="doc-file-meta text-muted fs-9 text-truncate">
                       {{ doc.size }} • 👁️ {{ doc.views }} • ⬇️ {{ doc.downloads }}
                     </div>
                   </div>
                 </div>
 
                 <button type="button"
-                        class="btn-doc-download rounded-pill px-2.5 py-1 fs-9 fw-bold btn-primary text-white border-0"
+                        class="btn-doc-download rounded-pill px-3 py-1 fs-9 fw-bold btn-primary text-white border-0 flex-shrink-0"
                         (click)="previewDoc(doc)">
                   Tải về
                 </button>
@@ -1071,18 +1071,18 @@
 
           <div class="d-flex flex-column gap-2 mt-2">
             <div *ngFor="let comment of sampleCommentsList; let idx = index"
-                 class="comment-sample-item p-2.5 rounded-3 border d-flex align-items-center justify-content-between gap-2"
+                 class="comment-sample-item p-2.5 rounded-3 border d-flex align-items-center justify-content-between gap-2.5 w-100"
                  [class.border-primary-subtle]="copiedCommentIndex === idx"
                  [class.bg-light-primary]="copiedCommentIndex === idx">
-              <div class="min-w-0">
+              <div class="flex-grow-1 min-w-0" style="overflow: hidden;">
                 <span class="badge rounded-pill px-2 py-0.5 fs-9 fw-bold mb-1" [ngClass]="comment.badge">
                   {{ comment.tag }}
                 </span>
-                <div class="text-gray-900 fs-8">{{ comment.text }}</div>
+                <div class="text-gray-900 fs-8 lh-base">{{ comment.text }}</div>
               </div>
 
               <button type="button"
-                      class="btn-copy-comment rounded-pill px-2.5 py-1.5 fs-9 fw-bold flex-shrink-0"
+                      class="btn-copy-comment rounded-pill px-3 py-1.5 fs-9 fw-bold flex-shrink-0"
                       [class.btn-success]="copiedCommentIndex === idx"
                       [class.btn-light]="copiedCommentIndex !== idx"
                       (click)="copyComment(comment.text, idx)">
