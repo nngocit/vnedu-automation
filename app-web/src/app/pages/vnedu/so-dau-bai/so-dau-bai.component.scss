@@ -563,7 +563,7 @@
     box-shadow: 0 4px 20px -2px rgba(16, 185, 129, 0.2), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
 
     &::before {
-      background: #10b981;
+      display: none !important;
     }
 
     .day-card-header {
@@ -766,7 +766,7 @@
       }
 
       td:first-child {
-        border-left: 3.5px solid #ef4444 !important;
+        border-left: none !important;
       }
     }
 
@@ -782,7 +782,7 @@
       }
 
       td:first-child {
-        border-left: 3.5px solid #cbd5e1 !important;
+        border-left: none !important;
       }
     }
   }
@@ -1963,14 +1963,7 @@
       box-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.4), 0 0 15px rgba(56, 189, 248, 0.15) !important;
 
       &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        width: 4.5px;
-        background: #38bdf8;
-        z-index: 5;
+        display: none !important;
       }
 
       .day-card-header {
@@ -2010,14 +2003,7 @@
       box-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.4), 0 0 15px rgba(16, 185, 129, 0.15) !important;
 
       &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        width: 4.5px;
-        background: #10b981;
-        z-index: 5;
+        display: none !important;
       }
 
       .day-card-header {
@@ -2207,7 +2193,7 @@
 
     .day-table tbody tr.row-slot-future {
       background-color: #181c32 !important;
-      border-left: 3px solid #3f4254 !important;
+      border-left: none !important;
 
       &:hover {
         background-color: #1b1f3a !important;
@@ -2254,7 +2240,7 @@
       background-color: rgba(245, 158, 11, 0.1) !important;
     }
     td:first-child {
-      border-left: 3px solid #f59e0b !important;
+      border-left: none !important;
     }
   }
 
@@ -4366,12 +4352,12 @@
   flex-shrink: 0;
 
   &.chip-matched {
-    background: #fef3c7 !important;
-    color: #b45309 !important;
-    border: 1px solid #fde68a !important;
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+    border: 1px solid #bfdbfe !important;
 
     &:hover {
-      background: #fde68a !important;
+      background: #dbeafe !important;
     }
   }
 

@@ -15,7 +15,32 @@
   </div>
 </div>
 
-<div class="vnedu-app-container">
+<!-- GIAO DIỆN NATIVE DÀNH RIÊNG CHO MOBILE (KHÔNG XÀI RESPONSIVE DỒN ÉP BẢNG) -->
+<app-so-dau-bai-mobile
+  *ngIf="isMobile"
+  [currentWeek]="currentWeek"
+  [realCurrentWeek]="realCurrentWeek"
+  [weeksList]="weeksList"
+  [dayGroups]="dayGroups"
+  [teacherTitle]="teacherTitle"
+  [teacherSchool]="teacherSchool"
+  [isSuperAdminLoggedIn]="isSuperAdminLoggedIn"
+  [currentLoggedInUser]="currentLoggedInUser"
+  [isFutureWeek]="isFutureWeek"
+  [isSavingBatch]="isSavingBatch"
+  (weekChange)="onWeekChangeMobile($event)"
+  (prevWeek)="prevWeek()"
+  (nextWeek)="nextWeek()"
+  (syncSingle)="syncSingle($event)"
+  (syncToday)="syncBatch('today')"
+  (syncAll)="syncBatch('all')"
+  (openAttendance)="openAttendanceModal($event)"
+  (scanSupervisor)="scanAllSupervisorAttendance()"
+  (switchTeacher)="openTeacherSwitcherModal()"
+></app-so-dau-bai-mobile>
+
+<!-- GIAO DIỆN DESKTOP ĐẦY ĐỦ TÍNH NĂNG (BẢNG, LIEFLAT ANALYTICS, RADAR...) -->
+<div *ngIf="!isMobile" class="vnedu-app-container">
   <!-- HERO WELCOME BANNER (THEO ĐÚNG MẪU ẢNH 1) -->
   <div class="hero-welcome-card mb-4 position-relative overflow-hidden">
     <div class="hero-content position-relative z-index-2">

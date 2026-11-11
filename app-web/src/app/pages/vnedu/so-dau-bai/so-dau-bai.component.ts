@@ -49,6 +49,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
 
   currentWeek = 10;
   realCurrentWeek = 10; // Tuần thực tế đang diễn ra trong năm học
+  isMobile: boolean = false;
   dataSource: 'vnedu' | 'excel' = 'vnedu';
   todayStr = '';
   selectedClassFilter: string = 'all';
@@ -267,6 +268,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.checkScreenSize();
     const now = new Date();
     this.todayStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
 
@@ -638,6 +640,22 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.checkScreenSize();
+  }
+
+  checkScreenSize(): void {
+    if (typeof window !== 'undefined') {
+      this.isMobile = window.innerWidth < 768;
+    }
+  }
+
+  onWeekChangeMobile(week: number): void {
+    this.currentWeek = week;
+    this.loadSchedule(week);
   }
 
   onWeekChange(event: any): void {

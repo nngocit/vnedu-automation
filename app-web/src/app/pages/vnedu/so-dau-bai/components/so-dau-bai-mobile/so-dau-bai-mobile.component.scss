@@ -1,0 +1,456 @@
+.mobile-app-wrapper {
+  background-color: #f8fafc;
+  min-height: 100vh;
+  padding-bottom: 5.5rem; // Chừa khoảng trống cho bottom dock và floating AI bot
+  font-family: inherit;
+  color: #1e293b;
+  overflow-x: hidden;
+}
+
+// 1. TOP BAR
+.mobile-top-bar {
+  background: #ffffff;
+  border-bottom: 1px solid #edf2f7;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+
+  .mobile-avatar-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0068ff 0%, #38bdf8 100%);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    box-shadow: 0 2px 6px rgba(0, 104, 255, 0.25);
+    cursor: pointer;
+  }
+
+  .mobile-teacher-name {
+    max-width: 130px;
+    line-height: 1.2;
+  }
+
+  .mobile-school-name {
+    max-width: 130px;
+    line-height: 1.2;
+  }
+
+  .btn-mobile-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    &:active {
+      background: #f1f5f9;
+    }
+  }
+
+  .mobile-week-pill {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 2px 4px;
+
+    .week-arrow {
+      background: transparent;
+      border: none;
+      color: #64748b;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      cursor: pointer;
+      &:disabled {
+        opacity: 0.3;
+      }
+    }
+
+    .week-select-native {
+      background: transparent;
+      border: none;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #0068ff;
+      padding: 2px 4px;
+      outline: none;
+      cursor: pointer;
+    }
+  }
+}
+
+// CẢNH BÁO TUẦN CŨ
+.mobile-notice-strip {
+  background: #fffbeb;
+  border-bottom: 1px solid #fef3c7;
+  color: #92400e;
+}
+
+// 2. SEGMENTED DAY BAR (TABS NGANG)
+.mobile-day-segmented-bar {
+  background: #ffffff;
+  border-bottom: 1px solid #edf2f7;
+  margin-bottom: 0.75rem;
+
+  .day-tabs-scroll {
+    overflow-x: auto;
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  .day-tab-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    min-width: 50px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+
+    .day-status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      margin-bottom: 2px;
+      background: #cbd5e1;
+
+      &.dot-today {
+        background: #0068ff;
+        box-shadow: 0 0 0 2px rgba(0, 104, 255, 0.25);
+      }
+      &.dot-completed {
+        background: #10b981;
+      }
+      &.dot-pending {
+        background: #ef4444;
+      }
+      &.dot-future {
+        background: #94a3b8;
+      }
+    }
+
+    .day-tab-thu {
+      color: #475569;
+      line-height: 1.1;
+    }
+
+    .day-tab-date {
+      font-size: 0.65rem !important;
+      line-height: 1;
+    }
+
+    // ACTIVE TAB
+    &.active {
+      background: #0068ff !important;
+      border-color: #0068ff !important;
+      box-shadow: 0 3px 10px rgba(0, 104, 255, 0.35);
+
+      .day-status-dot {
+        background: #ffffff !important;
+      }
+
+      .day-tab-thu {
+        color: #ffffff !important;
+      }
+
+      .day-tab-date {
+        color: rgba(255, 255, 255, 0.85) !important;
+      }
+    }
+  }
+}
+
+// 3. SELECTED DAY BANNER
+.selected-day-banner {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+
+  &.is-today-banner {
+    border-color: #bfdbfe;
+    background: linear-gradient(180deg, #f0f7ff 0%, #ffffff 100%);
+  }
+
+  &.is-completed-banner {
+    border-color: #bbf7d0;
+  }
+
+  .badge-today-mini {
+    background: #0068ff;
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+    letter-spacing: 0.02em;
+  }
+
+  .badge-done-mini {
+    background: #10b981;
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+  }
+
+  .badge-future-mini {
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .btn-quick-sync-today {
+    background: #0068ff;
+    color: #ffffff;
+    border: none;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.25rem 0.75rem;
+    box-shadow: 0 2px 6px rgba(0, 104, 255, 0.25);
+    cursor: pointer;
+  }
+}
+
+// 4. MOBILE SLOT CARDS
+.mobile-slot-app-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-left: 3.5px solid #3b82f6 !important;
+  transition: all 0.2s ease;
+
+  &.slot-pending {
+    background: #fffdfd;
+    border-color: #fecaca;
+    border-left: 3.5px solid #ef4444 !important;
+  }
+
+  &.slot-synced {
+    background: #ffffff;
+    border-color: #bbf7d0;
+    border-left: 3.5px solid #10b981 !important;
+  }
+
+  &.slot-future {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    border-left: 3.5px solid #cbd5e1 !important;
+  }
+
+  .slot-badge-session {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+
+    &.morning {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+    }
+    &.afternoon {
+      background: #fef3c7;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+  }
+
+  .mobile-class-pill {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+
+    &.class-badge-7a2 {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #bfdbfe;
+    }
+    &.class-badge-7a3 {
+      background: #f0fdf4;
+      color: #15803d;
+      border-color: #bbf7d0;
+    }
+    &.class-badge-9a2 {
+      background: #faf5ff;
+      color: #7e22ce;
+      border-color: #e9d5ff;
+    }
+  }
+
+  .attendance-chip-mobile {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: 20px;
+    white-space: nowrap;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid transparent;
+
+    &.chip-present {
+      background: #f0fdf4;
+      color: #16a34a;
+      border-color: #bbf7d0;
+    }
+
+    &.chip-matched {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #bfdbfe;
+    }
+
+    &.chip-mismatched, &.has-absent.pending {
+      background: #fef2f2;
+      color: #dc2626;
+      border-color: #fca5a5;
+      border-style: dashed;
+    }
+
+    &.chip-future-slot {
+      background: #f1f5f9;
+      color: #64748b;
+      border-color: #e2e8f0;
+    }
+  }
+
+  .input-ppct-mobile {
+    width: 48px;
+    padding: 0.15rem 0.35rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+  }
+
+  .input-lesson-mobile, .select-comment-mobile {
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    &:focus {
+      background: #ffffff;
+      border-color: #0068ff;
+      box-shadow: 0 0 0 3px rgba(0, 104, 255, 0.12);
+    }
+  }
+
+  .badge-slot-status {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+
+    &.synced {
+      background: #ecfdf5;
+      color: #047857;
+      border: 1px solid #a7f3d0;
+    }
+    &.pending {
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+    &.future {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+    }
+  }
+}
+
+// 5. BOTTOM DOCK
+.mobile-bottom-dock {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.05);
+  z-index: 990;
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+
+  .btn-dock-item {
+    background: transparent;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+    padding: 4px 12px;
+
+    .dock-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #64748b;
+    }
+    &:active .dock-label {
+      color: #0068ff;
+    }
+  }
+
+  .btn-dock-sync-all {
+    background: linear-gradient(135deg, #0068ff 0%, #2563eb 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 24px;
+    padding: 0.45rem 1.25rem;
+    font-size: 0.8rem;
+    font-weight: 800;
+    box-shadow: 0 4px 12px rgba(0, 104, 255, 0.35);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    &:disabled {
+      opacity: 0.6;
+    }
+  }
+}
+
+// DARK MODE
+:host-context(.dark-mode),
+body.dark-mode {
+  .mobile-app-wrapper {
+    background: #0f172a;
+    color: #f1f5f9;
+  }
+
+  .mobile-top-bar, .mobile-day-segmented-bar, .selected-day-banner, .mobile-slot-app-card, .mobile-bottom-dock {
+    background: #1e293b;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .mobile-teacher-name, h3, .text-gray-900 {
+    color: #f8fafc !important;
+  }
+
+  .day-tab-item {
+    background: #151e2e;
+    border-color: rgba(255, 255, 255, 0.08);
+    .day-tab-thu { color: #94a3b8; }
+  }
+
+  .input-lesson-mobile, .select-comment-mobile, .input-ppct-mobile {
+    background: #151e2e !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+  }
+}

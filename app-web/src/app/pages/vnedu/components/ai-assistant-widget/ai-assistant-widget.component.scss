@@ -8,8 +8,9 @@
   z-index: 1040;
 
   @media (max-width: 767.98px) {
-    bottom: calc(18px + env(safe-area-inset-bottom, 0px)) !important;
-    right: calc(16px + env(safe-area-inset-right, 0px)) !important;
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important; // Nằm cách trên Bottom Dock thoải mái, không che nút
+    right: calc(20px + env(safe-area-inset-right, 0px)) !important; // Không bị ép sát góc mép màn hình
+    z-index: 1045 !important;
 
     .btn-ai-launcher {
       width: 48px !important;
