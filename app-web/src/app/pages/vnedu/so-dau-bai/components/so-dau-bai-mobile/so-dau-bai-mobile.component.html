@@ -391,8 +391,8 @@
   <ng-container *ngIf="activeTab === 'sync'">
     <main class="mobile-sync-screen px-3 pt-3 pb-5 d-flex flex-column gap-3">
       <!-- Card Tiến độ Đồng bộ Tuần -->
-      <section class="sync-summary-card p-3 bg-white rounded-4 shadow-xs">
-        <div class="d-flex align-items-center justify-content-between mb-2">
+      <section class="sync-summary-card p-3.5 bg-white rounded-4 shadow-sm">
+        <div class="d-flex align-items-center justify-content-between mb-2.5">
           <div>
             <span class="badge-week-tag">Tuần {{ currentWeek }}</span>
             <h3 class="fw-bold fs-5 text-gray-900 mt-1 mb-0">Tiến độ lưu SĐB tuần</h3>
@@ -403,7 +403,7 @@
         </div>
 
         <!-- Progress Bar -->
-        <div class="progress mb-3" style="height: 10px; border-radius: 9999px; background: #e2e8f0;">
+        <div class="progress mb-3.5" style="height: 10px; border-radius: 9999px; background: #e2e8f0;">
           <div class="progress-bar"
                role="progressbar"
                [style.width.%]="syncPercentage"
@@ -414,28 +414,31 @@
         <!-- 3 Thống kê chi tiết chuẩn UI/UX Pro Max -->
         <div class="row g-2 text-center">
           <div class="col-4">
-            <div class="sync-stat-box sync-stat-synced p-2.5 rounded-3 border">
-              <div class="sync-stat-num text-success">{{ syncedSlotsCount }}</div>
-              <div class="sync-stat-label text-muted">Đã lưu vnEdu</div>
+            <div class="sync-stat-box sync-stat-synced p-2.5 rounded-3">
+              <span class="sync-stat-icon">✅</span>
+              <div class="sync-stat-num">{{ syncedSlotsCount }}</div>
+              <div class="sync-stat-label">Đã lưu vnEdu</div>
             </div>
           </div>
           <div class="col-4">
-            <div class="sync-stat-box sync-stat-pending p-2.5 rounded-3 border">
-              <div class="sync-stat-num text-warning">{{ pendingSlotsCount }}</div>
-              <div class="sync-stat-label text-muted">Cần lưu SĐB</div>
+            <div class="sync-stat-box sync-stat-pending p-2.5 rounded-3">
+              <span class="sync-stat-icon">⏳</span>
+              <div class="sync-stat-num">{{ pendingSlotsCount }}</div>
+              <div class="sync-stat-label">Cần lưu SĐB</div>
             </div>
           </div>
           <div class="col-4">
-            <div class="sync-stat-box sync-stat-mismatch p-2.5 rounded-3 border">
-              <div class="sync-stat-num text-info">{{ mismatchedSlotsCount }}</div>
-              <div class="sync-stat-label text-muted">Lệch Giám thị</div>
+            <div class="sync-stat-box sync-stat-mismatch p-2.5 rounded-3">
+              <span class="sync-stat-icon">🛡️</span>
+              <div class="sync-stat-num">{{ mismatchedSlotsCount }}</div>
+              <div class="sync-stat-label">Lệch Giám thị</div>
             </div>
           </div>
         </div>
       </section>
 
       <!-- Card Hành động đồng bộ cấp tốc -->
-      <section class="sync-actions-card p-3 bg-white rounded-4 shadow-xs d-flex flex-column gap-2.5">
+      <section class="sync-actions-card p-3.5 bg-white rounded-4 shadow-sm d-flex flex-column gap-2.5">
         <h4 class="fw-bold fs-6 text-gray-800 mb-1">Thao tác đồng bộ CSDL</h4>
         
         <!-- Nút Cam / Xanh: Lưu toàn bộ tuần -->
@@ -460,29 +463,36 @@
       </section>
 
       <!-- Danh sách trạng thái theo từng ngày trong tuần -->
-      <section class="sync-days-card p-3 bg-white rounded-4 shadow-xs">
+      <section class="sync-days-card p-3.5 bg-white rounded-4 shadow-sm">
         <h4 class="fw-bold fs-6 text-gray-800 mb-3">Tình trạng từng ngày trong tuần</h4>
         <div class="d-flex flex-column gap-2.5">
           <div *ngFor="let g of dayGroups; trackBy: trackByThu"
-               class="sync-day-item p-2.5 rounded-3 border d-flex align-items-center justify-content-between"
-               [class.border-success-subtle]="g.isCompleted"
-               [class.bg-light-success]="g.isCompleted">
-            <div>
-              <div class="d-flex align-items-center gap-2">
-                <span class="fw-bold text-gray-900 fs-6">{{ g.thuText }}</span>
-                <span class="text-muted fs-7">({{ g.ngay }})</span>
-                <span *ngIf="g.isToday" class="badge-pill-today fs-8">Hôm nay</span>
+               class="sync-day-item p-3 rounded-3 d-flex align-items-center justify-content-between"
+               [class.day-completed]="g.isCompleted"
+               [class.day-pending]="!g.isCompleted && g.pendingCount > 0">
+            <div class="d-flex align-items-center gap-3 min-w-0">
+              <!-- Icon tròn chỉ báo trạng thái ngày -->
+              <div class="day-status-circle flex-shrink-0" [ngClass]="g.isCompleted ? 'circle-completed' : 'circle-pending'">
+                <span *ngIf="g.isCompleted">✓</span>
+                <span *ngIf="!g.isCompleted">⏳</span>
               </div>
-              <div class="text-muted fs-8 mt-0.5">
-                {{ g.slots?.length || 0 }} tiết dạy • 
-                <span [class.text-success]="g.isCompleted" [class.text-warning]="!g.isCompleted && g.pendingCount > 0">
-                  {{ g.isCompleted ? '✓ Đã hoàn tất' : (g.pendingCount + ' tiết chưa lưu') }}
-                </span>
+              <div class="min-w-0">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <span class="fw-bold text-gray-900 fs-6">{{ g.thuText }}</span>
+                  <span class="text-muted fs-8">({{ g.ngay }})</span>
+                  <span *ngIf="g.isToday" class="badge-pill-today fs-9">Hôm nay</span>
+                </div>
+                <div class="text-muted fs-8 mt-0.5">
+                  {{ g.slots?.length || 0 }} tiết dạy • 
+                  <span [class.text-success]="g.isCompleted" [class.text-warning]="!g.isCompleted && g.pendingCount > 0" class="fw-semibold">
+                    {{ g.isCompleted ? '✓ Đã hoàn tất' : (g.pendingCount + ' tiết chưa lưu') }}
+                  </span>
+                </div>
               </div>
             </div>
 
             <button type="button"
-                    class="btn-view-day-schedule"
+                    class="btn-view-day-schedule flex-shrink-0"
                     (click)="goToScheduleDay(g.thu)">
               Xem lịch ❯
             </button>

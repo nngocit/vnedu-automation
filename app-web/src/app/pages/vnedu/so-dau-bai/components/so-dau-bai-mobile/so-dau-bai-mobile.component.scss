@@ -767,62 +767,93 @@ $tnvn-text-muted: #64748b;
   overflow-x: hidden !important;
   padding-bottom: 96px !important; // Chừa khoảng trống an toàn tuyệt đối cho Bottom Nav 66px
 
+  // TẤT CẢ CÁC CARD ĐƯỢC NÂNG CẤP BÓNG ĐỔ NỔI BẬT NATIVE, KHÔNG BỊ CHÌM VÀO NỀN
+  .sync-summary-card,
+  .sync-actions-card,
+  .sync-days-card {
+    background: #ffffff !important;
+    border-radius: 18px !important;
+    border: 1px solid rgba(226, 232, 240, 0.85) !important;
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.07), 0 2px 6px -1px rgba(15, 23, 42, 0.03) !important;
+  }
+
   .sync-summary-card {
-    border: 1px solid $tnvn-card-border;
     .badge-week-tag {
       display: inline-block;
       font-size: 12px;
       font-weight: 700;
-      color: $tnvn-blue;
-      background: $tnvn-blue-light;
-      padding: 2px 8px;
+      color: #2554f2;
+      background: #eff6ff;
+      padding: 3px 10px;
       border-radius: 9999px;
     }
     .sync-percent-pill {
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 800;
       color: #10b981;
       background: #ecfdf5;
-      padding: 4px 12px;
+      padding: 4px 14px;
       border-radius: 9999px;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.18);
     }
   }
 
-  // 3 Hộp thống kê phẳng, sắc nét, hiện đại (không bao giờ bị chìm 3D)
+  // 3 HỘP THỐNG KÊ KPI NỔI BẬT SẮC NÉT (KHÔNG BỊ CHÌM 3D/LÕM MÁNG)
   .sync-stat-box {
-    border-radius: 12px !important;
+    border-radius: 14px !important;
+    border: 1px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03) !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 6px !important;
     transition: all 0.2s ease !important;
 
+    .sync-stat-icon {
+      font-size: 15px;
+      line-height: 1;
+      margin-bottom: 3px;
+    }
+
     .sync-stat-num {
-      font-size: 20px !important;
+      font-size: 21px !important;
       font-weight: 800 !important;
-      line-height: 1.2;
+      line-height: 1.1;
     }
     .sync-stat-label {
-      font-size: 11.5px !important;
+      font-size: 11px !important;
       font-weight: 700 !important;
-      margin-top: 2px;
+      color: #64748b !important;
+      margin-top: 3px;
     }
 
     &.sync-stat-synced {
-      background: #f0fdf4 !important;
-      border: 1px solid #bbf7d0 !important;
+      background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%) !important;
+      border-color: #86efac !important;
+      .sync-stat-num { color: #16a34a !important; }
+      .sync-stat-label { color: #15803d !important; }
     }
     &.sync-stat-pending {
-      background: #fffbeb !important;
-      border: 1px solid #fde68a !important;
+      background: linear-gradient(180deg, #ffffff 0%, #fffbeb 100%) !important;
+      border-color: #fde68a !important;
+      .sync-stat-num { color: #d97706 !important; }
+      .sync-stat-label { color: #b45309 !important; }
     }
     &.sync-stat-mismatch {
-      background: #f5f3ff !important;
-      border: 1px solid #ddd6fe !important;
+      background: linear-gradient(180deg, #ffffff 0%, #f5f3ff 100%) !important;
+      border-color: #ddd6fe !important;
+      .sync-stat-num { color: #7c3aed !important; }
+      .sync-stat-label { color: #6d28d9 !important; }
     }
   }
 
-  // NÚT CAM THANH NIÊN (Hiện đại, phẳng, rực rỡ, KHÔNG BAO GIỜ BỊ 3D CHÌM)
+  // NÚT CAM THANH NIÊN (Vibrant gradient, bóng đổ nổi rực rỡ, KHÔNG BỊ CHÌM)
   .btn-tnvn-orange {
     -webkit-appearance: none !important;
     appearance: none !important;
-    background: linear-gradient(135deg, #ff8c00 0%, #ff5e00 100%) !important;
+    background: linear-gradient(135deg, #ff7a00 0%, #ff4d00 100%) !important;
     color: #ffffff !important;
     border: none !important;
     border-radius: 9999px !important;
@@ -830,7 +861,7 @@ $tnvn-text-muted: #64748b;
     font-weight: 800 !important;
     letter-spacing: 0.2px;
     padding: 13px 20px !important;
-    box-shadow: 0 4px 14px rgba(255, 122, 0, 0.35) !important;
+    box-shadow: 0 4px 14px rgba(255, 106, 0, 0.35) !important;
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex !important;
@@ -854,16 +885,18 @@ $tnvn-text-muted: #64748b;
     }
   }
 
+  // NÚT PHỤ: QUÉT GIÁM THỊ (Nổi bật, sắc nét, tương phản cao trên nền trắng)
   .btn-sync-action-blue {
     -webkit-appearance: none !important;
     appearance: none !important;
-    background: #eef4ff !important;
-    color: $tnvn-blue !important;
-    border: 1.5px solid rgba(43, 89, 255, 0.25) !important;
+    background: #ffffff !important;
+    color: #2554f2 !important;
+    border: 1.5px solid #2554f2 !important;
     border-radius: 9999px !important;
     font-size: 14px !important;
     font-weight: 700 !important;
     padding: 11px 20px !important;
+    box-shadow: 0 2px 8px rgba(37, 84, 242, 0.1) !important;
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex !important;
@@ -871,29 +904,57 @@ $tnvn-text-muted: #64748b;
     justify-content: center !important;
 
     &:active {
-      background: #dbeafe !important;
+      background: #eff6ff !important;
       transform: scale(0.98);
     }
   }
 
+  // DANH SÁCH TỪNG NGÀY TRONG TUẦN (SẠCH, NỔI BẬT, BỎ HỘP LỒNG CHÌM)
   .sync-days-card {
-    border: 1px solid $tnvn-card-border;
     .sync-day-item {
-      background: #ffffff;
+      background: #ffffff !important;
       border: 1px solid #e2e8f0 !important;
+      border-radius: 14px !important;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02) !important;
       transition: all 0.2s ease;
 
-      &.border-success-subtle {
+      &.day-completed {
         border-color: #bbf7d0 !important;
-        background: #f0fdf4 !important;
+        background: #ffffff !important;
+      }
+
+      &.day-pending {
+        border-color: #fde68a !important;
+        background: #ffffff !important;
+      }
+
+      .day-status-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 13px;
+
+        &.circle-completed {
+          background: #dcfce7;
+          color: #16a34a;
+        }
+
+        &.circle-pending {
+          background: #fef3c7;
+          color: #d97706;
+        }
       }
 
       .btn-view-day-schedule {
         -webkit-appearance: none !important;
         appearance: none !important;
-        background: #ffffff !important;
-        border: 1px solid #cbd5e1 !important;
-        color: $tnvn-blue !important;
+        background: #eff6ff !important;
+        border: 1px solid #bfdbfe !important;
+        color: #2554f2 !important;
         font-size: 12.5px !important;
         font-weight: 700 !important;
         padding: 6px 14px !important;
@@ -902,9 +963,9 @@ $tnvn-text-muted: #64748b;
         transition: all 0.15s ease;
 
         &:active {
-          background: $tnvn-blue !important;
+          background: #2554f2 !important;
           color: #ffffff !important;
-          border-color: $tnvn-blue !important;
+          border-color: #2554f2 !important;
         }
       }
     }
