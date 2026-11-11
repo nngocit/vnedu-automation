@@ -100,10 +100,11 @@ $tnvn-text-muted: #64748b;
   z-index: 20;
 
   .profile-card-content {
-    background: #ffffff !important;
+    background: linear-gradient(135deg, #1d4ae8 0%, #2b59ff 55%, #4a77ff 100%) !important;
     border-radius: 20px;
-    border: 1px solid $tnvn-card-border;
-    box-shadow: 0 6px 20px rgba(43, 89, 255, 0.07), 0 2px 6px rgba(0, 0, 0, 0.03);
+    border: 1.5px solid rgba(255, 255, 255, 0.28);
+    box-shadow: 0 10px 28px rgba(43, 89, 255, 0.35), 0 3px 8px rgba(0, 0, 0, 0.08);
+    color: #ffffff;
   }
 
   .avatar-wrapper {
@@ -141,7 +142,7 @@ $tnvn-text-muted: #64748b;
         width: 22px;
         height: 22px;
         border-radius: 50%;
-        background: $tnvn-blue;
+        background: #2b59ff;
         border: 2px solid #ffffff;
         display: flex;
         align-items: center;
@@ -156,12 +157,14 @@ $tnvn-text-muted: #64748b;
     font-weight: 800;
     letter-spacing: -0.2px;
     line-height: 24px;
+    color: #ffffff !important;
   }
 
   .edit-pencil-icon {
     font-size: 16px;
     cursor: pointer;
-    opacity: 0.85;
+    opacity: 0.9;
+    filter: brightness(1.2);
     &:hover {
       opacity: 1;
     }
@@ -172,16 +175,17 @@ $tnvn-text-muted: #64748b;
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    background: #f1f5f9;
-    color: #475569;
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
     font-size: 13px !important;
     font-weight: 700;
     padding: 5px 12px;
     border-radius: 9999px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    backdrop-filter: blur(8px);
 
     .check-icon {
-      color: #10b981;
+      color: #86efac;
       font-weight: 900;
       font-size: 14px;
     }
@@ -190,48 +194,53 @@ $tnvn-text-muted: #64748b;
   .badge-version-tnvn {
     display: inline-flex;
     align-items: center;
-    background: $tnvn-blue-light;
-    color: $tnvn-blue;
+    background: rgba(255, 210, 0, 0.25);
+    color: #ffd200;
     font-size: 13px !important;
     font-weight: 800;
     padding: 5px 12px;
     border-radius: 9999px;
-    border: 1px solid rgba(43, 89, 255, 0.2);
+    border: 1px solid rgba(255, 210, 0, 0.55);
+  }
+
+  .school-and-week-row {
+    border-top: 1px solid rgba(255, 255, 255, 0.22) !important;
   }
 
   .school-label {
     font-size: 13px !important;
     font-weight: 600;
-    color: $tnvn-text-muted;
+    color: rgba(255, 255, 255, 0.82) !important;
   }
 
   .school-name {
     font-size: 15px !important;
     font-weight: 800;
-    color: #1e293b;
+    color: #ffffff !important;
   }
 
   // Bộ chọn tuần Capsule
   .week-capsule-picker {
-    background: $tnvn-field-bg;
-    border: 1px solid #e2e8f0;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.35);
     border-radius: 9999px;
     padding: 3px 6px;
+    backdrop-filter: blur(8px);
 
     .week-btn-arrow {
       background: transparent;
       border: none;
-      color: $tnvn-text-muted;
+      color: #ffffff;
       font-size: 15px !important;
       padding: 4px 8px;
       cursor: pointer;
       border-radius: 50%;
       line-height: 1;
       &:disabled {
-        opacity: 0.3;
+        opacity: 0.35;
       }
       &:active:not(:disabled) {
-        background: #e2e8f0;
+        background: rgba(255, 255, 255, 0.25);
       }
     }
 
@@ -240,10 +249,15 @@ $tnvn-text-muted: #64748b;
       border: none;
       font-size: 14px !important;
       font-weight: 800;
-      color: $tnvn-blue;
+      color: #ffffff;
       padding: 4px 8px;
       outline: none;
       cursor: pointer;
+
+      option {
+        color: #1e293b;
+        background: #ffffff;
+      }
     }
   }
 }
@@ -924,4 +938,35 @@ $tnvn-text-muted: #64748b;
 @keyframes slideUpSheet {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
+}
+
+// ========================================================
+// 11. FACEBOOK SKELETON SHIMMER LOADING
+// ========================================================
+@keyframes fbShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.fb-shimmer {
+  background: linear-gradient(90deg, #edf2f7 0%, #f7fafc 50%, #edf2f7 100%) !important;
+  background-size: 200% 100% !important;
+  animation: fbShimmer 1.5s infinite linear !important;
+}
+
+.mobile-skeleton-wrapper {
+  .skeleton-status-pill {
+    border: 1px solid rgba(43, 89, 255, 0.15);
+  }
+  .skeleton-day-track {
+    border: 1px solid #e2e8f0;
+  }
+  .skeleton-banner,
+  .skeleton-slot-card {
+    border: 1px solid #e2e8f0;
+  }
 }

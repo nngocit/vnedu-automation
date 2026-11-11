@@ -96,13 +96,13 @@
 
         <!-- Lời chào & Tên giáo viên -->
         <div class="d-flex align-items-center justify-content-center gap-2 mb-1.5" (click)="activeTab = 'profile'">
-          <h2 class="teacher-name-heading mb-0 fw-bold text-gray-900">
+          <h2 class="teacher-name-heading mb-0 fw-bold">
             Xin chào, {{ isSuperAdminLoggedIn ? (currentLoggedInUser?.fullname || 'Xuân Ngọc') : teacherTitle }}
           </h2>
           <span class="edit-pencil-icon" title="Hồ sơ cá nhân">✏️</span>
         </div>
 
-        <!-- Badges: Đã xác thực + Phiên bản v2.8.4 -->
+        <!-- Badges: Đã xác thực + Phiên bản v2.8.6 -->
         <div class="d-flex align-items-center justify-content-center gap-2 mb-3 flex-wrap">
           <span class="badge-verified-tnvn">
             <span class="check-icon">✓</span>
@@ -116,8 +116,8 @@
         <!-- Đơn vị công tác & Bộ chọn tuần dạng Capsule -->
         <div class="school-and-week-row d-flex align-items-center justify-content-between pt-2.5 border-top border-gray-100 flex-wrap gap-2">
           <div class="text-start">
-            <div class="school-label text-muted">Đơn vị công tác</div>
-            <div class="school-name text-gray-900 fw-bold text-truncate" style="max-width: 160px;">
+            <div class="school-label">Đơn vị công tác</div>
+            <div class="school-name fw-bold text-truncate" style="max-width: 160px;">
               {{ teacherSchool }}
             </div>
           </div>
@@ -136,8 +136,71 @@
       </div>
     </section>
 
-    <!-- CẢNH BÁO TUẦN CŨ -->
-    <div *ngIf="currentWeek < realCurrentWeek" class="mobile-notice-strip warning mx-3 mb-3 px-3 py-2.5 rounded-3 d-flex align-items-center gap-2">
+    <!-- ======================================================== -->
+    <!-- SKELETON SHIMMER LOADING KHI SERVER LẤY DỮ LIỆU VNEDU    -->
+    <!-- (HIỆU ỨNG FACEBOOK SHIMMER SKELETON THEO YÊU CẦU NGƯỜI DÙNG) -->
+    <!-- ======================================================== -->
+    <section *ngIf="isLoading" class="mobile-skeleton-wrapper mx-3 mb-4 d-flex flex-column gap-3">
+      <!-- Loading banner báo trạng thái -->
+      <div class="skeleton-status-pill d-flex align-items-center justify-content-center gap-2 py-2.5 px-3 rounded-pill bg-white shadow-xs">
+        <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+        <span class="fw-bold fs-7 text-primary">Đang đồng bộ dữ liệu vnEdu...</span>
+      </div>
+
+      <!-- Skeleton Day Switcher Pills -->
+      <div class="skeleton-day-track p-1 bg-white rounded-pill shadow-xs d-flex gap-1">
+        <div class="skeleton-pill flex-fill fb-shimmer" style="height: 48px; border-radius: 9999px;"></div>
+        <div class="skeleton-pill flex-fill fb-shimmer" style="height: 48px; border-radius: 9999px;"></div>
+        <div class="skeleton-pill flex-fill fb-shimmer" style="height: 48px; border-radius: 9999px;"></div>
+        <div class="skeleton-pill flex-fill fb-shimmer" style="height: 48px; border-radius: 9999px;"></div>
+        <div class="skeleton-pill flex-fill fb-shimmer" style="height: 48px; border-radius: 9999px;"></div>
+        <div class="skeleton-pill flex-fill fb-shimmer" style="height: 48px; border-radius: 9999px;"></div>
+      </div>
+
+      <!-- Skeleton Day Banner -->
+      <div class="skeleton-banner p-3 bg-white rounded-4 shadow-xs d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2">
+          <div class="fb-shimmer rounded-3" style="width: 140px; height: 22px;"></div>
+          <div class="fb-shimmer rounded-pill" style="width: 70px; height: 20px;"></div>
+        </div>
+        <div class="fb-shimmer rounded-3" style="width: 90px; height: 18px;"></div>
+      </div>
+
+      <!-- Skeleton Slot Cards (3 cards placeholder) -->
+      <div *ngFor="let s of [1, 2, 3]" class="skeleton-slot-card p-3 bg-white rounded-4 shadow-xs d-flex flex-column gap-3">
+        <!-- Top header row -->
+        <div class="d-flex align-items-center justify-content-between pb-2 border-bottom border-gray-100">
+          <div class="d-flex align-items-center gap-2">
+            <div class="fb-shimmer rounded-pill" style="width: 50px; height: 22px;"></div>
+            <div class="fb-shimmer rounded-2" style="width: 60px; height: 20px;"></div>
+            <div class="fb-shimmer rounded-2" style="width: 80px; height: 16px;"></div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <div class="fb-shimmer rounded-pill" style="width: 55px; height: 22px;"></div>
+            <div class="fb-shimmer rounded-pill" style="width: 80px; height: 22px;"></div>
+          </div>
+        </div>
+
+        <!-- Middle subject & lesson box -->
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="fb-shimmer rounded-2" style="width: 110px; height: 22px;"></div>
+          <div class="fb-shimmer rounded-pill" style="width: 75px; height: 22px;"></div>
+        </div>
+        <div class="fb-shimmer rounded-3" style="width: 100%; height: 44px;"></div>
+        <div class="fb-shimmer rounded-3" style="width: 100%; height: 40px;"></div>
+
+        <!-- Bottom action buttons -->
+        <div class="d-flex align-items-center justify-content-between pt-1">
+          <div class="fb-shimmer rounded-pill" style="width: 100px; height: 26px;"></div>
+          <div class="fb-shimmer rounded-pill" style="width: 120px; height: 36px;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NỘI DUNG LỊCH DẠY KHI ĐÃ TẢI DỮ LIỆU XONG (!isLoading) -->
+    <ng-container *ngIf="!isLoading">
+      <!-- CẢNH BÁO TUẦN CŨ -->
+      <div *ngIf="currentWeek < realCurrentWeek" class="mobile-notice-strip warning mx-3 mb-3 px-3 py-2.5 rounded-3 d-flex align-items-center gap-2">
       <span class="fs-5">⚠️</span>
       <span class="notice-text text-amber-900 fw-semibold">
         Đang xem <strong>Tuần {{ currentWeek }}</strong> (Tuần cũ đã chốt sổ CSDL). Cẩn thận khi lưu đè dữ liệu!
@@ -319,6 +382,7 @@
         </div>
       </div>
     </main>
+    </ng-container>
   </ng-container>
 
   <!-- ======================================================== -->

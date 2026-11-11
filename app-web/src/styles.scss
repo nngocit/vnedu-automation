@@ -570,3 +570,22 @@ textarea {
   }
 }
 
+/* ========================================================= */
+/* FACEBOOK SKELETON SHIMMER LOADING (GLOBAL UTILITY)        */
+/* ========================================================= */
+@keyframes fbShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.fb-shimmer {
+  background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%) !important;
+  background-size: 200% 100% !important;
+  animation: fbShimmer 1.5s infinite linear !important;
+  display: block;
+}
+
