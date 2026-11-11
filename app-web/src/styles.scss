@@ -11,6 +11,19 @@
 @import "./assets/plugins/keenicons/outline/style.css";
 @import "./assets/plugins/keenicons/solid/style.css";
 
+body,
+#kt_body,
+.mat-typography,
+html,
+button,
+input,
+select,
+textarea {
+  font-family: 'Lexend', 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 /* ========================================================= */
 /* LIGHT MODE: THANH NIÊN VIỆT NAM OFFICIAL MODERN THEME     */
 /* (Xanh Hoàng gia Đoàn TNCS Hồ Chí Minh - Royal Youth Blue) */
@@ -446,3 +459,86 @@
     }
   }
 }
+
+/* ========================================================= */
+/* QUY TẮC BẢO ĐẢM GIAO DIỆN NATIVE MOBILE CHUẨN THANH NIÊN  */
+/* "MOBILE MÀU TỐI BỎ LUÔN KO XÀI - 100% LIGHT THEME NATIVE"  */
+/* ========================================================= */
+@media (max-width: 767.98px) {
+  // 1. Luôn ép Light Mode trên màn hình Mobile (Bỏ hoàn toàn Dark Mode trên Mobile)
+  html,
+  body,
+  #kt_body,
+  #kt_app_root,
+  #kt_app_page,
+  .app-page,
+  .app-wrapper,
+  .app-main,
+  .app-content,
+  .mobile-app-wrapper {
+    background-color: #f4f6fa !important;
+    color: #0f172a !important;
+  }
+
+  // Khử sạch mọi background tối màu nếu thiết bị ở dark mode
+  [data-bs-theme="dark"] {
+    body,
+    #kt_body,
+    #kt_app_root,
+    #kt_app_page,
+    .app-page,
+    .app-wrapper,
+    .app-main,
+    .app-content,
+    .mobile-app-wrapper {
+      background-color: #f4f6fa !important;
+      color: #0f172a !important;
+    }
+
+    // Header mobile luôn giữ màu xanh Thanh Niên
+    .mobile-youth-header {
+      background: linear-gradient(180deg, #2554f2 0%, #3062f9 100%) !important;
+      color: #ffffff !important;
+    }
+
+    // Các thẻ card luôn giữ nền trắng sáng
+    .mobile-slot-card,
+    .profile-card-content,
+    .selected-day-banner,
+    .empty-day-state,
+    .mobile-bottom-dock {
+      background-color: #ffffff !important;
+      color: #0f172a !important;
+      border-color: #edf1f7 !important;
+    }
+
+    // Input và form giữ màu xám nhạt hiện đại
+    .input-form-tnvn,
+    .select-form-tnvn,
+    .input-ppct-tnvn {
+      background-color: #f2f4f8 !important;
+      color: #0f172a !important;
+      border-color: #e4e7ec !important;
+    }
+  }
+
+  // 2. Ẩn thanh topbar desktop và toolbar dư thừa trên mobile để giữ bố cục đơn nhất chuẩn native
+  #kt_app_header,
+  #kt_app_toolbar {
+    display: none !important;
+  }
+
+  // Ẩn nút gạt đổi màu tối trên mobile
+  app-theme-mode-switcher {
+    display: none !important;
+  }
+
+  // Loại bỏ padding thừa của Metronic container trên mobile
+  #kt_app_content_container,
+  .app-container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 0 !important;
+  }
+}
+

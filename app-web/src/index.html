@@ -7,7 +7,9 @@
   <base href="/" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="shortcut icon" href="./assets/media/logos/favicon.ico" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <!-- SPLASH SCREEN-->
   <link rel="stylesheet" id="layout-styles-anchor" href="./assets/splash-screen.css" />
   <link rel="preconnect" href="https://fonts.gstatic.com">
@@ -18,11 +20,12 @@
   <!--begin::Theme mode setup on page load-->
   <script>
     if (document.documentElement) {
-      var defaultThemeMode = "system";
+      var isMobileDevice = window.innerWidth < 768 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      var defaultThemeMode = isMobileDevice ? "light" : "system";
 
       var hasKTName = document.body.hasAttribute("data-kt-name");
-      var lsKey = "kt_" + (hasKTName ? name + "_" : "") + "theme_mode_value"
-      var themeMode = localStorage.getItem(lsKey);
+      var lsKey = "kt_" + (hasKTName ? name + "_" : "") + "theme_mode_value";
+      var themeMode = isMobileDevice ? "light" : localStorage.getItem(lsKey);
       if (!themeMode) {
         if (defaultThemeMode === "system") {
           themeMode =
@@ -30,6 +33,9 @@
         } else {
           themeMode = defaultThemeMode;
         }
+      }
+      if (isMobileDevice) {
+        themeMode = "light";
       }
 
       document.documentElement.setAttribute("data-bs-theme", themeMode);

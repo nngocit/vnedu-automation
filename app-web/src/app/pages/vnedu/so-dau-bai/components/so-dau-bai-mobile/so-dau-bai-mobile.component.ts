@@ -18,7 +18,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
   @Input() currentLoggedInUser: any = null;
   @Input() isFutureWeek: boolean = false;
   @Input() isSavingBatch: boolean = false;
-  @Input() appVersion: string = 'v2.7.0';
+  @Input() appVersion: string = 'v2.8.1';
 
   @Output() weekChange = new EventEmitter<number>();
   @Output() prevWeek = new EventEmitter<void>();
@@ -31,6 +31,12 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
   @Output() switchTeacher = new EventEmitter<void>();
 
   selectedThu: number = 0;
+  activeTab: string = 'schedule';
+
+  get todayThu(): number {
+    const today = this.dayGroups?.find(g => g.isToday);
+    return today ? today.thu : (this.dayGroups?.[0]?.thu || 2);
+  }
 
   ngOnInit(): void {
     this.initSelectedDay();

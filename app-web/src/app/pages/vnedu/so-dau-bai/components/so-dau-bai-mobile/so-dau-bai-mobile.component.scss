@@ -1,86 +1,264 @@
+// ========================================================
+// MOBILE NATIVE COMPONENT STYLES
+// Theo chuẩn Thiết kế App Thanh niên Việt Nam (VNPT / TW Đoàn)
+// Phối màu: Xanh Thanh Niên #2b59ff, Vạch Vàng #ffd200, Cam #ff7a00
+// ========================================================
+
+$tnvn-blue-deep: #2554f2;
+$tnvn-blue: #2b59ff;
+$tnvn-blue-light: #eef4ff;
+$tnvn-yellow-indicator: #ffd200;
+$tnvn-orange: #ff7a00;
+$tnvn-orange-gradient: linear-gradient(135deg, #ff8c00 0%, #ff5e00 100%);
+$tnvn-bg: #f4f6fa;
+$tnvn-card-border: #edf1f7;
+$tnvn-field-bg: #f2f4f8;
+$tnvn-text-main: #14142b;
+$tnvn-text-muted: #8a94a6;
+
 .mobile-app-wrapper {
-  background-color: #f8fafc;
+  background-color: $tnvn-bg !important;
   min-height: 100vh;
-  padding-bottom: 5.5rem; // Chừa khoảng trống cho bottom dock và floating AI bot
-  font-family: inherit;
-  color: #1e293b;
+  padding-bottom: 5.5rem; // Chừa chỗ cho bottom navigation dock
+  font-family: 'Lexend', 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  color: $tnvn-text-main;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
-// 1. TOP BAR
-.mobile-top-bar {
-  background: #ffffff;
-  border-bottom: 1px solid #edf2f7;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+// ========================================================
+// 1. TOP HEADER NATIVE THANH NIÊN (ẢNH 1 VÀ ẢNH 6)
+// ========================================================
+.mobile-youth-header {
+  background: linear-gradient(180deg, $tnvn-blue-deep 0%, $tnvn-blue 100%) !important;
+  color: #ffffff;
+  position: relative;
+  padding-top: env(safe-area-inset-top, 0px);
 
-  .mobile-avatar-circle {
-    width: 36px;
-    height: 36px;
+  .header-top-row {
+    position: relative;
+    z-index: 10;
+  }
+
+  .header-nav-btn {
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #003ea8 0%, #0052cc 60%, #1865f2 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
     color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.15rem;
-    box-shadow: 0 2px 8px rgba(0, 82, 204, 0.35);
     cursor: pointer;
-  }
+    transition: all 0.2s ease;
 
-  .mobile-teacher-name {
-    max-width: 140px;
-    line-height: 1.2;
-  }
+    .header-svg-icon {
+      width: 19px;
+      height: 19px;
+      stroke: #ffffff;
+    }
 
-  .mobile-school-name {
-    max-width: 140px;
-    line-height: 1.2;
-  }
-
-  .btn-mobile-icon {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    border: 1px solid #e2e8f0;
-    background: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    cursor: pointer;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     &:active {
-      background: #f1f5f9;
+      transform: scale(0.92);
+      background: rgba(255, 255, 255, 0.3);
     }
   }
 
-  .mobile-week-pill {
-    background: #f1f5f9;
-    border: 1px solid #e2e8f0;
+  .header-title-box {
+    .header-app-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.2px;
+      line-height: 1.2;
+    }
+    .header-app-sub {
+      font-size: 0.7rem;
+      color: rgba(255, 255, 255, 0.85);
+      font-weight: 500;
+    }
+  }
+
+  // Hàng Sub-tabs (Chuẩn ảnh 1 và ảnh 6)
+  .header-subtabs-row {
+    position: relative;
+    z-index: 10;
+
+    .header-subtab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      padding: 4px 8px;
+
+      .subtab-text {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.72);
+        transition: color 0.2s ease;
+      }
+
+      &.active {
+        .subtab-text {
+          color: #ffffff !important;
+          font-weight: 800;
+        }
+
+        // VẠCH CHỈ MỤC VÀNG (#ffd200) CHUẨN MẪU ẢNH 1 VÀ 6
+        .subtab-active-yellow-bar {
+          width: 28px;
+          height: 3.5px;
+          background: $tnvn-yellow-indicator;
+          border-radius: 3px;
+          margin-top: 4px;
+          box-shadow: 0 1px 4px rgba(255, 210, 0, 0.5);
+        }
+      }
+    }
+  }
+
+  .header-curve-backdrop {
+    height: 32px;
+    background: transparent;
+  }
+}
+
+// ========================================================
+// 2. OVERLAPPING PROFILE HERO CARD (ẢNH MẪU 2)
+// ========================================================
+.mobile-profile-hero {
+  margin-top: -24px;
+  position: relative;
+  z-index: 20;
+
+  .profile-card-content {
+    background: #ffffff !important;
     border-radius: 20px;
+    border: 1px solid $tnvn-card-border;
+    box-shadow: 0 6px 20px rgba(43, 89, 255, 0.07), 0 2px 6px rgba(0, 0, 0, 0.03);
+  }
+
+  .avatar-wrapper {
+    width: 60px;
+    height: 60px;
+    cursor: pointer;
+
+    .avatar-ring {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      padding: 2.5px;
+      background: linear-gradient(135deg, #ffd200 0%, #ff7a00 100%);
+      box-shadow: 0 4px 12px rgba(255, 122, 0, 0.25);
+
+      .avatar-circle {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: #eef4ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .avatar-emoji {
+          font-size: 1.65rem;
+        }
+      }
+
+      .avatar-camera-badge {
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: $tnvn-blue;
+        border: 2px solid #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+      }
+    }
+  }
+
+  .teacher-name-heading {
+    letter-spacing: -0.2px;
+  }
+
+  .edit-pencil-icon {
+    font-size: 0.85rem;
+    cursor: pointer;
+    opacity: 0.8;
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  // Badges kiểu app Thanh Niên
+  .badge-verified-tnvn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    border: 1px solid #e2e8f0;
+
+    .check-icon {
+      color: #10b981;
+      font-weight: 900;
+    }
+  }
+
+  .badge-version-tnvn {
+    display: inline-flex;
+    align-items: center;
+    background: $tnvn-blue-light;
+    color: $tnvn-blue;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 9999px;
+    border: 1px solid rgba(43, 89, 255, 0.2);
+  }
+
+  // Bộ chọn tuần Capsule
+  .week-capsule-picker {
+    background: $tnvn-field-bg;
+    border: 1px solid #e2e8f0;
+    border-radius: 9999px;
     padding: 2px 4px;
 
-    .week-arrow {
+    .week-btn-arrow {
       background: transparent;
       border: none;
-      color: #64748b;
+      color: $tnvn-text-muted;
       font-size: 0.75rem;
-      padding: 2px 6px;
+      padding: 3px 6px;
       cursor: pointer;
+      border-radius: 50%;
+      line-height: 1;
       &:disabled {
         opacity: 0.3;
       }
+      &:active:not(:disabled) {
+        background: #e2e8f0;
+      }
     }
 
-    .week-select-native {
+    .week-select-tnvn {
       background: transparent;
       border: none;
       font-size: 0.75rem;
-      font-weight: 700;
-      color: #0052cc;
+      font-weight: 800;
+      color: $tnvn-blue;
       padding: 2px 4px;
       outline: none;
       cursor: pointer;
@@ -88,369 +266,446 @@
   }
 }
 
-// CẢNH BÁO TUẦN CŨ
+// Cảnh báo tuần cũ
 .mobile-notice-strip {
-  background: #fffbeb;
-  border-bottom: 1px solid #fef3c7;
-  color: #92400e;
+  background: #fffbeb !important;
+  border: 1px solid #fef3c7;
+  box-shadow: 0 1px 3px rgba(245, 158, 11, 0.08);
 }
 
-// 2. SEGMENTED DAY BAR (TABS NGANG)
-.mobile-day-segmented-bar {
-  background: #ffffff;
-  border-bottom: 1px solid #edf2f7;
-  margin-bottom: 0.75rem;
-
-  .day-tabs-scroll {
-    overflow-x: auto;
-    scrollbar-width: none;
-    &::-webkit-scrollbar {
-      display: none;
-    }
+// ========================================================
+// 3. SEGMENTED PILL DAY SWITCHER (ẢNH MẪU 7 - BXH CAPSULE)
+// ========================================================
+.day-switcher-container {
+  .day-segmented-track {
+    background: #edf1f7 !important;
+    border-radius: 9999px;
+    gap: 4px;
   }
 
-  .day-tab-item {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    min-width: 50px;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  .day-pill-btn {
+    background: transparent;
+    border: none;
+    border-radius: 9999px;
+    padding: 5px 2px;
     cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    color: $tnvn-text-muted;
+    outline: none;
 
-    .day-status-dot {
-      width: 6px;
-      height: 6px;
+    .day-pill-name {
+      font-size: 0.8rem;
+      line-height: 1.1;
+      color: inherit;
+    }
+
+    .day-pill-date {
+      font-size: 0.65rem;
+      line-height: 1;
+      color: inherit;
+      opacity: 0.8;
+    }
+
+    .status-micro-dot {
+      width: 5px;
+      height: 5px;
       border-radius: 50%;
-      margin-bottom: 2px;
-      background: #cbd5e1;
+      background: transparent;
 
       &.dot-today {
-        background: #0052cc;
-        box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.25);
+        background: $tnvn-blue;
       }
-      &.dot-completed {
+      &.dot-done {
         background: #10b981;
       }
-      &.dot-pending {
+      &.dot-alert {
         background: #ef4444;
       }
-      &.dot-future {
-        background: #94a3b8;
-      }
     }
 
-    .day-tab-thu {
-      color: #475569;
-      line-height: 1.1;
+    &:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.5);
     }
 
-    .day-tab-date {
-      font-size: 0.65rem !important;
-      line-height: 1;
-    }
-
-    // ACTIVE TAB - Xanh Thanh Niên Việt Nam
+    // ĐANG CHỌN (Active Pill: Màu Xanh Thanh Niên #2b59ff)
     &.active {
-      background: #0052cc !important;
-      border-color: #0052cc !important;
-      box-shadow: 0 3px 12px rgba(0, 82, 204, 0.35);
+      background: $tnvn-blue !important;
+      color: #ffffff !important;
+      box-shadow: 0 3px 10px rgba(43, 89, 255, 0.38);
 
-      .day-status-dot {
-        background: #ffffff !important;
-      }
-
-      .day-tab-thu {
+      .day-pill-name {
         color: #ffffff !important;
       }
-
-      .day-tab-date {
+      .day-pill-date {
         color: rgba(255, 255, 255, 0.9) !important;
+        opacity: 1;
+      }
+      .status-micro-dot {
+        background: #ffffff !important;
       }
     }
   }
 }
 
-// 3. SELECTED DAY BANNER
+// ========================================================
+// 4. SELECTED DAY BANNER & NÚT CAM THANH NIÊN (ẢNH 1)
+// ========================================================
 .selected-day-banner {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  background: #ffffff !important;
+  border: 1px solid $tnvn-card-border;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 
   &.is-today-banner {
-    border-color: #bfdbfe;
-    background: linear-gradient(180deg, #eef4ff 0%, #ffffff 100%);
+    border-left: 4px solid $tnvn-blue !important;
   }
 
-  &.is-completed-banner {
-    border-color: #bbf7d0;
-  }
-
-  .badge-today-mini {
-    background: #0052cc;
-    color: #ffffff;
-    font-size: 0.65rem;
+  .badge-pill-today {
+    background: $tnvn-blue-light;
+    color: $tnvn-blue;
+    font-size: 0.68rem;
     font-weight: 800;
-    padding: 0.15rem 0.45rem;
-    border-radius: 6px;
-    letter-spacing: 0.02em;
+    padding: 2px 8px;
+    border-radius: 9999px;
   }
 
-  .badge-done-mini {
-    background: #10b981;
-    color: #ffffff;
-    font-size: 0.65rem;
-    font-weight: 700;
-    padding: 0.15rem 0.45rem;
-    border-radius: 6px;
+  .badge-pill-done {
+    background: #ecfdf5;
+    color: #059669;
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 9999px;
   }
 
-  .badge-future-mini {
+  .badge-pill-future {
     background: #f1f5f9;
-    color: #475569;
-    font-size: 0.65rem;
-    font-weight: 600;
-    padding: 0.15rem 0.45rem;
-    border-radius: 6px;
-    border: 1px solid #e2e8f0;
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 9999px;
   }
 
-  .btn-quick-sync-today {
-    background: #0052cc;
-    color: #ffffff;
+  // NÚT CAM THANH NIÊN (Chuẩn ảnh 1 "CHỈNH SỬA")
+  .btn-tnvn-orange {
+    background: $tnvn-orange-gradient !important;
+    color: #ffffff !important;
     border: none;
-    border-radius: 20px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 0.25rem 0.75rem;
-    box-shadow: 0 2px 6px rgba(0, 82, 204, 0.25);
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    box-shadow: 0 4px 14px rgba(255, 122, 0, 0.35);
     cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      filter: brightness(1.05);
+      box-shadow: 0 6px 18px rgba(255, 122, 0, 0.45);
+    }
+    &:active {
+      transform: scale(0.98);
+    }
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
   }
 }
 
-// 4. MOBILE SLOT CARDS
-.mobile-slot-app-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-left: 3.5px solid #3b82f6 !important;
+// ========================================================
+// 5. DANH SÁCH THẺ TIẾT HỌC (CHUẨN FORM ẢNH 3 & 4)
+// ========================================================
+.mobile-slot-card {
+  background: #ffffff !important;
+  border: 1px solid $tnvn-card-border !important;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.03);
   transition: all 0.2s ease;
 
   &.slot-pending {
-    background: #fffdfd;
-    border-color: #fecaca;
-    border-left: 3.5px solid #ef4444 !important;
+    border-left: 3.5px solid #f59e0b !important;
   }
-
   &.slot-synced {
-    background: #ffffff;
-    border-color: #bbf7d0;
     border-left: 3.5px solid #10b981 !important;
   }
-
   &.slot-future {
-    background: #f8fafc;
-    border-color: #e2e8f0;
-    border-left: 3.5px solid #cbd5e1 !important;
+    border-left: 3.5px solid #94a3b8 !important;
   }
 
-  .slot-badge-session {
-    font-size: 0.65rem;
-    font-weight: 700;
-    padding: 0.15rem 0.45rem;
-    border-radius: 4px;
+  // Session Badge (Sáng / Chiều)
+  .session-badge {
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 6px;
 
     &.morning {
-      background: #eff6ff;
-      color: #1d4ed8;
-      border: 1px solid #bfdbfe;
+      background: #e0f2fe;
+      color: #0369a1;
     }
     &.afternoon {
       background: #fef3c7;
       color: #b45309;
-      border: 1px solid #fde68a;
     }
   }
 
-  .mobile-class-pill {
+  // Class Pill (Lớp học)
+  .class-pill {
     font-size: 0.72rem;
-    font-weight: 700;
-    padding: 0.2rem 0.55rem;
-    border-radius: 6px;
-    background: #eff6ff;
-    color: #2563eb;
-    border: 1px solid #bfdbfe;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 8px;
 
+    &.class-badge-9a2 {
+      background: #ede9fe;
+      color: #6d28d9;
+    }
     &.class-badge-7a2 {
-      background: #eff6ff;
-      color: #1d4ed8;
-      border-color: #bfdbfe;
+      background: #e0e7ff;
+      color: #3730a3;
     }
     &.class-badge-7a3 {
-      background: #f0fdf4;
-      color: #15803d;
-      border-color: #bbf7d0;
+      background: #ccfbf1;
+      color: #0f766e;
     }
-    &.class-badge-9a2 {
-      background: #faf5ff;
-      color: #7e22ce;
-      border-color: #e9d5ff;
-    }
-  }
-
-  .attendance-chip-mobile {
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 0.2rem 0.55rem;
-    border-radius: 20px;
-    white-space: nowrap;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    border: 1px solid transparent;
-
-    &.chip-present {
-      background: #f0fdf4;
-      color: #16a34a;
-      border-color: #bbf7d0;
-    }
-
-    &.chip-matched {
-      background: #eff6ff;
-      color: #1d4ed8;
-      border-color: #bfdbfe;
-    }
-
-    &.chip-mismatched, &.has-absent.pending {
-      background: #fef2f2;
-      color: #dc2626;
-      border-color: #fca5a5;
-      border-style: dashed;
-    }
-
-    &.chip-future-slot {
+    &.class-badge-default {
       background: #f1f5f9;
-      color: #64748b;
-      border-color: #e2e8f0;
+      color: #334155;
     }
   }
 
-  .input-ppct-mobile {
-    width: 48px;
-    padding: 0.15rem 0.35rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-  }
-
-  .input-lesson-mobile, .select-comment-mobile {
-    border: 1px solid #e2e8f0;
-    background: #f8fafc;
-    &:focus {
-      background: #ffffff;
-      border-color: #0052cc;
-      box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.12);
-    }
-  }
-
-  .badge-slot-status {
+  // Attendance Pill (Điểm danh)
+  .attendance-pill {
     font-size: 0.7rem;
     font-weight: 700;
-    padding: 0.2rem 0.5rem;
-    border-radius: 6px;
+    padding: 3px 8px;
+    border-radius: 9999px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
 
-    &.synced {
-      background: #ecfdf5;
-      color: #047857;
-      border: 1px solid #a7f3d0;
+    &.chip-matched,
+    &.has-absent {
+      background: #fef3c7;
+      color: #92400e;
+      border-color: #fde68a;
     }
+    &.chip-present,
+    &.all-present {
+      background: #ecfdf5;
+      color: #059669;
+      border-color: #a7f3d0;
+    }
+    &.chip-mismatched,
     &.pending {
       background: #fef2f2;
       color: #b91c1c;
-      border: 1px solid #fecaca;
+      border-color: #fecaca;
+    }
+    &.chip-future-slot {
+      background: #f8fafc;
+      color: #64748b;
+      border-color: #e2e8f0;
+    }
+
+    &:active {
+      transform: scale(0.96);
+    }
+  }
+
+  // Tiết PPCT Box
+  .input-ppct-tnvn {
+    width: 46px;
+    height: 32px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: $tnvn-field-bg !important;
+    color: $tnvn-blue !important;
+    font-size: 0.85rem;
+    outline: none;
+    transition: all 0.2s ease;
+    &:focus {
+      border-color: $tnvn-blue !important;
+      background: #ffffff !important;
+      box-shadow: 0 0 0 3px rgba(43, 89, 255, 0.15);
+    }
+  }
+
+  // Form Label (Chuẩn ảnh 3 "Nơi sinh hoạt Đoàn *")
+  .form-field-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: $tnvn-text-muted;
+    margin-bottom: 5px;
+    letter-spacing: 0.1px;
+  }
+
+  // Form Input & Select (Chuẩn ảnh 3 & 4)
+  .input-form-tnvn,
+  .select-form-tnvn {
+    background: $tnvn-field-bg !important;
+    border: 1.5px solid transparent !important;
+    border-radius: 14px !important;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: $tnvn-text-main !important;
+    outline: none;
+    transition: all 0.2s ease;
+
+    &:focus {
+      background: #ffffff !important;
+      border-color: $tnvn-blue !important;
+      box-shadow: 0 0 0 3px rgba(43, 89, 255, 0.12);
+    }
+  }
+
+  .select-wrapper-tnvn {
+    position: relative;
+
+    .select-form-tnvn {
+      appearance: none;
+      -webkit-appearance: none;
+      padding-right: 36px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .select-chevron-icon {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      pointer-events: none;
+    }
+  }
+
+  // Badge trạng thái Slot
+  .badge-slot-status {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 9999px;
+
+    &.synced {
+      background: #ecfdf5;
+      color: #059669;
+    }
+    &.pending {
+      background: #fef2f2;
+      color: #dc2626;
     }
     &.future {
       background: #f1f5f9;
-      color: #475569;
-      border: 1px solid #e2e8f0;
+      color: #64748b;
+    }
+  }
+
+  // Nút hành động slot:
+  // Nếu chưa lưu: Nút CAM Thanh Niên
+  // Nếu đã lưu: Nút Xanh/Xám nhã nhặn
+  .btn-slot-action {
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 7px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+
+    &.btn-orange-action {
+      background: $tnvn-orange-gradient !important;
+      color: #ffffff !important;
+      box-shadow: 0 3px 10px rgba(255, 122, 0, 0.3);
+      &:hover {
+        filter: brightness(1.05);
+      }
+      &:active {
+        transform: scale(0.96);
+      }
+    }
+
+    &.btn-synced {
+      background: #ecfdf5 !important;
+      color: #059669 !important;
+      border: 1px solid #a7f3d0 !important;
+      &:active {
+        background: #d1fae5 !important;
+      }
+    }
+
+    &.btn-future {
+      background: #f1f5f9 !important;
+      color: #475569 !important;
+      border: 1px solid #e2e8f0 !important;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
   }
 }
 
-// 5. BOTTOM DOCK
-.mobile-bottom-dock {
+// ========================================================
+// 6. BOTTOM NAVIGATION BAR (CHUẨN ẢNH MẪU 1, 2, 5)
+// ICON CHƯA CHỌN: nét mảnh màu xám (#8a94a6)
+// ICON ĐANG CHỌN: đặc khối màu xanh (#2b59ff)
+// ========================================================
+.mobile-bottom-nav {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  background: #ffffff;
-  border-top: 1px solid #e2e8f0;
-  box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.05);
+  background: #ffffff !important;
+  border-top: 1px solid $tnvn-card-border;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
   z-index: 990;
-  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+  height: 60px;
+  padding: 4px 12px calc(4px + env(safe-area-inset-bottom, 0px)) 12px;
 
-  .btn-dock-item {
+  .bottom-nav-item {
     background: transparent;
     border: none;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
+    justify-content: center;
+    gap: 3px;
     cursor: pointer;
-    padding: 4px 12px;
+    padding: 4px 8px;
+    flex: 1;
+    transition: all 0.15s ease;
 
-    .dock-label {
+    .nav-icon-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+    }
+
+    .nav-label {
       font-size: 0.68rem;
-      font-weight: 700;
-      color: #64748b;
+      font-weight: 500;
+      color: $tnvn-text-muted; // MÀU XÁM KHI CHƯA CHỌN
+      line-height: 1;
+      transition: color 0.15s ease;
     }
-    &:active .dock-label {
-      color: #0052cc;
+
+    // ĐANG CHỌN (ACTIVE)
+    &.active {
+      .nav-label {
+        color: $tnvn-blue !important; // MÀU XANH KHI ĐANG CHỌN
+        font-weight: 700;
+      }
     }
-  }
 
-  .btn-dock-sync-all {
-    background: linear-gradient(135deg, #003ea8 0%, #0052cc 60%, #1865f2 100%);
-    color: #ffffff;
-    border: none;
-    border-radius: 24px;
-    padding: 0.45rem 1.25rem;
-    font-size: 0.8rem;
-    font-weight: 800;
-    box-shadow: 0 4px 14px rgba(0, 82, 204, 0.35);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-
-    &:disabled {
-      opacity: 0.6;
+    &:active {
+      transform: scale(0.94);
     }
-  }
-}
-
-// DARK MODE
-:host-context(.dark-mode),
-body.dark-mode {
-  .mobile-app-wrapper {
-    background: #0f172a;
-    color: #f1f5f9;
-  }
-
-  .mobile-top-bar, .mobile-day-segmented-bar, .selected-day-banner, .mobile-slot-app-card, .mobile-bottom-dock {
-    background: #1e293b;
-    border-color: rgba(255, 255, 255, 0.08);
-  }
-
-  .mobile-teacher-name, h3, .text-gray-900 {
-    color: #f8fafc !important;
-  }
-
-  .day-tab-item {
-    background: #151e2e;
-    border-color: rgba(255, 255, 255, 0.08);
-    .day-tab-thu { color: #94a3b8; }
-  }
-
-  .input-lesson-mobile, .select-comment-mobile, .input-ppct-mobile {
-    background: #151e2e !important;
-    border-color: rgba(255, 255, 255, 0.12) !important;
-    color: #ffffff !important;
   }
 }
