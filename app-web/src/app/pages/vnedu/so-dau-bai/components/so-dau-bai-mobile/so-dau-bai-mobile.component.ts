@@ -19,7 +19,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
   @Input() isFutureWeek: boolean = false;
   @Input() isSavingBatch: boolean = false;
   @Input() isLoading: boolean = false;
-  @Input() appVersion: string = 'v2.8.10';
+  @Input() appVersion: string = 'v2.8.11';
   @Input() notifications: any[] = [];
   @Input() unreadNotificationsCount: number = 0;
 
