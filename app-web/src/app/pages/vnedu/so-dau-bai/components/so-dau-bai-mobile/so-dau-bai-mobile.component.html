@@ -68,29 +68,6 @@
       </button>
     </div>
 
-    <!-- HÀNG TAB CHUYỂN MỤC VỚI VẠCH CHỈ MỤC VÀNG (#ffd200) CHUẨN MẪU THANH NIÊN -->
-    <div *ngIf="activeTab === 'schedule'"
-         class="header-subtabs-row d-flex align-items-center justify-content-around px-2 pt-1 pb-2">
-      <div class="header-subtab-item"
-           [class.active]="selectedThu === todayThu"
-           (click)="selectDay(todayThu)">
-        <span class="subtab-text">Hôm nay</span>
-        <div *ngIf="selectedThu === todayThu" class="subtab-active-yellow-bar"></div>
-      </div>
-      <div class="header-subtab-item"
-           [class.active]="selectedThu !== todayThu"
-           (click)="selectDay(dayGroups[0]?.thu || 2)">
-        <span class="subtab-text">Cả tuần</span>
-        <div *ngIf="selectedThu !== todayThu" class="subtab-active-yellow-bar"></div>
-      </div>
-      <div class="header-subtab-item" (click)="activeTab = 'sync'">
-        <span class="subtab-text">Đồng bộ</span>
-      </div>
-      <div class="header-subtab-item" (click)="activeTab = 'profile'">
-        <span class="subtab-text">Cá nhân</span>
-      </div>
-    </div>
-
     <!-- Phông nền xanh mở rộng làm điểm tựa cho Card Profile chồng lên -->
     <div class="header-curve-backdrop"></div>
   </header>

@@ -10,7 +10,7 @@ import { AuthService, UserType } from '../../../../../../modules/auth';
     standalone: false
 })
 export class UserInnerComponent implements OnInit, OnDestroy {
-  appVersion: string = 'v2.8.4';
+  appVersion: string = 'v2.8.5';
   @HostBinding('class')
   class = `menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg menu-state-primary fw-bold py-4 fs-6 w-325px shadow-lg`;
   @HostBinding('attr.data-kt-menu') dataKtMenu = 'true';
