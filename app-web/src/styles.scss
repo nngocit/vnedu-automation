@@ -12,26 +12,32 @@
 @import "./assets/plugins/keenicons/solid/style.css";
 
 /* ========================================================= */
-/* LIGHT MODE: ZALO OFFICIAL MODERN UI THEME                 */
+/* LIGHT MODE: THANH NIÊN VIỆT NAM OFFICIAL MODERN THEME     */
+/* (Xanh Hoàng gia Đoàn TNCS Hồ Chí Minh - Royal Youth Blue) */
 /* ========================================================= */
 [data-bs-theme="light"],
 :root:not([data-bs-theme="dark"]) {
+  --bs-primary: #0052cc !important;
+  --bs-primary-rgb: 0, 82, 204 !important;
+  --bs-link-color: #0052cc !important;
+  --bs-link-hover-color: #003ea8 !important;
+
   body,
   #kt_app_root,
   #kt_app_page,
   .app-page,
   .app-wrapper,
   .app-main {
-    background: #eef0f3 !important;
+    background: #f1f5f9 !important;
   }
 
   #kt_app_header {
     background: #ffffff !important;
-    border-bottom: 1px solid #e4e6eb !important;
+    border-bottom: 1px solid #e2e8f0 !important;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04) !important;
   }
 
-  // Sidebar sáng đồng bộ - Khử hoàn toàn lỗi bên trái màu đen bên phải màu trắng
+  // Sidebar sáng đồng bộ - Màu thương hiệu Thanh Niên Việt Nam
   #kt_app_sidebar,
   .app-sidebar {
     background: #ffffff !important;
@@ -60,25 +66,25 @@
       }
       .menu-icon app-keenicon,
       .menu-icon i {
-        color: #0068ff !important;
+        color: #0052cc !important;
       }
 
       &:hover {
         background-color: #f1f5f9 !important;
         .menu-title {
-          color: #0068ff !important;
+          color: #0052cc !important;
         }
       }
 
       &.active {
-        background-color: #e5f0ff !important;
+        background-color: #eef4ff !important;
         .menu-title {
-          color: #0068ff !important;
+          color: #0052cc !important;
           font-weight: 800 !important;
         }
         .menu-icon app-keenicon,
         .menu-icon i {
-          color: #0068ff !important;
+          color: #0052cc !important;
         }
       }
     }
@@ -152,8 +158,8 @@
 
         &:focus {
           background-color: #ffffff !important;
-          border-color: #0068ff !important;
-          box-shadow: 0 0 0 3px rgba(0, 104, 255, 0.15) !important;
+          border-color: #0052cc !important;
+          box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.15) !important;
         }
       }
     }

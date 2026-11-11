@@ -1,4 +1,4 @@
-<!-- Toast thông báo nổi -->
+﻿<!-- Toast thông báo nổi -->
 <div *ngIf="toastMessage" class="position-fixed top-0 end-0 p-5 z-index-100" style="z-index: 9999;">
   <div class="toast show align-items-center border-0 shadow-lg text-white rounded-3 overflow-hidden"
        [ngClass]="toastMessage.type === 'success' ? 'bg-success' : (toastMessage.type === 'danger' ? 'bg-danger' : 'bg-primary')"
@@ -28,6 +28,7 @@
   [currentLoggedInUser]="currentLoggedInUser"
   [isFutureWeek]="isFutureWeek"
   [isSavingBatch]="isSavingBatch"
+  [appVersion]="appVersion"
   (weekChange)="onWeekChangeMobile($event)"
   (prevWeek)="prevWeek()"
   (nextWeek)="nextWeek()"
@@ -404,7 +405,7 @@
             <div class="lieflat-progress-wrapper mb-2">
               <svg width="100%" height="10" class="lieflat-bar-svg">
                 <rect x="0" y="0" width="100%" height="10" rx="5" class="svg-progress-track" fill="#f1f5f9" />
-                <rect x="0" y="0" [attr.width]="completionRate + '%'" height="10" rx="5" fill="#0068ff" />
+                <rect x="0" y="0" [attr.width]="completionRate + '%'" height="10" rx="5" fill="#0052cc" />
               </svg>
             </div>
 
@@ -2074,3 +2075,4 @@
 
 <!-- TRỢ LÝ AI VNEDU (AI ASSISTANT CHATBOT WIDGET) -->
 <app-ai-assistant-widget [currentWeek]="currentWeek" [slots]="slots"></app-ai-assistant-widget>
+

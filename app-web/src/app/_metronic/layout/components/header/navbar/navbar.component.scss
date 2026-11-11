@@ -75,7 +75,8 @@
   position: fixed;
   inset: 0;
   z-index: 1060;
-  background: transparent;
+  background: rgba(15, 23, 42, 0.2);
+  backdrop-filter: blur(2px);
 }
 
 .header-notif-dropdown {
@@ -91,6 +92,18 @@
   animation: notifSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   border: 1px solid #e2e8f0;
   overflow: hidden;
+
+  @media (max-width: 767.98px) {
+    position: fixed !important;
+    top: calc(56px + env(safe-area-inset-top, 0px)) !important;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    max-width: calc(100vw - 20px) !important;
+    margin-top: 0 !important;
+    border-radius: 14px !important;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.3) !important;
+  }
 }
 
 @keyframes notifSlideDown {

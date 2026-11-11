@@ -1,4 +1,4 @@
-:host {
+﻿:host {
   display: block;
 }
 
@@ -34,30 +34,30 @@
   transition: all 0.15s ease;
   border: 1px solid transparent;
 
-  // Primary Action duy nhất: Solid Zalo Blue
+  // Primary Action duy nhất: Xanh Thanh Niên Việt Nam
   &.pill-primary {
-    background-color: #0068ff;
+    background-color: #0052cc;
     color: #ffffff;
-    border: 1px solid #0054cc;
-    box-shadow: 0 2px 6px rgba(0, 104, 255, 0.28);
+    border: 1px solid #0040a8;
+    box-shadow: 0 2px 6px rgba(0, 82, 204, 0.28);
 
     &:hover {
-      background-color: #0054cc;
+      background-color: #0040a8;
       color: #ffffff;
     }
   }
 
   // Soft Blue Pill (Đồng bộ hôm nay)
   &.pill-soft-blue {
-    background-color: #e5f0ff;
-    color: #0068ff;
-    border: 1px solid #b8d7ff;
-    box-shadow: 0 1px 2px rgba(0, 104, 255, 0.08);
+    background-color: #eef4ff;
+    color: #0052cc;
+    border: 1px solid #bfdbfe;
+    box-shadow: 0 1px 2px rgba(0, 82, 204, 0.08);
 
     &:hover {
-      background-color: #d0e4ff;
-      color: #0054cc;
-      border-color: #99c4ff;
+      background-color: #dbeafe;
+      color: #0040a8;
+      border-color: #93c5fd;
     }
   }
 
@@ -225,14 +225,14 @@
   }
 
   &.stat-blue {
-    background-color: #e5f0ff;
-    color: #0068ff;
-    border: 1.5px solid #0068ff;
+    background-color: #eef4ff;
+    color: #0052cc;
+    border: 1.5px solid #0052cc;
     font-weight: 800;
   }
 }
 
-// Bộ lọc lớp học - Zalo Blue active (Tương phản cao, chữ đậm, viền rõ nét)
+// Bộ lọc lớp học - Xanh Thanh Niên Việt Nam active
 .class-filter-pill {
   border-radius: 9999px;
   padding: 0.45rem 1.1rem;
@@ -247,15 +247,15 @@
 
   &:hover {
     background: #f1f5f9;
-    color: #0068ff;
-    border-color: #0068ff;
+    color: #0052cc;
+    border-color: #0052cc;
   }
 
   &.active {
-    background-color: #0068ff;
+    background-color: #0052cc;
     color: #ffffff;
-    border-color: #0054cc;
-    box-shadow: 0 3px 8px rgba(0, 104, 255, 0.35);
+    border-color: #0040a8;
+    box-shadow: 0 3px 10px rgba(0, 82, 204, 0.35);
   }
 }
 
@@ -503,7 +503,7 @@
       border-bottom: 1px solid #edf4fc !important;
 
       .day-title.text-today-title {
-        color: #0068ff !important;
+        color: #0052cc !important;
         font-weight: 800 !important;
       }
 
@@ -515,7 +515,7 @@
       }
 
       .slot-count-today {
-        color: #0068ff !important;
+        color: #0052cc !important;
         font-weight: 700 !important;
       }
     }
@@ -642,7 +642,7 @@
   align-items: center;
   gap: 5px;
   background: #ebf3ff;
-  color: #0068ff;
+  color: #0052cc;
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.3px;
@@ -655,7 +655,7 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background-color: #0068ff;
+    background-color: #0052cc;
     box-shadow: 0 0 0 0 rgba(0, 104, 255, 0.6);
     animation: pulseTodayDot 1.6s infinite cubic-bezier(0.66, 0, 0, 1);
   }
@@ -670,7 +670,7 @@
 // Nút lưu nhanh hôm nay trên Header
 .btn-sync-today-quick {
   border: none;
-  background: #0068ff;
+  background: #0052cc;
   color: #ffffff;
   font-size: 0.75rem;
   font-weight: 600;
@@ -710,7 +710,7 @@
 .btn-scroll-today {
   border: 1px solid rgba(0, 104, 255, 0.25);
   background: #ffffff;
-  color: #0068ff;
+  color: #0052cc;
   font-size: 0.75rem;
   font-weight: 600;
   padding: 4px 12px;
@@ -719,7 +719,7 @@
   transition: all 0.2s ease;
 
   &:hover {
-    background: #0068ff;
+    background: #0052cc;
     color: #ffffff;
   }
 }
@@ -1147,7 +1147,7 @@
 
   &.morning {
     background-color: #f0f7ff;
-    color: #0068ff;
+    color: #0052cc;
     border: 1px solid #dbeafe;
   }
 
@@ -1167,7 +1167,7 @@
   padding: 0.25rem 0.75rem;
   border-radius: 6px;
   display: inline-block;
-  border: 1.5px solid #0068ff;
+  border: 1.5px solid #0052cc;
   box-shadow: 0 1px 3px rgba(0, 104, 255, 0.15);
   letter-spacing: 0.3px;
 }
@@ -1261,7 +1261,7 @@
   cursor: pointer;
 
   &.btn-pending {
-    background-color: #0068ff;
+    background-color: #0052cc;
     color: #ffffff;
     border: 1px solid #0054cc;
     box-shadow: 0 2px 4px rgba(0, 104, 255, 0.28);
@@ -1280,7 +1280,7 @@
 
     &:hover {
       background-color: #f8fafc;
-      color: #0068ff;
+      color: #0052cc;
       border-color: #b8d7ff;
     }
   }
@@ -1783,7 +1783,7 @@
 }
 
 .pill-primary-save {
-  background: #0068ff !important;
+  background: #0052cc !important;
   color: #ffffff !important;
   border: 1px solid #0054cc !important;
   border-radius: 9999px;
@@ -3050,7 +3050,7 @@
 
   &.active {
     background: #ffffff;
-    color: #0068ff;
+    color: #0052cc;
     font-weight: 700;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
 
@@ -3115,7 +3115,7 @@
 
     .badge-slot-class {
       background: #e5f0ff;
-      color: #0068ff;
+      color: #0052cc;
       font-weight: 800;
       padding: 0.2rem 0.65rem;
       border-radius: 6px;
@@ -3181,17 +3181,17 @@
 
       &.pill-phep {
         background: #ffffff;
-        color: #0068ff;
+        color: #0052cc;
         border: 1px solid #b8d7ff;
         box-shadow: 0 1px 2px rgba(0, 104, 255, 0.06);
 
         .pill-dot {
-          background: #0068ff;
+          background: #0052cc;
         }
 
         &:hover {
           background: #e5f0ff;
-          border-color: #0068ff;
+          border-color: #0052cc;
         }
       }
 
@@ -3279,7 +3279,7 @@
 
     &.tag-phep {
       background: #ffffff;
-      color: #0068ff;
+      color: #0052cc;
       border-color: #b8d7ff;
     }
 
@@ -3309,11 +3309,11 @@
 
     &.btn-detail-matched {
       background: #e5f0ff;
-      color: #0068ff;
+      color: #0052cc;
       border-color: #b8d7ff;
 
       &:hover {
-        background: #0068ff;
+        background: #0052cc;
         color: #ffffff;
         border-color: #0054cc;
         box-shadow: 0 2px 6px rgba(0, 104, 255, 0.28);
@@ -3321,7 +3321,7 @@
     }
 
     &.btn-detail-mismatched {
-      background: #0068ff;
+      background: #0052cc;
       color: #ffffff;
       border-color: #0054cc;
 
@@ -3357,7 +3357,7 @@
       width: 34px;
       height: 34px;
       border-radius: 8px;
-      background: #0068ff;
+      background: #0052cc;
       color: #ffffff;
       display: flex;
       align-items: center;
@@ -3380,7 +3380,7 @@
 
     .badge-lieflat-glance {
       background: #e0f2fe;
-      color: #0068ff;
+      color: #0052cc;
       font-size: 0.68rem;
       font-weight: 800;
       padding: 0.18rem 0.6rem;
@@ -3410,8 +3410,8 @@
 
       &:hover {
         background: #f1f5f9;
-        border-color: #0068ff;
-        color: #0068ff;
+        border-color: #0052cc;
+        color: #0052cc;
       }
 
       .toggle-arrow {
@@ -3479,7 +3479,7 @@
     .metric-val {
       font-size: 1.65rem;
       font-weight: 900;
-      color: #0068ff;
+      color: #0052cc;
       line-height: 1;
     }
 
@@ -3521,7 +3521,7 @@
     display: inline-block;
 
     &.bg-primary {
-      background-color: #0068ff;
+      background-color: #0052cc;
     }
 
     &.bg-amber {
@@ -3568,18 +3568,18 @@
 
     &:hover {
       background: #eff6ff;
-      border-color: #0068ff;
+      border-color: #0052cc;
       transform: translateX(2px);
     }
 
     &.is-filtered {
       background: #eff6ff;
-      border-color: #0068ff;
-      box-shadow: 0 0 0 1.5px #0068ff;
+      border-color: #0052cc;
+      box-shadow: 0 0 0 1.5px #0052cc;
     }
 
     .class-badge-mini {
-      background: #0068ff;
+      background: #0052cc;
       color: #ffffff;
       font-size: 0.75rem;
       font-weight: 800;
@@ -3598,7 +3598,7 @@
 
       .mini-bar-fill {
         height: 100%;
-        background: #0068ff;
+        background: #0052cc;
         border-radius: 9999px;
         transition: width 0.4s ease;
       }
@@ -3685,7 +3685,7 @@
 
     .spark-bar {
       width: 100%;
-      background: #0068ff; // XANH DƯƠNG TƯƠI ĐẬM (thay thế màu xám mờ nhạt #94a3b8)
+      background: #0052cc; // XANH DƯƠNG TƯƠI ĐẬM (thay thế màu xám mờ nhạt #94a3b8)
       border-radius: 4px 4px 0 0;
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       transform-origin: bottom;
@@ -3708,7 +3708,7 @@
       color: #0f172a;
 
       &.label-today {
-        color: #0068ff;
+        color: #0052cc;
         font-weight: 900;
       }
 
@@ -3719,7 +3719,7 @@
 
     &.is-today-col {
       span.fs-10 {
-        color: #0068ff;
+        color: #0052cc;
         font-weight: 900;
       }
     }
@@ -4037,9 +4037,9 @@
 // VIVID MODERN COLOR THEME EXTENSION (THEO ĐÚNG 5 MẪU ẢNH THIẾT KẾ)
 // ===================================================================
 
-// 1. HERO WELCOME CARD
+// 1. HERO WELCOME CARD - XANH THANH NIÊN VIỆT NAM OFFICIAL THEME
 .hero-welcome-card {
-  background: linear-gradient(135deg, #0068ff 0%, #1e40af 100%);
+  background: linear-gradient(135deg, #003ea8 0%, #0052cc 60%, #1865f2 100%);
   border-radius: 16px;
   padding: 1.5rem 1.75rem;
   color: #ffffff;
@@ -4048,7 +4048,7 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 1.25rem;
-  box-shadow: 0 10px 25px -5px rgba(0, 104, 255, 0.35);
+  box-shadow: 0 10px 25px -5px rgba(0, 82, 204, 0.35);
   position: relative;
   overflow: hidden;
 
@@ -4410,7 +4410,7 @@
 .btn-action-link {
   background: transparent;
   border: none;
-  color: #0068ff;
+  color: #0052cc;
   font-weight: 600;
   font-size: 0.8125rem;
   padding: 4px 8px;
@@ -4522,7 +4522,7 @@
 
 .weather-hour-pill {
   background: #eff6ff;
-  color: #0068ff;
+  color: #0052cc;
   font-size: 0.75rem;
   font-weight: 700;
   padding: 0.18rem 0.6rem;
@@ -4709,7 +4709,7 @@
 
       &.badge-day-glow {
         background: #eff6ff;
-        color: #0068ff;
+        color: #0052cc;
         border: 1px solid #bfdbfe;
       }
     }
@@ -5474,3 +5474,4 @@ body.dark-mode {
     border-color: rgba(255, 255, 255, 0.1) !important;
   }
 }
+

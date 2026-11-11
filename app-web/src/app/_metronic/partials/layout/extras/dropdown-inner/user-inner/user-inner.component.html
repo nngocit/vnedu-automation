@@ -26,6 +26,12 @@
         <div class="text-gray-500 fs-8 mt-1.5 text-truncate" [title]="(_user.companyName || 'THCS An Lập') + ' • ' + (_user.phone || _user.username || '051197003685')">
           {{ _user.companyName || 'THCS An Lập' }} • <strong class="text-gray-700">{{ _user.phone || _user.username || '051197003685' }}</strong>
         </div>
+        <!-- Phiên bản hệ thống -->
+        <div class="mt-1.5">
+          <span class="badge badge-light-primary fw-bolder fs-9 px-2 py-0.5 border border-primary border-opacity-25 shadow-xs">
+            Phiên bản {{ appVersion }}
+          </span>
+        </div>
       </div>
     </div>
   </div>

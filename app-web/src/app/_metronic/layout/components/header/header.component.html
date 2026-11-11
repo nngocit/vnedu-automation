@@ -21,8 +21,11 @@
     <!--end::sidebar mobile toggle-->
     <!--begin::Mobile logo-->
     <div class="d-flex align-items-center flex-grow-1 flex-lg-grow-0">
-      <a routerLink="/dashboard" class="d-lg-none">
+      <a routerLink="/dashboard" class="d-lg-none d-flex align-items-center">
         <img alt="Logo" src="./assets/media/logos/default-small.svg" class="h-30px" />
+        <span class="badge badge-light-primary fw-bolder fs-9 px-2 py-0.5 ms-2 border border-primary border-opacity-25 shadow-xs">
+          {{ appVersion }}
+        </span>
       </a>
     </div>
     <!--end::Mobile logo-->
