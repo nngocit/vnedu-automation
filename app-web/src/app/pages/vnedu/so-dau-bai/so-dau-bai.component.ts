@@ -156,6 +156,12 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   // Toast / Thông báo
   toastMessage: { text: string; type: 'success' | 'danger' | 'info' } | null = null;
 
+  // Chế độ xem trên Mobile (Thẻ thân thiện / Bảng đầy đủ)
+  mobileViewMode: 'cards' | 'table' = 'cards';
+  setMobileViewMode(mode: 'cards' | 'table'): void {
+    this.mobileViewMode = mode;
+  }
+
   // Đa hồ sơ giáo viên (Multi-Teacher Switcher)
   showTeacherSwitcherModal: boolean = false;
   savedTeachersList: any[] = [];
