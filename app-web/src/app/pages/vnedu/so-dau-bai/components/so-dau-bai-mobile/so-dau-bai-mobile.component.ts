@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, OnDestroy, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { VnEduSlot, WeekOption } from '../../../models/vnedu.model';
 import { VnEduService } from '../../../services/vnedu.service';
 
@@ -8,7 +8,7 @@ import { VnEduService } from '../../../services/vnedu.service';
   styleUrls: ['./so-dau-bai-mobile.component.scss'],
   standalone: false
 })
-export class SoDauBaiMobileComponent implements OnInit, OnChanges {
+export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   @Input() dayGroups: any[] = [];
   @Input() currentWeek: number = 10;
   @Input() realCurrentWeek: number = 10;
@@ -20,7 +20,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
   @Input() isFutureWeek: boolean = false;
   @Input() isSavingBatch: boolean = false;
   @Input() isLoading: boolean = false;
-  @Input() appVersion: string = 'v2.8.14';
+  @Input() appVersion: string = 'v2.8.15';
   @Input() notifications: any[] = [];
   @Input() unreadNotificationsCount: number = 0;
 
@@ -44,6 +44,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
   // ========================================================
   // QUẢN LÝ TIN NHẮN vnEdu THỰC TẾ (LẤY TỪ TÀI KHOẢN ĐÃ ĐĂNG NHẬP)
   // KHÔNG SỬ DỤNG DỮ LIỆU GIẢ LẬP (CHEAT DATA)
+  // HỖ TRỢ REAL-TIME ĐỒNG BỘ TỨC THỜI (BROADCASTCHANNEL + SSE + POLLING)
   // ========================================================
   currentChatRole: 'huyen' | 'admin' = 'huyen';
   activeContact: any = null;
@@ -52,6 +53,10 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
   messageInputText: string = '';
   isLoadingChatUsers: boolean = false;
   chatMessages: any[] = [];
+
+  private chatBroadcastChannel: BroadcastChannel | null = null;
+  private chatEventSource: EventSource | null = null;
+  private chatPollingTimer: any = null;
 
   // Danh bạ khởi tạo mặc định từ các tài khoản thực tế đã đăng nhập hệ thống
   chatContacts: any[] = [
@@ -315,6 +320,26 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
     this.initSelectedDay();
     this.loadChatUsersFromBackend();
     this.loadChatMessagesFromBackend();
+    this.initRealtimeChatListeners();
+  }
+
+  ngOnDestroy(): void {
+    if (this.chatBroadcastChannel) {
+      try {
+        this.chatBroadcastChannel.close();
+      } catch (_) {}
+      this.chatBroadcastChannel = null;
+    }
+    if (this.chatEventSource) {
+      try {
+        this.chatEventSource.close();
+      } catch (_) {}
+      this.chatEventSource = null;
+    }
+    if (this.chatPollingTimer) {
+      clearInterval(this.chatPollingTimer);
+      this.chatPollingTimer = null;
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -458,8 +483,100 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
   }
 
   // ========================================================
-  // CÁC THAO TÁC XỬ LÝ CHAT NỘI BỘ vnEdu THỰC TẾ
+  // CÁC THAO TÁC XỬ LÝ CHAT NỘI BỘ vnEdu THỰC TẾ (REAL-TIME)
   // ========================================================
+  initRealtimeChatListeners(): void {
+    // 1. BroadcastChannel: Đồng bộ tức thời 0ms giữa các Tab / Cửa sổ cùng trình duyệt
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        this.chatBroadcastChannel = new BroadcastChannel('vnedu_chat_bus');
+        this.chatBroadcastChannel.onmessage = (event) => {
+          if (event?.data?.type === 'new_message' && event?.data?.message) {
+            this.handleIncomingMessage(event.data.message);
+          }
+        };
+      } catch (err) {
+        console.warn('Không thể khởi tạo BroadcastChannel:', err);
+      }
+    }
+
+    // 2. Server-Sent Events (SSE): Push thời gian thực từ máy chủ cho mọi thiết bị / trình duyệt khác
+    this.connectChatEventSource();
+
+    // 3. Polling dự phòng mỗi 3 giây khi đang mở tab tin nhắn (Đảm bảo 100% không sót)
+    if (typeof window !== 'undefined') {
+      this.chatPollingTimer = setInterval(() => {
+        if (this.activeTab === 'messages') {
+          this.loadChatMessagesFromBackend(true);
+        }
+      }, 3000);
+    }
+  }
+
+  connectChatEventSource(): void {
+    if (typeof window !== 'undefined' && 'EventSource' in window) {
+      try {
+        if (this.chatEventSource) {
+          this.chatEventSource.close();
+          this.chatEventSource = null;
+        }
+        this.chatEventSource = new EventSource('/api/chat/stream');
+        this.chatEventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data?.type === 'new_message' && data?.message) {
+              this.handleIncomingMessage(data.message);
+            }
+          } catch (_) {}
+        };
+        this.chatEventSource.onerror = () => {
+          if (this.chatEventSource) {
+            this.chatEventSource.close();
+            this.chatEventSource = null;
+          }
+          // Tự động kết nối lại sau 5 giây nếu gián đoạn
+          setTimeout(() => this.connectChatEventSource(), 5000);
+        };
+      } catch (err) {
+        console.warn('Lỗi kết nối Server-Sent Events chat:', err);
+      }
+    }
+  }
+
+  handleIncomingMessage(incomingMsg: any): void {
+    if (!incomingMsg || !incomingMsg.id) return;
+    if (!this.chatMessages) this.chatMessages = [];
+
+    // Kiểm tra trùng lặp (Deduplicate)
+    const exists = this.chatMessages.some(m =>
+      m.id === incomingMsg.id ||
+      (m.senderId === incomingMsg.senderId &&
+       m.receiverId === incomingMsg.receiverId &&
+       m.text === incomingMsg.text &&
+       Math.abs(new Date(m.timestamp || 0).getTime() - new Date(incomingMsg.timestamp || 0).getTime()) < 6000)
+    );
+
+    if (!exists) {
+      this.chatMessages.push(incomingMsg);
+
+      // Cập nhật tin nhắn mới nhất trong danh bạ
+      const partnerId = incomingMsg.senderId === this.currentChatUserId ? incomingMsg.receiverId : incomingMsg.senderId;
+      const contact = this.chatContacts.find(c => c.id === partnerId || c.username === partnerId);
+      if (contact) {
+        contact.lastMessage = incomingMsg.text;
+        contact.lastTime = incomingMsg.time;
+        if (!this.activeContact || (this.activeContact.id !== partnerId && this.activeContact.username !== partnerId)) {
+          contact.unreadCount = (contact.unreadCount || 0) + 1;
+        }
+      }
+
+      this.cdr.detectChanges();
+      if (this.activeContact) {
+        setTimeout(() => this.scrollChatToBottom(), 50);
+      }
+    }
+  }
+
   loadChatUsersFromBackend(): void {
     this.isLoadingChatUsers = true;
     this.vneduService.getChatUsers().subscribe({
@@ -477,13 +594,26 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
     });
   }
 
-  loadChatMessagesFromBackend(): void {
+  loadChatMessagesFromBackend(silent: boolean = false): void {
     this.vneduService.getChatMessages().subscribe({
       next: (res) => {
         if (res && res.success && Array.isArray(res.messages)) {
-          this.chatMessages = res.messages;
-          this.cdr.detectChanges();
-          setTimeout(() => this.scrollChatToBottom(), 80);
+          const prevCount = this.chatMessages?.length || 0;
+          const existingIds = new Set((this.chatMessages || []).map(m => m.id));
+          let hasNew = false;
+          res.messages.forEach(m => {
+            if (!existingIds.has(m.id)) {
+              if (!this.chatMessages) this.chatMessages = [];
+              this.chatMessages.push(m);
+              hasNew = true;
+            }
+          });
+          if (this.chatMessages.length !== prevCount || !silent) {
+            this.cdr.detectChanges();
+            if (!silent || hasNew) {
+              setTimeout(() => this.scrollChatToBottom(), 60);
+            }
+          }
         }
       },
       error: () => {}
@@ -594,7 +724,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
     const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
     const localMsg = {
-      id: 'msg_' + Date.now(),
+      id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
       senderId,
       senderName,
       receiverId,
@@ -610,9 +740,17 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
     this.activeContact.lastMessage = text;
     this.activeContact.lastTime = timeStr;
     this.messageInputText = '';
-    setTimeout(() => this.scrollChatToBottom(), 80);
+    this.cdr.detectChanges();
+    setTimeout(() => this.scrollChatToBottom(), 50);
 
-    // Lưu vào Backend máy chủ và file chat_messages.json
+    // Phát sóng 0ms tức thì cho các tab khác trong cùng trình duyệt
+    try {
+      if (this.chatBroadcastChannel) {
+        this.chatBroadcastChannel.postMessage({ type: 'new_message', message: localMsg });
+      }
+    } catch (_) {}
+
+    // Lưu vào Backend máy chủ và đẩy SSE cho các thiết bị khác
     this.vneduService.sendChatMessage({
       senderId,
       senderName,
@@ -623,9 +761,16 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
       next: (res) => {
         if (res && res.success && res.message) {
           localMsg.id = res.message.id;
+          try {
+            if (this.chatBroadcastChannel) {
+              this.chatBroadcastChannel.postMessage({ type: 'new_message', message: res.message });
+            }
+          } catch (_) {}
         }
       },
-      error: () => {}
+      error: (err) => {
+        console.warn('Lỗi gửi tin nhắn tới máy chủ:', err);
+      }
     });
   }
 

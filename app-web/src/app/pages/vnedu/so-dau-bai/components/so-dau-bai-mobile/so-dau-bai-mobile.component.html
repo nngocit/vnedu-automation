@@ -1,4 +1,4 @@
-<div class="mobile-app-wrapper">
+<div class="mobile-app-wrapper" [class.chat-active-mode]="activeTab === 'messages' && !!activeContact">
   <!-- ======================================================== -->
   <!-- 1. TOP APP BAR NATIVE CHUẨN APP THANH NIÊN VIỆT NAM      -->
   <!-- ======================================================== -->
@@ -637,7 +637,7 @@
   <!-- TAB 4: TIN NHẮN NỘI BỘ GIÁO VIÊN TRONG TRƯỜNG (TEXT-ONLY)-->
   <!-- ======================================================== -->
   <ng-container *ngIf="activeTab === 'messages'">
-    <main class="mobile-chat-screen d-flex flex-column">
+    <main class="mobile-chat-screen d-flex flex-column" [class.in-conversation]="!!activeContact">
 
       <!-- ============================================== -->
       <!-- GIAO DIỆN 1: DANH SÁCH GIÁO VIÊN & HỘI THOẠI   -->
@@ -810,8 +810,7 @@
         </div>
 
         <!-- Khung luồng tin nhắn (Chat Message Stream) -->
-        <div class="chat-messages-scroll flex-grow-1 px-3 py-3 d-flex flex-column gap-3 overflow-y-auto"
-             style="min-height: 380px; max-height: 480px; background: #f8fafc;">
+        <div class="chat-messages-scroll flex-grow-1 px-3 py-3 d-flex flex-column gap-3 overflow-y-auto">
           
           <!-- Phân cách ngày -->
           <div class="chat-date-separator text-center my-1">

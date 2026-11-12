@@ -314,7 +314,39 @@ app.post('/api/admin/teachers/save', (req, res) => {
 
 // ========================================================
 // API: TIN NHẮN NỘI BỘ vnEdu (LẤY TỪ TÀI KHOẢN THỰC ĐÃ ĐĂNG NHẬP)
+// HỖ TRỢ REAL-TIME PUSH QUA SERVER-SENT EVENTS (SSE)
 // ========================================================
+let sseChatClients = [];
+
+app.get('/api/chat/stream', (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    if (res.flushHeaders) res.flushHeaders();
+
+    const clientId = Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+    const client = { id: clientId, res };
+    sseChatClients.push(client);
+
+    // Gửi thông báo kết nối thành công ban đầu
+    res.write(`data: ${JSON.stringify({ type: 'connected', clientId })}\n\n`);
+
+    // Gửi heartbeat định kỳ để giữ kết nối không bị ngắt
+    const pingTimer = setInterval(() => {
+        try {
+            res.write(`: ping\n\n`);
+        } catch (_) {
+            clearInterval(pingTimer);
+        }
+    }, 15000);
+
+    req.on('close', () => {
+        clearInterval(pingTimer);
+        sseChatClients = sseChatClients.filter(c => c.id !== clientId);
+    });
+});
+
 app.get('/api/chat/users', (req, res) => {
     try {
         const users = chatManager.getRealChatUsers();
@@ -338,6 +370,15 @@ app.post('/api/chat/messages', (req, res) => {
     try {
         const { senderId, senderName, receiverId, receiverName, text } = req.body;
         const message = chatManager.sendMessage({ senderId, senderName, receiverId, receiverName, text });
+
+        // Phát sóng tức thời (Real-time Broadcast) tới toàn bộ các trình duyệt đang mở
+        const payload = JSON.stringify({ type: 'new_message', message });
+        sseChatClients.forEach(c => {
+            try {
+                c.res.write(`data: ${payload}\n\n`);
+            } catch (_) {}
+        });
+
         res.json({ success: true, message });
     } catch (e) {
         res.status(500).json({ success: false, error: e.message });
