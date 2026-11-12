@@ -12,7 +12,7 @@ import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/
 })
 export class AuthComponent implements OnInit, OnDestroy {
   today: Date = new Date();
-  appVersion: string = 'v2.8.13';
+  appVersion: string = 'v2.8.14';
 
   constructor() {}
 

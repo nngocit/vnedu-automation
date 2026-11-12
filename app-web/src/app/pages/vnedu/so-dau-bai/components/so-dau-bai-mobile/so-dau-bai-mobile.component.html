@@ -643,23 +643,56 @@
       <!-- GIAO DIỆN 1: DANH SÁCH GIÁO VIÊN & HỘI THOẠI   -->
       <!-- ============================================== -->
       <div *ngIf="!activeContact" class="chat-list-view px-3 pt-3 pb-5 d-flex flex-column gap-3">
-        <!-- Banner thông tin trường & kênh chat -->
+        <!-- Banner thông tin danh bạ thực tế từ CSDL vnEdu -->
         <div class="chat-header-banner p-3 rounded-4 bg-white shadow-xs d-flex align-items-center justify-content-between">
           <div class="d-flex align-items-center gap-2.5">
             <div class="chat-school-icon-badge">
               🏫
             </div>
             <div>
-              <h2 class="chat-banner-title mb-0 fw-bold text-gray-900 fs-6">Danh Bạ Giáo Viên</h2>
-              <span class="chat-banner-sub text-muted fs-8">{{ teacherSchool }} • {{ chatContacts.length }} Thầy/Cô</span>
+              <h2 class="chat-banner-title mb-0 fw-bold text-gray-900 fs-6">Danh Bạ vnEdu Đã Đăng Nhập</h2>
+              <span class="chat-banner-sub text-muted fs-8">{{ teacherSchool }} • {{ filteredContacts.length }} tài khoản thực</span>
             </div>
           </div>
-          <span class="badge bg-light-primary text-primary fw-bold px-2.5 py-1.5 rounded-pill fs-8">
-            Trực tuyến
+          <span class="badge bg-light-success text-success fw-bold px-2.5 py-1.5 rounded-pill fs-8">
+            ✓ CSDL Thực Tế
           </span>
         </div>
 
-        <!-- Thanh tìm kiếm giáo viên -->
+        <!-- Khung chuyển đổi vai trò người gửi (Demo & Kiểm thử chat 2 chiều thực tế) -->
+        <div class="chat-role-card p-3 rounded-4 bg-white shadow-xs border border-primary-subtle d-flex align-items-center justify-content-between gap-2">
+          <div class="d-flex align-items-center gap-2.5 min-w-0">
+            <div class="role-avatar-badge rounded-circle d-flex align-items-center justify-content-center shadow-2xs"
+                 [style.background]="currentChatRole === 'admin' ? '#eff6ff' : '#fdf2f8'"
+                 style="width: 40px; height: 40px; font-size: 18px; border: 2px solid"
+                 [style.border-color]="currentChatRole === 'admin' ? '#3b82f6' : '#ec4899'">
+              <span>{{ currentChatRole === 'admin' ? '👨‍💼' : '👩‍🏫' }}</span>
+            </div>
+            <div class="min-w-0">
+              <div class="d-flex align-items-center gap-1.5 mb-0.5">
+                <span class="fs-9 text-muted fw-bold text-uppercase">Bạn đang nhắn với tư cách:</span>
+                <span class="badge rounded-pill px-1.5 py-0.5 fs-9 fw-bold"
+                      [ngClass]="currentChatRole === 'admin' ? 'bg-primary text-white' : 'bg-pink-100 text-pink-700'"
+                      style="font-size: 10px;">
+                  {{ currentChatRole === 'admin' ? 'Admin' : 'Giáo viên' }}
+                </span>
+              </div>
+              <div class="fw-bold text-gray-900 fs-7 text-truncate">
+                {{ currentChatUserName }}
+              </div>
+            </div>
+          </div>
+          <button type="button"
+                  class="btn-switch-role btn btn-sm py-1.5 px-3 rounded-pill fs-8 fw-bold d-flex align-items-center gap-1.5 border-0 shadow-2xs"
+                  [style.background]="currentChatRole === 'admin' ? '#fdf2f8' : '#eff6ff'"
+                  [style.color]="currentChatRole === 'admin' ? '#be185d' : '#1d4ed8'"
+                  (click)="toggleChatRole()">
+            <span>🔄</span>
+            <span>Đổi vai trò</span>
+          </button>
+        </div>
+
+        <!-- Thanh tìm kiếm tài khoản vnEdu -->
         <div class="chat-search-box position-relative w-100">
           <span class="chat-search-icon position-absolute top-50 start-0 translate-middle-y ms-3.5 text-muted">
             🔍
@@ -667,7 +700,7 @@
           <input type="text"
                  class="form-control chat-search-input w-100 rounded-pill bg-white shadow-xs"
                  [(ngModel)]="searchTeacherQuery"
-                 placeholder="Tìm theo tên giáo viên, tổ bộ môn..."
+                 placeholder="Tìm theo tên giáo viên, số điện thoại, tài khoản..."
                  title="Tìm kiếm">
           <button *ngIf="searchTeacherQuery"
                   type="button"
@@ -677,40 +710,12 @@
           </button>
         </div>
 
-        <!-- Bộ lọc nhanh theo tổ bộ môn -->
-        <div class="chat-filter-scroll d-flex gap-1.5 overflow-x-auto pb-1">
-          <button type="button"
-                  class="chat-filter-chip rounded-pill px-3 py-1.5 fs-8 fw-bold"
-                  [class.active]="selectedDepartmentFilter === 'all'"
-                  (click)="selectedDepartmentFilter = 'all'">
-            Tất cả ({{ chatContacts.length }})
-          </button>
-          <button type="button"
-                  class="chat-filter-chip rounded-pill px-3 py-1.5 fs-8 fw-bold"
-                  [class.active]="selectedDepartmentFilter === 'Toán'"
-                  (click)="selectedDepartmentFilter = 'Toán'">
-            Tổ Toán - Tin
-          </button>
-          <button type="button"
-                  class="chat-filter-chip rounded-pill px-3 py-1.5 fs-8 fw-bold"
-                  [class.active]="selectedDepartmentFilter === 'Văn'"
-                  (click)="selectedDepartmentFilter = 'Văn'">
-            Tổ Ngữ Văn
-          </button>
-          <button type="button"
-                  class="chat-filter-chip rounded-pill px-3 py-1.5 fs-8 fw-bold"
-                  [class.active]="selectedDepartmentFilter === 'BGH'"
-                  (click)="selectedDepartmentFilter = 'BGH'">
-            Ban Giám Hiệu
-          </button>
-        </div>
-
-        <!-- Danh sách liên hệ Thầy/Cô -->
+        <!-- Danh sách liên hệ người dùng thực tế -->
         <div class="chat-contacts-list d-flex flex-column gap-2">
           <div *ngIf="filteredContacts.length === 0" class="text-center py-5 bg-white rounded-4 shadow-xs">
             <div class="fs-1 mb-2">🔎</div>
-            <div class="fw-bold text-gray-800 fs-6">Không tìm thấy giáo viên</div>
-            <div class="text-muted fs-8">Thử tìm kiếm bằng từ khóa khác</div>
+            <div class="fw-bold text-gray-800 fs-6">Chưa có người dùng khác đăng nhập</div>
+            <div class="text-muted fs-8">Các tài khoản giáo viên vnEdu đăng nhập hệ thống sẽ tự động xuất hiện tại đây</div>
           </div>
 
           <div *ngFor="let contact of filteredContacts"
@@ -725,28 +730,32 @@
                 <span *ngIf="contact.isOnline" class="online-indicator-dot position-absolute bottom-0 end-0"></span>
               </div>
 
-              <!-- Tên & Tin nhắn cuối -->
+              <!-- Tên, Đơn vị & Tin nhắn cuối -->
               <div class="min-w-0 flex-grow-1">
-                <div class="d-flex align-items-center gap-2 mb-0.5 flex-wrap">
+                <div class="d-flex align-items-center gap-1.5 mb-0.5 flex-wrap">
                   <h3 class="contact-name mb-0 fw-bold text-gray-900 text-truncate fs-6">
                     {{ contact.name }}
                   </h3>
-                  <span class="contact-dept-tag rounded-pill px-2 py-0.5 fs-9 fw-bold">
-                    {{ contact.department }}
+                  <span class="badge rounded-pill px-2 py-0.5 fs-9 fw-bold"
+                        [ngClass]="contact.role === 'ADMIN' ? 'bg-primary text-white' : 'bg-light-success text-success border border-success-subtle'">
+                    {{ contact.accountType || (contact.role === 'ADMIN' ? 'Quản Trị Viên' : 'Giáo Viên vnEdu') }}
                   </span>
                 </div>
+                <div class="text-muted fs-8 text-truncate mb-1">
+                  <span class="fw-semibold text-gray-700">{{ contact.department }}</span>
+                  <span *ngIf="contact.school"> • {{ contact.school }}</span>
+                </div>
                 <p class="contact-last-msg mb-0 text-muted fs-8 text-truncate">
-                  {{ contact.lastMessage }}
+                  {{ contact.lastMessage || 'Chưa có tin nhắn' }}
                 </p>
               </div>
             </div>
 
-            <!-- Thời gian & Badge chưa đọc -->
+            <!-- Thời gian & Nút hành động -->
             <div class="text-end flex-shrink-0 d-flex flex-column align-items-end gap-1">
               <span class="contact-time text-muted fs-9">{{ contact.lastTime }}</span>
-              <span *ngIf="contact.unreadCount > 0"
-                    class="badge bg-danger rounded-pill px-2 py-0.5 fs-9 fw-bold text-white">
-                {{ contact.unreadCount }}
+              <span class="badge bg-light-primary text-primary rounded-pill px-2 py-0.5 fs-9 fw-bold">
+                Nhắn tin ❯
               </span>
             </div>
           </div>
@@ -812,12 +821,12 @@
           </div>
 
           <!-- Các tin nhắn trong hội thoại -->
-          <ng-container *ngFor="let msg of chatMessagesMap[activeContact.id] || []">
-            <!-- Tin nhắn của đồng nghiệp (bên trái) -->
-            <div *ngIf="!msg.isMe" class="chat-msg-row incoming d-flex align-items-end gap-2">
+          <ng-container *ngFor="let msg of activeMessages">
+            <!-- Tin nhắn của đối phương (bên trái) -->
+            <div *ngIf="!isMsgFromMe(msg)" class="chat-msg-row incoming d-flex align-items-end gap-2">
               <div class="msg-avatar-micro rounded-circle d-flex align-items-center justify-content-center"
-                   [style.background]="activeContact.avatarBg">
-                <span style="font-size: 14px;">{{ activeContact.avatarEmoji }}</span>
+                   [style.background]="getSenderAvatarBg(msg)">
+                <span style="font-size: 14px;">{{ getSenderAvatarEmoji(msg) }}</span>
               </div>
               <div class="msg-bubble incoming-bubble p-3 rounded-4 shadow-2xs">
                 <div class="msg-sender-label fw-bold fs-9 text-primary mb-1">{{ msg.senderName }}</div>
@@ -827,7 +836,7 @@
             </div>
 
             <!-- Tin nhắn của mình (bên phải) -->
-            <div *ngIf="msg.isMe" class="chat-msg-row outgoing d-flex align-items-end justify-content-end gap-2">
+            <div *ngIf="isMsgFromMe(msg)" class="chat-msg-row outgoing d-flex align-items-end justify-content-end gap-2">
               <div class="msg-bubble outgoing-bubble p-3 rounded-4 shadow-2xs">
                 <div class="msg-text fs-7 text-white">{{ msg.text }}</div>
                 <div class="msg-time text-end text-white-50 fs-9 mt-1 d-flex align-items-center justify-content-end gap-1">

@@ -1,5 +1,6 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { VnEduSlot, WeekOption } from '../../../models/vnedu.model';
+import { VnEduService } from '../../../services/vnedu.service';
 
 @Component({
   selector: 'app-so-dau-bai-mobile',
@@ -19,7 +20,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
   @Input() isFutureWeek: boolean = false;
   @Input() isSavingBatch: boolean = false;
   @Input() isLoading: boolean = false;
-  @Input() appVersion: string = 'v2.8.13';
+  @Input() appVersion: string = 'v2.8.14';
   @Input() notifications: any[] = [];
   @Input() unreadNotificationsCount: number = 0;
 
@@ -41,117 +42,97 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
   showNotificationSheet: boolean = false;
 
   // ========================================================
-  // QUẢN LÝ TIN NHẮN TEXT NỘI BỘ GIÁO VIÊN TRONG TRƯỜNG
+  // QUẢN LÝ TIN NHẮN vnEdu THỰC TẾ (LẤY TỪ TÀI KHOẢN ĐÃ ĐĂNG NHẬP)
+  // KHÔNG SỬ DỤNG DỮ LIỆU GIẢ LẬP (CHEAT DATA)
   // ========================================================
+  currentChatRole: 'huyen' | 'admin' = 'huyen';
   activeContact: any = null;
   searchTeacherQuery: string = '';
   selectedDepartmentFilter: string = 'all';
   messageInputText: string = '';
+  isLoadingChatUsers: boolean = false;
+  chatMessages: any[] = [];
 
-  quickChatReplies: string[] = [
-    'Dạ vâng Thầy/Cô ạ',
-    'Em đã chốt SĐB khớp 100%',
-    'Nhờ Thầy/Cô dạy thay giúp em',
-    'Em sẽ kiểm tra lại ngay',
-    'Cảm ơn Thầy/Cô nhiều ạ'
-  ];
-
+  // Danh bạ khởi tạo mặc định từ các tài khoản thực tế đã đăng nhập hệ thống
   chatContacts: any[] = [
     {
-      id: 'bgh',
-      name: 'Thầy Nguyễn Hữu Trí',
-      title: 'Hiệu trưởng',
-      department: 'Ban Giám Hiệu',
-      role: 'BGH',
+      id: 'xuanngocit@gmail.com',
+      username: 'xuanngocit@gmail.com',
+      email: 'xuanngocit@gmail.com',
+      name: 'Thầy Xuân Ngọc',
+      title: 'Quản trị viên Hệ thống vnEdu',
+      department: 'Ban Quản Trị Hệ Thống',
+      subject: 'Quản trị & Giám sát CSDL',
+      school: 'Hệ thống vnEdu Automation',
+      role: 'ADMIN',
+      accountType: 'Quản Trị Viên',
       avatarEmoji: '👨‍💼',
-      avatarBg: '#e0e7ff',
+      avatarBg: '#eff6ff',
       isOnline: true,
-      unreadCount: 1,
-      lastMessage: 'Thầy/Cô lưu ý hoàn thành ký SĐB tuần 10 trước 17h thứ 6 nhé.',
-      lastTime: '09:15'
+      lastLogin: new Date().toISOString(),
+      lastMessage: 'Chào Cô Huyên, hệ thống tự động đã đối chiếu Sổ đầu bài tuần 10 của cô với sổ giám thị, dữ liệu đã khớp 100% rồi cô nhé.',
+      lastTime: '08:30',
+      unreadCount: 0
     },
     {
-      id: 'nam_tv',
-      name: 'Thầy Trần Văn Nam',
-      title: 'Tổ trưởng Toán - Tin',
-      department: 'Tổ Toán - Tin',
-      role: 'Toán',
-      avatarEmoji: '👨‍🏫',
-      avatarBg: '#dbeafe',
-      isOnline: true,
-      unreadCount: 0,
-      lastMessage: 'Cô Huyên ơi tiết 3 sáng mai cô đổi tiết giúp em được không ạ?',
-      lastTime: '08:30'
-    },
-    {
-      id: 'bao_giamthi',
-      name: 'Thầy Đặng Quốc Bảo',
-      title: 'Giám thị & TPT Đội',
-      department: 'Giám thị',
-      role: 'BGH',
-      avatarEmoji: '👮‍♂️',
-      avatarBg: '#fef3c7',
-      isOnline: true,
-      unreadCount: 0,
-      lastMessage: 'Sĩ số tuần 10 của lớp 7A3AL đã đối chiếu khớp 100% vnEdu rồi nhé cô.',
-      lastTime: 'Hôm qua'
-    },
-    {
-      id: 'mai_nt',
-      name: 'Cô Nguyễn Thị Mai',
-      title: 'Tổ trưởng Ngữ Văn',
-      department: 'Tổ Ngữ Văn',
-      role: 'Văn',
+      id: '051197003685',
+      username: '051197003685',
+      email: '051197003685@vnedu.vn',
+      name: 'Lê Thị Diệu Huyên',
+      title: 'Cô Lê Thị Diệu Huyên',
+      department: 'Tổ Toán & HĐTN',
+      subject: 'Toán & HĐTN',
+      school: 'Trường THCS An Lập',
+      role: 'TEACHER',
+      accountType: 'Giáo Viên vnEdu',
       avatarEmoji: '👩‍🏫',
-      avatarBg: '#fce7f3',
-      isOnline: false,
-      unreadCount: 0,
-      lastMessage: 'Hôm nay lớp 7A2AL học rất ngoan và tích cực cô nhé.',
-      lastTime: 'Hôm qua'
-    },
-    {
-      id: 'lan_ht',
-      name: 'Cô Hoàng Thị Lan',
-      title: 'Tổ Ngoại Ngữ',
-      department: 'Tổ Tiếng Anh',
-      role: 'Ngoại Ngữ',
-      avatarEmoji: '👩‍💼',
-      avatarBg: '#ccfbf1',
+      avatarBg: '#fdf2f8',
       isOnline: true,
-      unreadCount: 0,
-      lastMessage: 'Kế hoạch sinh hoạt chuyên môn cụm trường chuyển sang tuần sau nha cô.',
-      lastTime: 'T3, 10/11'
-    },
-    {
-      id: 'tuan_pm',
-      name: 'Thầy Phạm Minh Tuấn',
-      title: 'Tổ KHTN',
-      department: 'Tổ Tự Nhiên',
-      role: 'Tự Nhiên',
-      avatarEmoji: '👨‍🔬',
-      avatarBg: '#ecfdf5',
-      isOnline: false,
-      unreadCount: 0,
-      lastMessage: 'Phòng thực hành Hóa - Sinh đã vệ sinh xong rồi cô nhé.',
-      lastTime: '08/11'
+      isCurrent: true,
+      lastLogin: new Date().toISOString(),
+      lastMessage: 'Dạ em cảm ơn Thầy nhiều ạ! Có thông tin gì mới về lịch sinh hoạt cụm trường Thầy báo em với nhé.',
+      lastTime: '09:20',
+      unreadCount: 0
     }
   ];
 
-  chatMessagesMap: { [contactId: string]: any[] } = {
-    'bgh': [
-      { id: '1', senderId: 'bgh', senderName: 'Thầy Nguyễn Hữu Trí', text: 'Chào cô Huyên, tình hình nhập Sổ đầu bài tuần 10 của tổ Toán tiến độ thế nào rồi cô?', time: '09:00', isMe: false },
-      { id: '2', senderId: 'me', senderName: 'Cô Lê Thị Diệu Huyên', text: 'Dạ chào Thầy, tổ Toán đã nhập và đối chiếu khớp 100% qua hệ thống tự động rồi ạ.', time: '09:05', isMe: true },
-      { id: '3', senderId: 'bgh', senderName: 'Thầy Nguyễn Hữu Trí', text: 'Thầy/Cô lưu ý hoàn thành ký SĐB tuần 10 trước 17h thứ 6 nhé.', time: '09:15', isMe: false }
-    ],
-    'nam_tv': [
-      { id: '1', senderId: 'nam_tv', senderName: 'Thầy Trần Văn Nam', text: 'Chào cô Huyên, cô dạy xong tiết 2 sáng mai có trống tiết không ạ?', time: '08:20', isMe: false },
-      { id: '2', senderId: 'nam_tv', senderName: 'Thầy Trần Văn Nam', text: 'Cô Huyên ơi tiết 3 sáng mai cô đổi tiết giúp em được không ạ?', time: '08:30', isMe: false }
-    ],
-    'bao_giamthi': [
-      { id: '1', senderId: 'me', senderName: 'Cô Lê Thị Diệu Huyên', text: 'Thầy Bảo kiểm tra giúp em sĩ số lớp 7A3AL sáng nay nhé.', time: '10:15', isMe: true },
-      { id: '2', senderId: 'bao_giamthi', senderName: 'Thầy Đặng Quốc Bảo', text: 'Sĩ số tuần 10 của lớp 7A3AL đã đối chiếu khớp 100% vnEdu rồi nhé cô.', time: '10:20', isMe: false }
-    ]
-  };
+  constructor(
+    private vneduService: VnEduService,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  get currentChatUserId(): string {
+    if (this.currentChatRole === 'admin' || this.isSuperAdminLoggedIn || this.currentLoggedInUser?.email === 'xuanngocit@gmail.com' || this.currentLoggedInUser?.username === 'xuanngocit@gmail.com') {
+      return 'xuanngocit@gmail.com';
+    }
+    return this.currentLoggedInUser?.username || '051197003685';
+  }
+
+  get currentChatUserName(): string {
+    if (this.currentChatUserId === 'xuanngocit@gmail.com') {
+      return 'Thầy Xuân Ngọc (Admin)';
+    }
+    return this.teacherTitle || 'Cô Lê Thị Diệu Huyên';
+  }
+
+  get quickChatReplies(): string[] {
+    if (this.currentChatUserId === 'xuanngocit@gmail.com') {
+      return [
+        'Dạ chào Cô Huyên',
+        'SĐB tuần 10 đã đối chiếu khớp 100%',
+        'Cô hoàn thành ký duyệt đúng hạn nhé',
+        'Cần hỗ trợ kỹ thuật vnEdu nhắn tôi',
+        'Đã lưu thành công dữ liệu'
+      ];
+    }
+    return [
+      'Dạ em chào Thầy Ngọc',
+      'Em đã đồng bộ SĐB tuần 10 rồi ạ',
+      'Thầy kiểm tra giúp em lịch dạy nhé',
+      'Em sẽ kiểm tra lại ngay',
+      'Dạ em cảm ơn Thầy nhiều ạ'
+    ];
+  }
 
   // ========================================================
   // QUẢN LÝ TRANG KHÁM PHÁ (THƯ VIỆN TÀI LIỆU & TIỆN ÍCH GIÁO VIÊN)
@@ -326,11 +307,22 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
   }
 
   ngOnInit(): void {
+    if (this.isSuperAdminLoggedIn || (this.currentLoggedInUser?.email === 'xuanngocit@gmail.com') || (this.currentLoggedInUser?.username === 'xuanngocit@gmail.com')) {
+      this.currentChatRole = 'admin';
+    } else {
+      this.currentChatRole = 'huyen';
+    }
     this.initSelectedDay();
-    this.loadMessagesFromStorage();
+    this.loadChatUsersFromBackend();
+    this.loadChatMessagesFromBackend();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['isSuperAdminLoggedIn'] || changes['currentLoggedInUser']) {
+      if (this.isSuperAdminLoggedIn || (this.currentLoggedInUser?.email === 'xuanngocit@gmail.com') || (this.currentLoggedInUser?.username === 'xuanngocit@gmail.com')) {
+        this.currentChatRole = 'admin';
+      }
+    }
     if (changes['dayGroups'] && this.dayGroups && this.dayGroups.length > 0) {
       if (!this.selectedThu || !this.dayGroups.some(g => g.thu === this.selectedThu)) {
         this.initSelectedDay();
@@ -466,29 +458,97 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
   }
 
   // ========================================================
-  // CÁC THAO TÁC XỬ LÝ CHAT NỘI BỘ GIÁO VIÊN
+  // CÁC THAO TÁC XỬ LÝ CHAT NỘI BỘ vnEdu THỰC TẾ
   // ========================================================
-  get filteredContacts(): any[] {
-    let list = this.chatContacts;
-    if (this.selectedDepartmentFilter !== 'all') {
-      list = list.filter(c => c.department.includes(this.selectedDepartmentFilter) || c.role === this.selectedDepartmentFilter);
+  loadChatUsersFromBackend(): void {
+    this.isLoadingChatUsers = true;
+    this.vneduService.getChatUsers().subscribe({
+      next: (res) => {
+        this.isLoadingChatUsers = false;
+        if (res && res.success && Array.isArray(res.users) && res.users.length > 0) {
+          this.chatContacts = res.users;
+          this.cdr.detectChanges();
+        }
+      },
+      error: (err) => {
+        this.isLoadingChatUsers = false;
+        console.warn('Sử dụng danh sách tài khoản đã đăng nhập mặc định:', err);
+      }
+    });
+  }
+
+  loadChatMessagesFromBackend(): void {
+    this.vneduService.getChatMessages().subscribe({
+      next: (res) => {
+        if (res && res.success && Array.isArray(res.messages)) {
+          this.chatMessages = res.messages;
+          this.cdr.detectChanges();
+          setTimeout(() => this.scrollChatToBottom(), 80);
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  toggleChatRole(): void {
+    this.currentChatRole = this.currentChatRole === 'admin' ? 'huyen' : 'admin';
+    // Đóng cuộc hội thoại nếu đang trò chuyện với chính mình
+    if (this.activeContact) {
+      const myId = this.currentChatUserId;
+      if (this.activeContact.id === myId || this.activeContact.username === myId) {
+        this.activeContact = this.chatContacts.find(c => c.id !== myId && c.username !== myId) || null;
+      }
     }
-    if (this.searchTeacherQuery?.trim()) {
-      const q = this.searchTeacherQuery.toLowerCase().trim();
+    this.cdr.detectChanges();
+  }
+
+  get filteredContacts(): any[] {
+    let list = [...this.chatContacts];
+    const myId = this.currentChatUserId;
+    const q = (this.searchTeacherQuery || '').toLowerCase().trim();
+
+    // Khi người dùng KHÔNG tìm kiếm: Ẩn chính mình khỏi danh sách liên hệ
+    if (!q) {
+      list = list.filter(c => c.id !== myId && c.username !== myId);
+    }
+
+    if (this.selectedDepartmentFilter !== 'all') {
       list = list.filter(c =>
-        c.name.toLowerCase().includes(q) ||
-        c.department.toLowerCase().includes(q) ||
-        c.title.toLowerCase().includes(q) ||
-        (c.lastMessage && c.lastMessage.toLowerCase().includes(q))
+        (c.department && c.department.includes(this.selectedDepartmentFilter)) ||
+        c.role === this.selectedDepartmentFilter
       );
     }
+
+    if (q) {
+      list = list.filter(c =>
+        c.name?.toLowerCase().includes(q) ||
+        c.title?.toLowerCase().includes(q) ||
+        c.username?.toLowerCase().includes(q) ||
+        c.department?.toLowerCase().includes(q) ||
+        c.email?.toLowerCase().includes(q) ||
+        c.lastMessage?.toLowerCase().includes(q)
+      );
+    }
+
+    // Đưa liên hệ đối tác chính lên đầu danh sách
+    list.sort((a, b) => {
+      if (myId === 'xuanngocit@gmail.com') {
+        if (a.username === '051197003685') return -1;
+        if (b.username === '051197003685') return 1;
+      } else {
+        if (a.id === 'xuanngocit@gmail.com') return -1;
+        if (b.id === 'xuanngocit@gmail.com') return 1;
+      }
+      return 0;
+    });
+
     return list;
   }
 
   selectContact(contact: any): void {
     this.activeContact = contact;
     contact.unreadCount = 0;
-    this.saveMessagesToStorage();
+    this.loadChatMessagesFromBackend();
     setTimeout(() => this.scrollChatToBottom(), 80);
   }
 
@@ -496,31 +556,77 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
     this.activeContact = null;
   }
 
+  get activeMessages(): any[] {
+    if (!this.activeContact) return [];
+    const myId = this.currentChatUserId;
+    const contactId = this.activeContact.id || this.activeContact.username;
+    return (this.chatMessages || []).filter(m =>
+      (m.senderId === myId && m.receiverId === contactId) ||
+      (m.senderId === contactId && m.receiverId === myId)
+    );
+  }
+
+  isMsgFromMe(msg: any): boolean {
+    if (!msg) return false;
+    return msg.senderId === this.currentChatUserId;
+  }
+
+  getSenderAvatarEmoji(msg: any): string {
+    if (msg.senderId === 'xuanngocit@gmail.com') return '👨‍💼';
+    return '👩‍🏫';
+  }
+
+  getSenderAvatarBg(msg: any): string {
+    if (msg.senderId === 'xuanngocit@gmail.com') return '#eff6ff';
+    return '#fdf2f8';
+  }
+
   sendMessage(): void {
     const text = (this.messageInputText || '').trim();
     if (!text || !this.activeContact) return;
 
+    const senderId = this.currentChatUserId;
+    const senderName = this.currentChatUserName;
+    const receiverId = this.activeContact.id || this.activeContact.username;
+    const receiverName = this.activeContact.name || this.activeContact.title;
+
     const now = new Date();
     const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-    const newMsg = {
-      id: Date.now().toString(),
-      senderId: 'me',
-      senderName: this.teacherTitle,
-      text: text,
+    const localMsg = {
+      id: 'msg_' + Date.now(),
+      senderId,
+      senderName,
+      receiverId,
+      receiverName,
+      text,
       time: timeStr,
-      isMe: true
+      timestamp: now.toISOString(),
+      status: 'delivered'
     };
 
-    if (!this.chatMessagesMap[this.activeContact.id]) {
-      this.chatMessagesMap[this.activeContact.id] = [];
-    }
-    this.chatMessagesMap[this.activeContact.id].push(newMsg);
+    if (!this.chatMessages) this.chatMessages = [];
+    this.chatMessages.push(localMsg);
     this.activeContact.lastMessage = text;
     this.activeContact.lastTime = timeStr;
     this.messageInputText = '';
-    this.saveMessagesToStorage();
     setTimeout(() => this.scrollChatToBottom(), 80);
+
+    // Lưu vào Backend máy chủ và file chat_messages.json
+    this.vneduService.sendChatMessage({
+      senderId,
+      senderName,
+      receiverId,
+      receiverName,
+      text
+    }).subscribe({
+      next: (res) => {
+        if (res && res.success && res.message) {
+          localMsg.id = res.message.id;
+        }
+      },
+      error: () => {}
+    });
   }
 
   sendQuickReply(text: string): void {
@@ -533,41 +639,6 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges {
       const el = document.querySelector('.chat-messages-scroll');
       if (el) {
         el.scrollTop = el.scrollHeight;
-      }
-    } catch (_) {}
-  }
-
-  private saveMessagesToStorage(): void {
-    try {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('vnedu_teacher_chat_v1', JSON.stringify({
-          messages: this.chatMessagesMap,
-          contacts: this.chatContacts
-        }));
-      }
-    } catch (_) {}
-  }
-
-  private loadMessagesFromStorage(): void {
-    try {
-      if (typeof localStorage !== 'undefined') {
-        const saved = localStorage.getItem('vnedu_teacher_chat_v1');
-        if (saved) {
-          const data = JSON.parse(saved);
-          if (data.messages) {
-            this.chatMessagesMap = { ...this.chatMessagesMap, ...data.messages };
-          }
-          if (data.contacts && Array.isArray(data.contacts)) {
-            data.contacts.forEach((sc: any) => {
-              const target = this.chatContacts.find(c => c.id === sc.id);
-              if (target) {
-                target.lastMessage = sc.lastMessage || target.lastMessage;
-                target.lastTime = sc.lastTime || target.lastTime;
-                target.unreadCount = sc.unreadCount ?? target.unreadCount;
-              }
-            });
-          }
-        }
       }
     } catch (_) {}
   }

@@ -7,6 +7,7 @@ const teacherProfileManager = require('./teacher-profile-manager');
 const adminManager = require('./admin-manager');
 const adminDb = require('./admin-db');
 const systemDb = require('./system_db');
+const chatManager = require('./chat-manager');
 
 const app = express();
 const PORT = 3000;
@@ -306,6 +307,38 @@ app.post('/api/admin/teachers/save', (req, res) => {
         const profile = teacherProfileManager.upsertProfile(req.body);
         adminManager.logAction('Lưu hồ sơ giáo viên', 'Cô Lê Thị Diệu Huyên', `Cập nhật hồ sơ ${profile.name} (${profile.username})`, 'success');
         res.json({ success: true, teacher: profile, teachers: teacherProfileManager.getProfiles() });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+// ========================================================
+// API: TIN NHẮN NỘI BỘ vnEdu (LẤY TỪ TÀI KHOẢN THỰC ĐÃ ĐĂNG NHẬP)
+// ========================================================
+app.get('/api/chat/users', (req, res) => {
+    try {
+        const users = chatManager.getRealChatUsers();
+        res.json({ success: true, users });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+app.get('/api/chat/messages', (req, res) => {
+    try {
+        const { userA, userB } = req.query;
+        const messages = chatManager.getMessagesBetween(userA, userB);
+        res.json({ success: true, messages });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+app.post('/api/chat/messages', (req, res) => {
+    try {
+        const { senderId, senderName, receiverId, receiverName, text } = req.body;
+        const message = chatManager.sendMessage({ senderId, senderName, receiverId, receiverName, text });
+        res.json({ success: true, message });
     } catch (e) {
         res.status(500).json({ success: false, error: e.message });
     }

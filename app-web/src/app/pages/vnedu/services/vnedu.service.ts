@@ -267,4 +267,29 @@ export class VnEduService {
       headers: this.getHeaders()
     });
   }
+
+  // ========================================================
+  // TIN NHẮN NỘI BỘ vnEdu (LẤY TỪ TÀI KHOẢN THỰC ĐÃ ĐĂNG NHẬP)
+  // ========================================================
+  getChatUsers(): Observable<{ success: boolean; users: any[] }> {
+    return this.http.get<{ success: boolean; users: any[] }>(`${this.baseUrl}/chat/users`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  getChatMessages(userA?: string, userB?: string): Observable<{ success: boolean; messages: any[] }> {
+    let url = `${this.baseUrl}/chat/messages`;
+    if (userA && userB) {
+      url += `?userA=${encodeURIComponent(userA)}&userB=${encodeURIComponent(userB)}`;
+    }
+    return this.http.get<{ success: boolean; messages: any[] }>(url, {
+      headers: this.getHeaders()
+    });
+  }
+
+  sendChatMessage(data: { senderId: string; senderName?: string; receiverId: string; receiverName?: string; text: string }): Observable<{ success: boolean; message: any }> {
+    return this.http.post<{ success: boolean; message: any }>(`${this.baseUrl}/chat/messages`, data, {
+      headers: this.getHeaders()
+    });
+  }
 }
