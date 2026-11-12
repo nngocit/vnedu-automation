@@ -760,13 +760,13 @@
             </div>
 
             <!-- Thời gian & Nút hành động / Badge chưa đọc -->
-            <div class="text-end flex-shrink-0 d-flex flex-column align-items-end gap-1" style="min-width: 80px;">
+            <div class="text-end flex-shrink-0 d-flex flex-column align-items-end gap-1" style="min-width: 86px;">
               <span class="contact-time text-muted fs-9">{{ contact.lastTime }}</span>
 
-              <!-- Badge số tin chưa đọc màu đỏ nổi bật -->
+              <!-- Badge số tin chưa đọc màu đỏ nổi bật (hiển thị số lượng chính xác) -->
               <span *ngIf="getUnreadCountForContact(contact) > 0"
                     class="badge bg-danger text-white rounded-pill px-2 py-0.5 fs-9 fw-bold shadow-xs animate-pulse">
-                {{ getUnreadCountForContact(contact) }} tin mới
+                {{ getUnreadCountForContact(contact) }} tin chưa đọc
               </span>
 
               <span *ngIf="getUnreadCountForContact(contact) === 0"
@@ -804,13 +804,30 @@
             </div>
 
             <div class="min-w-0">
-              <h3 class="conv-partner-name mb-0 fw-bold text-gray-900 text-truncate fs-6">
-                {{ activeContact.name }}
-              </h3>
+              <div class="d-flex align-items-center gap-1.5 mb-0.5 flex-wrap">
+                <h3 class="conv-partner-name mb-0 fw-bold text-gray-900 text-truncate fs-6">
+                  {{ activeContact.name }}
+                </h3>
+                <!-- Trạng thái xem tin nhắn đối phương như Zalo -->
+                <span *ngIf="unreadSentMessagesCountForActiveContact > 0"
+                      class="badge bg-danger text-white rounded-pill px-2 py-0.5 fs-9 fw-bold shadow-xs animate-pulse"
+                      title="Đối phương chưa xem tin nhắn bạn gửi">
+                  ● Chưa xem ({{ unreadSentMessagesCountForActiveContact }})
+                </span>
+                <span *ngIf="unreadSentMessagesCountForActiveContact === 0 && hasSentMessagesToActiveContact"
+                      class="badge bg-light-success text-success border border-success-subtle rounded-pill px-2 py-0.5 fs-9 fw-semibold"
+                      title="Đối phương đã xem tất cả tin nhắn">
+                  ✓ Đã xem
+                </span>
+              </div>
               <div class="conv-partner-sub text-muted fs-8 d-flex align-items-center gap-1.5">
                 <span class="badge-dept-micro">{{ activeContact.department }}</span>
                 <span>•</span>
-                <span [class.text-success]="activeContact.isOnline" class="fw-semibold">
+                <span *ngIf="isPartnerTyping" class="text-primary fw-bold animate-pulse d-inline-flex align-items-center gap-1">
+                  <span>✍️</span>
+                  <span>Đang soạn tin...</span>
+                </span>
+                <span *ngIf="!isPartnerTyping" [class.text-success]="activeContact.isOnline" class="fw-semibold">
                   {{ activeContact.isOnline ? 'Đang trực tuyến' : 'Ngoại tuyến' }}
                 </span>
               </div>
@@ -846,6 +863,13 @@
             </span>
           </div>
 
+          <!-- Dải thông báo số tin nhắn chưa đọc vừa mở -->
+          <div *ngIf="unreadMessagesCountBeforeOpening > 0" class="chat-unread-alert text-center my-1">
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1 fs-8 fw-bold shadow-2xs">
+              🔔 Có {{ unreadMessagesCountBeforeOpening }} tin nhắn mới từ {{ activeContact.name }}
+            </span>
+          </div>
+
           <!-- Các tin nhắn trong hội thoại -->
           <ng-container *ngFor="let msg of activeMessages">
             <!-- Tin nhắn của đối phương (bên trái) -->
@@ -857,7 +881,10 @@
               <div class="msg-bubble incoming-bubble p-3 rounded-4 shadow-2xs">
                 <div class="msg-sender-label fw-bold fs-9 text-primary mb-1">{{ msg.senderName }}</div>
                 <div class="msg-text fs-7 text-gray-900">{{ msg.text }}</div>
-                <div class="msg-time text-end text-muted fs-9 mt-1">{{ msg.time }}</div>
+                <div class="msg-time text-end text-muted fs-9 mt-1 d-flex align-items-center justify-content-end gap-1">
+                  <span>{{ msg.time }}</span>
+                  <span class="text-success fs-9" title="Đã nhận">✓</span>
+                </div>
               </div>
             </div>
 
@@ -865,13 +892,42 @@
             <div *ngIf="isMsgFromMe(msg)" class="chat-msg-row outgoing d-flex align-items-end justify-content-end gap-2">
               <div class="msg-bubble outgoing-bubble p-3 rounded-4 shadow-2xs">
                 <div class="msg-text fs-7 text-white">{{ msg.text }}</div>
-                <div class="msg-time text-end text-white-50 fs-9 mt-1 d-flex align-items-center justify-content-end gap-1">
+                <div class="msg-time text-end text-white-50 fs-9 mt-1 d-flex align-items-center justify-content-end gap-1.5">
                   <span>{{ msg.time }}</span>
-                  <span class="tick-sent">✓✓</span>
+
+                  <!-- Trạng thái tin nhắn như Zalo: Chưa đọc thì hiện đỏ, đối phương xem rồi thì hiện đã xem -->
+                  <span *ngIf="msg.status === 'read'"
+                        class="msg-status-seen d-inline-flex align-items-center gap-0.5"
+                        title="Đối phương đã xem">
+                    <span class="seen-check">✓✓</span>
+                    <span class="seen-text">Đã xem</span>
+                  </span>
+
+                  <span *ngIf="msg.status !== 'read'"
+                        class="msg-status-unseen badge bg-danger text-white rounded-pill px-1.5 py-0.5 shadow-2xs fw-bold"
+                        title="Đối phương chưa xem">
+                    Chưa xem
+                  </span>
                 </div>
               </div>
             </div>
           </ng-container>
+
+          <!-- HIỆU ỨNG ĐANG GÕ TIN NHẮN (TYPING INDICATOR CHUẨN ZALO) -->
+          <div *ngIf="isPartnerTyping" class="chat-msg-row incoming typing-row d-flex align-items-end gap-2">
+            <div class="msg-avatar-micro rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                 [style.background]="activeContact.avatarBg">
+              <span style="font-size: 14px;">{{ activeContact.avatarEmoji }}</span>
+            </div>
+            <div class="msg-bubble incoming-bubble typing-bubble p-2.5 px-3 rounded-4 shadow-2xs d-flex align-items-center gap-2">
+              <span class="fs-9 text-muted fw-semibold">{{ activeContact.name }} đang soạn tin</span>
+              <div class="typing-wave d-flex align-items-center gap-1">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Khung soạn tin nhắn (Text-only Bottom Bar) -->
@@ -891,6 +947,7 @@
             <input type="text"
                    class="form-control-tnvn chat-text-input flex-grow-1 px-3 py-2.5 rounded-pill bg-light border-0 fs-7"
                    [(ngModel)]="messageInputText"
+                   (input)="onMessageInputChange()"
                    (keyup.enter)="sendMessage()"
                    placeholder="Nhập tin nhắn với Thầy/Cô..."
                    title="Nhập tin nhắn văn bản">
@@ -1266,10 +1323,10 @@
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
         </svg>
 
-        <!-- Huy hiệu báo tin nhắn mới chưa đọc trên menu -->
+        <!-- Huy hiệu báo tin nhắn mới chưa đọc trên menu (trên 5 tin thì hiện 5+ để khỏi cộng dồn) -->
         <span *ngIf="totalUnreadMessagesCount > 0"
               class="nav-unread-badge position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger text-white fw-bold shadow-xs">
-          {{ totalUnreadMessagesCount > 9 ? '9+' : totalUnreadMessagesCount }}
+          {{ totalUnreadMessagesCount > 5 ? '5+' : totalUnreadMessagesCount }}
         </span>
       </div>
       <span class="nav-label">Tin nhắn</span>

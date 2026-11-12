@@ -299,6 +299,12 @@ export class VnEduService {
     });
   }
 
+  sendTypingStatus(senderId: string, receiverId: string, isTyping: boolean): Observable<{ success: boolean }> {
+    return this.http.post<{ success: boolean }>(`${this.baseUrl}/chat/typing`, { senderId, receiverId, isTyping }, {
+      headers: this.getHeaders()
+    });
+  }
+
   clearChatMessages(userA?: string, userB?: string, clearAll: boolean = false): Observable<{ success: boolean; result?: any }> {
     return this.http.post<{ success: boolean; result?: any }>(`${this.baseUrl}/chat/messages/clear`, { userA, userB, clearAll }, {
       headers: this.getHeaders()

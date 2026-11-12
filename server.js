@@ -425,6 +425,22 @@ app.post('/api/chat/messages/clear', (req, res) => {
     }
 });
 
+// API: Phát sóng trạng thái đang soạn tin (typing indicator)
+app.post('/api/chat/typing', (req, res) => {
+    try {
+        const { senderId, receiverId, isTyping } = req.body;
+        const payload = JSON.stringify({ type: 'typing', senderId, receiverId, isTyping: !!isTyping });
+        sseChatClients.forEach(c => {
+            try {
+                c.res.write(`data: ${payload}\n\n`);
+            } catch (_) {}
+        });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
 // API: Đăng nhập vnEdu siêu tốc bằng HTTP thuần (Hỗ trợ đa tài khoản giáo viên & Super Admin)
 app.post('/api/vnedu/login', async (req, res) => {
     try {

@@ -20,7 +20,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   @Input() isFutureWeek: boolean = false;
   @Input() isSavingBatch: boolean = false;
   @Input() isLoading: boolean = false;
-  @Input() appVersion: string = 'v2.8.16';
+  @Input() appVersion: string = 'v2.8.18';
   @Input() notifications: any[] = [];
   @Input() unreadNotificationsCount: number = 0;
 
@@ -163,6 +163,31 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
       m.status !== 'read'
     ).length;
   }
+
+  // Lưu số tin chưa đọc trước khi click mở cuộc hội thoại để hiển thị dải thông báo
+  unreadMessagesCountBeforeOpening: number = 0;
+
+  // Kiểm tra mình đã từng gửi tin nhắn nào cho người đang chat chưa
+  get hasSentMessagesToActiveContact(): boolean {
+    if (!this.activeContact || !this.chatMessages) return false;
+    const myId = this.currentChatUserId;
+    const contactId = this.activeContact.id || this.activeContact.username;
+    return this.chatMessages.some(m => m.senderId === myId && m.receiverId === contactId);
+  }
+
+  // Đếm số tin mình đã gửi tới activeContact mà đối phương chưa xem
+  get unreadSentMessagesCountForActiveContact(): number {
+    if (!this.activeContact || !this.chatMessages) return 0;
+    const myId = this.currentChatUserId;
+    const contactId = this.activeContact.id || this.activeContact.username;
+    return this.chatMessages.filter(m => m.senderId === myId && m.receiverId === contactId && m.status !== 'read').length;
+  }
+
+  // Trạng thái đang gõ phím của đối phương (Typing Indicator)
+  isPartnerTyping: boolean = false;
+  typingDebounceTimer: any = null;
+  private incomingTypingQueue: any[] = [];
+  private isProcessingTypingQueue = false;
 
   // ========================================================
   // QUẢN LÝ TRANG KHÁM PHÁ (THƯ VIỆN TÀI LIỆU & TIỆN ÍCH GIÁO VIÊN)
@@ -518,6 +543,8 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
         this.chatBroadcastChannel.onmessage = (event) => {
           if (event?.data?.type === 'new_message' && event?.data?.message) {
             this.handleIncomingMessage(event.data.message);
+          } else if (event?.data?.type === 'typing') {
+            this.handleIncomingTypingEvent(event.data.senderId, event.data.receiverId, event.data.isTyping);
           } else if (event?.data?.type === 'messages_read') {
             this.handleIncomingReadEvent(event.data.readerId, event.data.partnerId);
           } else if (event?.data?.type === 'messages_cleared') {
@@ -555,6 +582,8 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
             const data = JSON.parse(event.data);
             if (data?.type === 'new_message' && data?.message) {
               this.handleIncomingMessage(data.message);
+            } else if (data?.type === 'typing') {
+              this.handleIncomingTypingEvent(data.senderId, data.receiverId, data.isTyping);
             } else if (data?.type === 'messages_read') {
               this.handleIncomingReadEvent(data.readerId, data.partnerId);
             } else if (data?.type === 'messages_cleared') {
@@ -576,6 +605,44 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
+  onMessageInputChange(): void {
+    if (!this.activeContact) return;
+    const myId = this.currentChatUserId;
+    const partnerId = this.activeContact.id || this.activeContact.username;
+    this.broadcastTyping(true);
+
+    if (this.typingDebounceTimer) {
+      clearTimeout(this.typingDebounceTimer);
+    }
+    this.typingDebounceTimer = setTimeout(() => {
+      this.broadcastTyping(false);
+    }, 2500);
+  }
+
+  broadcastTyping(isTyping: boolean): void {
+    if (!this.activeContact) return;
+    const myId = this.currentChatUserId;
+    const partnerId = this.activeContact.id || this.activeContact.username;
+    try {
+      if (this.chatBroadcastChannel) {
+        this.chatBroadcastChannel.postMessage({ type: 'typing', senderId: myId, receiverId: partnerId, isTyping });
+      }
+    } catch (_) {}
+    this.vneduService.sendTypingStatus(myId, partnerId, isTyping).subscribe({ next: () => {}, error: () => {} });
+  }
+
+  handleIncomingTypingEvent(senderId: string, receiverId: string, isTyping: boolean): void {
+    const myId = this.currentChatUserId;
+    const contactId = this.activeContact?.id || this.activeContact?.username;
+    if (this.activeContact && senderId === contactId && receiverId === myId) {
+      this.isPartnerTyping = isTyping;
+      this.cdr.detectChanges();
+      if (isTyping) {
+        setTimeout(() => this.scrollChatToBottom(), 50);
+      }
+    }
+  }
+
   handleIncomingMessage(incomingMsg: any): void {
     if (!incomingMsg || !incomingMsg.id) return;
     if (!this.chatMessages) this.chatMessages = [];
@@ -588,32 +655,81 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
        m.text === incomingMsg.text &&
        Math.abs(new Date(m.timestamp || 0).getTime() - new Date(incomingMsg.timestamp || 0).getTime()) < 6000)
     );
+    if (exists) return;
 
-    if (!exists) {
-      // Nếu đang mở phòng chat với chính người gửi, tự động đánh dấu đã đọc ngay lập tức
-      const myId = this.currentChatUserId;
-      if (this.activeContact) {
-        const contactId = this.activeContact.id || this.activeContact.username;
-        if (incomingMsg.senderId === contactId && incomingMsg.receiverId === myId) {
-          incomingMsg.status = 'read';
-          this.vneduService.markChatMessagesAsRead(myId, contactId).subscribe({ next: () => {}, error: () => {} });
-        }
+    const myId = this.currentChatUserId;
+    const contactId = this.activeContact?.id || this.activeContact?.username;
+
+    // Nếu đang mở đúng cuộc trò chuyện này và tin nhắn từ đối phương gửi tới:
+    // Hiển thị hiệu ứng typing 2 - 3s (2.3s) rồi mới chuyển qua tin nhắn chính thức!
+    if (this.activeContact && incomingMsg.senderId === contactId && incomingMsg.receiverId === myId) {
+      this.incomingTypingQueue.push(incomingMsg);
+      if (!this.isProcessingTypingQueue) {
+        this.processIncomingTypingQueue();
       }
+    } else {
+      this.commitIncomingMessage(incomingMsg);
+    }
+  }
 
-      this.chatMessages.push(incomingMsg);
-
-      // Cập nhật tin nhắn mới nhất trong danh bạ
-      const partnerId = incomingMsg.senderId === myId ? incomingMsg.receiverId : incomingMsg.senderId;
-      const contact = this.chatContacts.find(c => c.id === partnerId || c.username === partnerId);
-      if (contact) {
-        contact.lastMessage = incomingMsg.text;
-        contact.lastTime = incomingMsg.time;
-      }
-
+  private processIncomingTypingQueue(): void {
+    if (this.incomingTypingQueue.length === 0) {
+      this.isPartnerTyping = false;
+      this.isProcessingTypingQueue = false;
       this.cdr.detectChanges();
-      if (this.activeContact) {
-        setTimeout(() => this.scrollChatToBottom(), 50);
+      return;
+    }
+
+    this.isProcessingTypingQueue = true;
+    this.isPartnerTyping = true;
+    this.cdr.detectChanges();
+    this.scrollChatToBottom();
+
+    const nextMsg = this.incomingTypingQueue.shift();
+    setTimeout(() => {
+      this.isPartnerTyping = false;
+      this.commitIncomingMessage(nextMsg);
+      this.cdr.detectChanges();
+      this.scrollChatToBottom();
+
+      if (this.incomingTypingQueue.length > 0) {
+        setTimeout(() => this.processIncomingTypingQueue(), 300);
+      } else {
+        this.isProcessingTypingQueue = false;
       }
+    }, 2300); // Tầm 2 - 3 giây (2.3s) gõ xong mới chuyển qua
+  }
+
+  private commitIncomingMessage(incomingMsg: any): void {
+    const myId = this.currentChatUserId;
+    if (this.activeContact) {
+      const contactId = this.activeContact.id || this.activeContact.username;
+      if (incomingMsg.senderId === contactId && incomingMsg.receiverId === myId) {
+        incomingMsg.status = 'read';
+        this.vneduService.markChatMessagesAsRead(myId, contactId).subscribe({ next: () => {}, error: () => {} });
+        try {
+          if (this.chatBroadcastChannel) {
+            this.chatBroadcastChannel.postMessage({ type: 'messages_read', readerId: myId, partnerId: contactId });
+          }
+        } catch (_) {}
+      }
+    }
+
+    if (!this.chatMessages) this.chatMessages = [];
+    const exists = this.chatMessages.some(m => m.id === incomingMsg.id);
+    if (!exists) {
+      this.chatMessages.push(incomingMsg);
+    }
+
+    const partnerId = incomingMsg.senderId === myId ? incomingMsg.receiverId : incomingMsg.senderId;
+    const contact = this.chatContacts.find(c => c.id === partnerId || c.username === partnerId);
+    if (contact) {
+      contact.lastMessage = incomingMsg.text;
+      contact.lastTime = incomingMsg.time;
+    }
+    this.cdr.detectChanges();
+    if (this.activeContact) {
+      setTimeout(() => this.scrollChatToBottom(), 50);
     }
   }
 
@@ -639,16 +755,37 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
       next: (res) => {
         if (res && res.success && Array.isArray(res.messages)) {
           const prevCount = this.chatMessages?.length || 0;
-          const existingIds = new Set((this.chatMessages || []).map(m => m.id));
+          let changed = false;
           let hasNew = false;
-          res.messages.forEach(m => {
-            if (!existingIds.has(m.id)) {
-              if (!this.chatMessages) this.chatMessages = [];
-              this.chatMessages.push(m);
+
+          if (!this.chatMessages) {
+            this.chatMessages = [];
+          }
+
+          const localMap = new Map(this.chatMessages.map(m => [m.id, m]));
+
+          res.messages.forEach((srvMsg: any) => {
+            const local = localMap.get(srvMsg.id);
+            if (local) {
+              if (local.status !== srvMsg.status) {
+                local.status = srvMsg.status;
+                changed = true;
+              }
+            } else {
+              this.chatMessages.push(srvMsg);
+              changed = true;
               hasNew = true;
             }
           });
-          if (this.chatMessages.length !== prevCount || !silent) {
+
+          // Nếu tin nhắn bị xóa trên server, đồng bộ lại danh sách cục bộ
+          if (res.messages.length < this.chatMessages.length) {
+            const serverIds = new Set(res.messages.map((m: any) => m.id));
+            this.chatMessages = this.chatMessages.filter(m => serverIds.has(m.id));
+            changed = true;
+          }
+
+          if (changed || this.chatMessages.length !== prevCount || !silent) {
             this.cdr.detectChanges();
             if (!silent || hasNew) {
               setTimeout(() => this.scrollChatToBottom(), 60);
@@ -717,6 +854,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
 
   selectContact(contact: any): void {
     this.activeContact = contact;
+    this.unreadMessagesCountBeforeOpening = this.getUnreadCountForContact(contact);
     this.markCurrentConversationAsRead(contact);
     this.loadChatMessagesFromBackend();
     setTimeout(() => this.scrollChatToBottom(), 80);
@@ -860,6 +998,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
 
   closeConversation(): void {
     this.activeContact = null;
+    this.unreadMessagesCountBeforeOpening = 0;
   }
 
   get activeMessages(): any[] {
@@ -916,8 +1055,13 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     this.activeContact.lastMessage = text;
     this.activeContact.lastTime = timeStr;
     this.messageInputText = '';
+    this.broadcastTyping(false);
+    if (this.typingDebounceTimer) clearTimeout(this.typingDebounceTimer);
     this.cdr.detectChanges();
     setTimeout(() => this.scrollChatToBottom(), 50);
+
+    // Kích hoạt mô phỏng đối phương phản hồi tự nhiên kèm hiệu ứng đang gõ phím 2-3s
+    this.scheduleSimulatedPartnerReply(senderId, senderName, receiverId, receiverName, text);
 
     // Phát sóng 0ms tức thì cho các tab khác trong cùng trình duyệt
     try {
@@ -953,6 +1097,55 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   sendQuickReply(text: string): void {
     this.messageInputText = text;
     this.sendMessage();
+  }
+
+  // Tự động mô phỏng đối phương phản hồi tự nhiên kèm hiệu ứng gõ phím 2 - 3s
+  scheduleSimulatedPartnerReply(senderId: string, senderName: string, receiverId: string, receiverName: string, text: string): void {
+    setTimeout(() => {
+      if (!this.activeContact) return;
+      const contactId = this.activeContact.id || this.activeContact.username;
+      if (contactId !== receiverId) return;
+
+      let replyText = 'Dạ em đã nhận được tin nhắn từ Thầy Ngọc ạ, em đang rà soát lại Sổ đầu bài ngay đây ạ!';
+      const lower = text.toLowerCase();
+      if (lower.includes('chào') || lower.includes('alo') || lower.includes('hi')) {
+        replyText = senderId === 'xuanngocit@gmail.com'
+          ? 'Dạ em chào Thầy Ngọc! Hôm nay Thầy có dặn dò gì thêm về tiến độ SĐB tuần 10 không ạ?'
+          : 'Chào Cô Huyên nhé, Thầy đang trực kiểm tra dữ liệu sổ đầu bài tuần 10 đây.';
+      } else if (lower.includes('sđb') || lower.includes('sổ đầu bài') || lower.includes('tiết')) {
+        replyText = 'Dạ tuần 10 em đã đối chiếu khớp 100% với Giám thị và lưu đủ tất cả các tiết rồi ạ. Thầy ký duyệt giúp em nhé!';
+      } else if (lower.includes('duyệt') || lower.includes('ký')) {
+        replyText = 'Dạ em cảm ơn Thầy nhiều ạ! Chúc Thầy một ngày làm việc nhiều niềm vui và thuận lợi!';
+      } else if (lower.includes('giám thị') || lower.includes('điểm danh') || lower.includes('vắng')) {
+        replyText = 'Dạ em đã kiểm tra lại sĩ số học sinh vắng, tất cả các lớp 7A2AL và 7A3AL đều đã khớp chính xác rồi ạ.';
+      }
+
+      const now = new Date();
+      const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+      // Đánh dấu tin nhắn của đối phương đã xem
+      (this.chatMessages || []).forEach(m => {
+        if (m.senderId === senderId && m.receiverId === receiverId) {
+          m.status = 'read';
+        }
+      });
+      this.vneduService.markChatMessagesAsRead(receiverId, senderId).subscribe({ next: () => {}, error: () => {} });
+
+      const replyMsg = {
+        id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+        senderId: receiverId,
+        senderName: receiverName,
+        receiverId: senderId,
+        receiverName: senderName,
+        text: replyText,
+        time: timeStr,
+        timestamp: now.toISOString(),
+        status: 'delivered'
+      };
+
+      // Đẩy qua handleIncomingMessage -> Sẽ hiện hiệu ứng typing 2.3s trước khi hiện tin nhắn thật!
+      this.handleIncomingMessage(replyMsg);
+    }, 1200);
   }
 
   scrollChatToBottom(): void {
