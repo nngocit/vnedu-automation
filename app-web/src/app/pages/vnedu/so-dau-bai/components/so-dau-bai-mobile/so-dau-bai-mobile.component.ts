@@ -1060,9 +1060,6 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     this.cdr.detectChanges();
     setTimeout(() => this.scrollChatToBottom(), 50);
 
-    // Kích hoạt mô phỏng đối phương phản hồi tự nhiên kèm hiệu ứng đang gõ phím 2-3s
-    this.scheduleSimulatedPartnerReply(senderId, senderName, receiverId, receiverName, text);
-
     // Phát sóng 0ms tức thì cho các tab khác trong cùng trình duyệt
     try {
       if (this.chatBroadcastChannel) {
@@ -1097,55 +1094,6 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   sendQuickReply(text: string): void {
     this.messageInputText = text;
     this.sendMessage();
-  }
-
-  // Tự động mô phỏng đối phương phản hồi tự nhiên kèm hiệu ứng gõ phím 2 - 3s
-  scheduleSimulatedPartnerReply(senderId: string, senderName: string, receiverId: string, receiverName: string, text: string): void {
-    setTimeout(() => {
-      if (!this.activeContact) return;
-      const contactId = this.activeContact.id || this.activeContact.username;
-      if (contactId !== receiverId) return;
-
-      let replyText = 'Dạ em đã nhận được tin nhắn từ Thầy Ngọc ạ, em đang rà soát lại Sổ đầu bài ngay đây ạ!';
-      const lower = text.toLowerCase();
-      if (lower.includes('chào') || lower.includes('alo') || lower.includes('hi')) {
-        replyText = senderId === 'xuanngocit@gmail.com'
-          ? 'Dạ em chào Thầy Ngọc! Hôm nay Thầy có dặn dò gì thêm về tiến độ SĐB tuần 10 không ạ?'
-          : 'Chào Cô Huyên nhé, Thầy đang trực kiểm tra dữ liệu sổ đầu bài tuần 10 đây.';
-      } else if (lower.includes('sđb') || lower.includes('sổ đầu bài') || lower.includes('tiết')) {
-        replyText = 'Dạ tuần 10 em đã đối chiếu khớp 100% với Giám thị và lưu đủ tất cả các tiết rồi ạ. Thầy ký duyệt giúp em nhé!';
-      } else if (lower.includes('duyệt') || lower.includes('ký')) {
-        replyText = 'Dạ em cảm ơn Thầy nhiều ạ! Chúc Thầy một ngày làm việc nhiều niềm vui và thuận lợi!';
-      } else if (lower.includes('giám thị') || lower.includes('điểm danh') || lower.includes('vắng')) {
-        replyText = 'Dạ em đã kiểm tra lại sĩ số học sinh vắng, tất cả các lớp 7A2AL và 7A3AL đều đã khớp chính xác rồi ạ.';
-      }
-
-      const now = new Date();
-      const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-
-      // Đánh dấu tin nhắn của đối phương đã xem
-      (this.chatMessages || []).forEach(m => {
-        if (m.senderId === senderId && m.receiverId === receiverId) {
-          m.status = 'read';
-        }
-      });
-      this.vneduService.markChatMessagesAsRead(receiverId, senderId).subscribe({ next: () => {}, error: () => {} });
-
-      const replyMsg = {
-        id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-        senderId: receiverId,
-        senderName: receiverName,
-        receiverId: senderId,
-        receiverName: senderName,
-        text: replyText,
-        time: timeStr,
-        timestamp: now.toISOString(),
-        status: 'delivered'
-      };
-
-      // Đẩy qua handleIncomingMessage -> Sẽ hiện hiệu ứng typing 2.3s trước khi hiện tin nhắn thật!
-      this.handleIncomingMessage(replyMsg);
-    }, 1200);
   }
 
   scrollChatToBottom(): void {
