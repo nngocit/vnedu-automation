@@ -42,6 +42,9 @@ scratch/
 # OS files
 .DS_Store
 Thumbs.db
+*.db-journal
+*.db-wal
+*.db-shm
 
 # Environment secrets
 .env

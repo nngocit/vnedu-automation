@@ -385,6 +385,46 @@ app.post('/api/chat/messages', (req, res) => {
     }
 });
 
+// API: Đánh dấu tin nhắn đã xem/đã đọc cho từng người dùng
+app.post('/api/chat/messages/read', (req, res) => {
+    try {
+        const { readerId, partnerId } = req.body;
+        const result = chatManager.markAsRead({ readerId, partnerId });
+
+        // Phát sóng SSE để các tab cùng tài khoản cập nhật tức thì trạng thái đã đọc
+        const payload = JSON.stringify({ type: 'messages_read', readerId, partnerId });
+        sseChatClients.forEach(c => {
+            try {
+                c.res.write(`data: ${payload}\n\n`);
+            } catch (_) {}
+        });
+
+        res.json({ success: true, result });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+// API: Xóa toàn bộ lịch sử tin nhắn hoặc xóa cuộc trò chuyện
+app.post('/api/chat/messages/clear', (req, res) => {
+    try {
+        const { userA, userB, clearAll } = req.body;
+        const result = chatManager.clearMessages({ userA, userB, clearAll });
+
+        // Phát sóng SSE tới mọi client để xóa sạch tin nhắn tức thời
+        const payload = JSON.stringify({ type: 'messages_cleared', userA, userB, clearAll: !!clearAll });
+        sseChatClients.forEach(c => {
+            try {
+                c.res.write(`data: ${payload}\n\n`);
+            } catch (_) {}
+        });
+
+        res.json({ success: true, result });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
 // API: Đăng nhập vnEdu siêu tốc bằng HTTP thuần (Hỗ trợ đa tài khoản giáo viên & Super Admin)
 app.post('/api/vnedu/login', async (req, res) => {
     try {

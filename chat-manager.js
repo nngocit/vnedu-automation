@@ -238,9 +238,49 @@ function sendMessage({ senderId, senderName, receiverId, receiverName, text }) {
     return newMsg;
 }
 
+/**
+ * Đánh dấu đã đọc các tin nhắn gửi tới readerId từ partnerId (hoặc toàn bộ)
+ */
+function markAsRead({ readerId, partnerId }) {
+    if (!readerId) return { updatedCount: 0 };
+    const messages = readMessages();
+    let updatedCount = 0;
+    messages.forEach(m => {
+        if (m.receiverId === readerId && (!partnerId || m.senderId === partnerId)) {
+            if (m.status !== 'read') {
+                m.status = 'read';
+                updatedCount++;
+            }
+        }
+    });
+    if (updatedCount > 0) {
+        writeMessages(messages);
+    }
+    return { success: true, updatedCount };
+}
+
+/**
+ * Xóa toàn bộ lịch sử tin nhắn hoặc xóa cuộc hội thoại giữa 2 user
+ */
+function clearMessages({ userA, userB, clearAll }) {
+    if (clearAll || (!userA && !userB)) {
+        writeMessages([]);
+        return { success: true, count: 0, clearedAll: true };
+    }
+    const messages = readMessages();
+    const remaining = messages.filter(m => !(
+        (m.senderId === userA && m.receiverId === userB) ||
+        (m.senderId === userB && m.receiverId === userA)
+    ));
+    writeMessages(remaining);
+    return { success: true, count: remaining.length, clearedAll: false };
+}
+
 module.exports = {
     getRealChatUsers,
     getMessagesBetween,
     readMessages,
-    sendMessage
+    sendMessage,
+    markAsRead,
+    clearMessages
 };

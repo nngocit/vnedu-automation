@@ -20,7 +20,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   @Input() isFutureWeek: boolean = false;
   @Input() isSavingBatch: boolean = false;
   @Input() isLoading: boolean = false;
-  @Input() appVersion: string = 'v2.8.15';
+  @Input() appVersion: string = 'v2.8.16';
   @Input() notifications: any[] = [];
   @Input() unreadNotificationsCount: number = 0;
 
@@ -53,6 +53,8 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   messageInputText: string = '';
   isLoadingChatUsers: boolean = false;
   chatMessages: any[] = [];
+  showClearChatConfirmModal: boolean = false;
+  clearTargetType: 'all' | 'conversation' = 'all';
 
   private chatBroadcastChannel: BroadcastChannel | null = null;
   private chatEventSource: EventSource | null = null;
@@ -137,6 +139,29 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
       'Em sẽ kiểm tra lại ngay',
       'Dạ em cảm ơn Thầy nhiều ạ'
     ];
+  }
+
+  // Đếm số lượng tin nhắn chưa đọc từ một liên hệ cụ thể gửi tới tài khoản hiện tại
+  getUnreadCountForContact(contact: any): number {
+    if (!contact) return 0;
+    const myId = this.currentChatUserId;
+    const contactId = contact.id || contact.username;
+    if (!this.chatMessages || this.chatMessages.length === 0) return 0;
+    return this.chatMessages.filter(m =>
+      m.senderId === contactId &&
+      m.receiverId === myId &&
+      m.status !== 'read'
+    ).length;
+  }
+
+  // Tổng số tin nhắn chưa xem của toàn bộ các liên hệ gửi tới tài khoản hiện tại
+  get totalUnreadMessagesCount(): number {
+    const myId = this.currentChatUserId;
+    if (!this.chatMessages || this.chatMessages.length === 0) return 0;
+    return this.chatMessages.filter(m =>
+      m.receiverId === myId &&
+      m.status !== 'read'
+    ).length;
   }
 
   // ========================================================
@@ -493,6 +518,10 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
         this.chatBroadcastChannel.onmessage = (event) => {
           if (event?.data?.type === 'new_message' && event?.data?.message) {
             this.handleIncomingMessage(event.data.message);
+          } else if (event?.data?.type === 'messages_read') {
+            this.handleIncomingReadEvent(event.data.readerId, event.data.partnerId);
+          } else if (event?.data?.type === 'messages_cleared') {
+            this.handleIncomingClearEvent(event.data.userA, event.data.userB, event.data.clearAll);
           }
         };
       } catch (err) {
@@ -526,6 +555,10 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
             const data = JSON.parse(event.data);
             if (data?.type === 'new_message' && data?.message) {
               this.handleIncomingMessage(data.message);
+            } else if (data?.type === 'messages_read') {
+              this.handleIncomingReadEvent(data.readerId, data.partnerId);
+            } else if (data?.type === 'messages_cleared') {
+              this.handleIncomingClearEvent(data.userA, data.userB, data.clearAll);
             }
           } catch (_) {}
         };
@@ -557,17 +590,24 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     );
 
     if (!exists) {
+      // Nếu đang mở phòng chat với chính người gửi, tự động đánh dấu đã đọc ngay lập tức
+      const myId = this.currentChatUserId;
+      if (this.activeContact) {
+        const contactId = this.activeContact.id || this.activeContact.username;
+        if (incomingMsg.senderId === contactId && incomingMsg.receiverId === myId) {
+          incomingMsg.status = 'read';
+          this.vneduService.markChatMessagesAsRead(myId, contactId).subscribe({ next: () => {}, error: () => {} });
+        }
+      }
+
       this.chatMessages.push(incomingMsg);
 
       // Cập nhật tin nhắn mới nhất trong danh bạ
-      const partnerId = incomingMsg.senderId === this.currentChatUserId ? incomingMsg.receiverId : incomingMsg.senderId;
+      const partnerId = incomingMsg.senderId === myId ? incomingMsg.receiverId : incomingMsg.senderId;
       const contact = this.chatContacts.find(c => c.id === partnerId || c.username === partnerId);
       if (contact) {
         contact.lastMessage = incomingMsg.text;
         contact.lastTime = incomingMsg.time;
-        if (!this.activeContact || (this.activeContact.id !== partnerId && this.activeContact.username !== partnerId)) {
-          contact.unreadCount = (contact.unreadCount || 0) + 1;
-        }
       }
 
       this.cdr.detectChanges();
@@ -677,9 +717,145 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
 
   selectContact(contact: any): void {
     this.activeContact = contact;
-    contact.unreadCount = 0;
+    this.markCurrentConversationAsRead(contact);
     this.loadChatMessagesFromBackend();
     setTimeout(() => this.scrollChatToBottom(), 80);
+  }
+
+  // Đánh dấu toàn bộ tin nhắn trong cuộc hội thoại hiện tại là đã đọc
+  markCurrentConversationAsRead(contact: any): void {
+    if (!contact) return;
+    const myId = this.currentChatUserId;
+    const contactId = contact.id || contact.username;
+    let hasUnread = false;
+
+    (this.chatMessages || []).forEach(m => {
+      if (m.senderId === contactId && m.receiverId === myId && m.status !== 'read') {
+        m.status = 'read';
+        hasUnread = true;
+      }
+    });
+
+    if (hasUnread) {
+      this.cdr.detectChanges();
+      this.vneduService.markChatMessagesAsRead(myId, contactId).subscribe({
+        next: () => {},
+        error: () => {}
+      });
+      try {
+        if (this.chatBroadcastChannel) {
+          this.chatBroadcastChannel.postMessage({ type: 'messages_read', readerId: myId, partnerId: contactId });
+        }
+      } catch (_) {}
+    }
+  }
+
+  // Xử lý sự kiện tin nhắn đã được đọc từ client khác
+  handleIncomingReadEvent(readerId: string, partnerId?: string): void {
+    let changed = false;
+    (this.chatMessages || []).forEach(m => {
+      if (m.receiverId === readerId && (!partnerId || m.senderId === partnerId)) {
+        if (m.status !== 'read') {
+          m.status = 'read';
+          changed = true;
+        }
+      }
+    });
+    if (changed) {
+      this.cdr.detectChanges();
+    }
+  }
+
+  // Xử lý sự kiện tin nhắn đã bị xóa từ client khác
+  handleIncomingClearEvent(userA?: string, userB?: string, clearAll?: boolean): void {
+    if (clearAll || (!userA && !userB)) {
+      this.chatMessages = [];
+      this.activeContact = null;
+      (this.chatContacts || []).forEach(c => {
+        c.lastMessage = 'Chưa có tin nhắn mới';
+        c.lastTime = '';
+        c.unreadCount = 0;
+      });
+    } else {
+      this.chatMessages = (this.chatMessages || []).filter(m => !(
+        (m.senderId === userA && m.receiverId === userB) ||
+        (m.senderId === userB && m.receiverId === userA)
+      ));
+      const contact = (this.chatContacts || []).find(c => c.id === userA || c.id === userB || c.username === userA || c.username === userB);
+      if (contact) {
+        contact.lastMessage = 'Chưa có tin nhắn mới';
+        contact.lastTime = '';
+        contact.unreadCount = 0;
+      }
+    }
+    this.cdr.detectChanges();
+  }
+
+  // Các thao tác modal xóa tin nhắn an toàn
+  promptClearAllMessages(): void {
+    this.clearTargetType = 'all';
+    this.showClearChatConfirmModal = true;
+  }
+
+  promptClearCurrentConversation(): void {
+    this.clearTargetType = 'conversation';
+    this.showClearChatConfirmModal = true;
+  }
+
+  cancelClearChat(): void {
+    this.showClearChatConfirmModal = false;
+  }
+
+  confirmClearChat(): void {
+    this.showClearChatConfirmModal = false;
+    const isAll = this.clearTargetType === 'all';
+    const myId = this.currentChatUserId;
+    const partnerId = this.activeContact?.id || this.activeContact?.username;
+
+    if (isAll) {
+      this.chatMessages = [];
+      this.activeContact = null;
+      (this.chatContacts || []).forEach(c => {
+        c.lastMessage = 'Chưa có tin nhắn mới';
+        c.lastTime = '';
+        c.unreadCount = 0;
+      });
+      this.cdr.detectChanges();
+
+      try {
+        if (this.chatBroadcastChannel) {
+          this.chatBroadcastChannel.postMessage({ type: 'messages_cleared', clearAll: true });
+        }
+      } catch (_) {}
+
+      this.vneduService.clearChatMessages(undefined, undefined, true).subscribe({
+        next: () => {},
+        error: (err) => console.warn('Lỗi xóa lịch sử tin nhắn:', err)
+      });
+    } else if (partnerId) {
+      this.chatMessages = (this.chatMessages || []).filter(m => !(
+        (m.senderId === myId && m.receiverId === partnerId) ||
+        (m.senderId === partnerId && m.receiverId === myId)
+      ));
+      const contact = this.chatContacts.find(c => c.id === partnerId || c.username === partnerId);
+      if (contact) {
+        contact.lastMessage = 'Chưa có tin nhắn mới';
+        contact.lastTime = '';
+        contact.unreadCount = 0;
+      }
+      this.cdr.detectChanges();
+
+      try {
+        if (this.chatBroadcastChannel) {
+          this.chatBroadcastChannel.postMessage({ type: 'messages_cleared', userA: myId, userB: partnerId, clearAll: false });
+        }
+      } catch (_) {}
+
+      this.vneduService.clearChatMessages(myId, partnerId, false).subscribe({
+        next: () => {},
+        error: (err) => console.warn('Lỗi xóa cuộc hội thoại:', err)
+      });
+    }
   }
 
   closeConversation(): void {

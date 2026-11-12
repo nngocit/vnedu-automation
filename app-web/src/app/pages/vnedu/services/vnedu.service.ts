@@ -292,4 +292,16 @@ export class VnEduService {
       headers: this.getHeaders()
     });
   }
+
+  markChatMessagesAsRead(readerId: string, partnerId?: string): Observable<{ success: boolean; result?: any }> {
+    return this.http.post<{ success: boolean; result?: any }>(`${this.baseUrl}/chat/messages/read`, { readerId, partnerId }, {
+      headers: this.getHeaders()
+    });
+  }
+
+  clearChatMessages(userA?: string, userB?: string, clearAll: boolean = false): Observable<{ success: boolean; result?: any }> {
+    return this.http.post<{ success: boolean; result?: any }>(`${this.baseUrl}/chat/messages/clear`, { userA, userB, clearAll }, {
+      headers: this.getHeaders()
+    });
+  }
 }
