@@ -212,7 +212,7 @@ function getMessagesBetween(userA, userB) {
 /**
  * Gửi tin nhắn mới giữa 2 tài khoản thực tế
  */
-function sendMessage({ senderId, senderName, receiverId, receiverName, text }) {
+function sendMessage({ senderId, senderName, receiverId, receiverName, text, replyTo, isCallLog, callType, callDuration, callStatus }) {
     if (!senderId || !receiverId || !text || !text.trim()) {
         throw new Error('Dữ liệu gửi tin nhắn không hợp lệ');
     }
@@ -232,6 +232,21 @@ function sendMessage({ senderId, senderName, receiverId, receiverName, text }) {
         timestamp: now.toISOString(),
         status: 'delivered'
     };
+
+    if (replyTo && replyTo.text) {
+        newMsg.replyTo = {
+            id: replyTo.id || '',
+            senderName: replyTo.senderName || '',
+            text: replyTo.text.length > 120 ? replyTo.text.substring(0, 120) + '...' : replyTo.text
+        };
+    }
+
+    if (isCallLog) {
+        newMsg.isCallLog = true;
+        newMsg.callType = callType || 'voice'; // 'voice' | 'video'
+        newMsg.callDuration = callDuration || 0;
+        newMsg.callStatus = callStatus || 'completed'; // 'completed' | 'missed' | 'rejected'
+    }
 
     messages.push(newMsg);
     writeMessages(messages);

@@ -368,8 +368,8 @@ app.get('/api/chat/messages', (req, res) => {
 
 app.post('/api/chat/messages', (req, res) => {
     try {
-        const { senderId, senderName, receiverId, receiverName, text } = req.body;
-        const message = chatManager.sendMessage({ senderId, senderName, receiverId, receiverName, text });
+        const { senderId, senderName, receiverId, receiverName, text, replyTo, isCallLog, callType, callDuration, callStatus } = req.body;
+        const message = chatManager.sendMessage({ senderId, senderName, receiverId, receiverName, text, replyTo, isCallLog, callType, callDuration, callStatus });
 
         // Phát sóng tức thời (Real-time Broadcast) tới toàn bộ các trình duyệt đang mở
         const payload = JSON.stringify({ type: 'new_message', message });
@@ -380,6 +380,34 @@ app.post('/api/chat/messages', (req, res) => {
         });
 
         res.json({ success: true, message });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+// API: Tín hiệu cuộc gọi thoại & video (Zalo Call Signal)
+app.post('/api/chat/call/signal', (req, res) => {
+    try {
+        const { type, signalType, callerId, callerName, callerAvatar, receiverId, receiverName, callType, duration } = req.body;
+        const effectiveSignalType = signalType || type;
+        const payload = JSON.stringify({
+            type: 'call_signal',
+            signalType: effectiveSignalType,
+            callerId,
+            callerName,
+            callerAvatar,
+            receiverId,
+            receiverName,
+            callType: callType || 'voice', // 'voice' | 'video'
+            duration: duration || 0,
+            timestamp: Date.now()
+        });
+        sseChatClients.forEach(c => {
+            try {
+                c.res.write(`data: ${payload}\n\n`);
+            } catch (_) {}
+        });
+        res.json({ success: true });
     } catch (e) {
         res.status(500).json({ success: false, error: e.message });
     }

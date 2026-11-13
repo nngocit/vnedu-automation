@@ -13,7 +13,7 @@ import { ILayout, LayoutType } from '../../core/configs/config';
     standalone: false
 })
 export class HeaderComponent implements OnInit, OnDestroy {
-  appVersion: string = 'v2.8.18';
+  appVersion: string = 'v2.8.19';
   private unsubscribe: Subscription[] = [];
   // Public props
   currentLayoutType: LayoutType | null;

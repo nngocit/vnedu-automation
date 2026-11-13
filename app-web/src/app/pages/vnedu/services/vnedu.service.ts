@@ -287,8 +287,34 @@ export class VnEduService {
     });
   }
 
-  sendChatMessage(data: { senderId: string; senderName?: string; receiverId: string; receiverName?: string; text: string }): Observable<{ success: boolean; message: any }> {
+  sendChatMessage(data: {
+    senderId: string;
+    senderName?: string;
+    receiverId: string;
+    receiverName?: string;
+    text: string;
+    replyTo?: { id?: string; senderName?: string; text?: string } | null;
+    isCallLog?: boolean;
+    callType?: 'voice' | 'video';
+    callDuration?: number;
+    callStatus?: 'completed' | 'missed' | 'rejected';
+  }): Observable<{ success: boolean; message: any }> {
     return this.http.post<{ success: boolean; message: any }>(`${this.baseUrl}/chat/messages`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  sendCallSignal(signalData: {
+    signalType: 'call_start' | 'call_accept' | 'call_reject' | 'call_end';
+    callerId: string;
+    callerName: string;
+    callerAvatar?: string;
+    receiverId: string;
+    receiverName: string;
+    callType?: 'voice' | 'video';
+    duration?: number;
+  }): Observable<{ success: boolean }> {
+    return this.http.post<{ success: boolean }>(`${this.baseUrl}/chat/call/signal`, signalData, {
       headers: this.getHeaders()
     });
   }

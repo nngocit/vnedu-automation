@@ -20,7 +20,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   @Input() isFutureWeek: boolean = false;
   @Input() isSavingBatch: boolean = false;
   @Input() isLoading: boolean = false;
-  @Input() appVersion: string = 'v2.8.18';
+  @Input() appVersion: string = 'v2.8.19';
   @Input() notifications: any[] = [];
   @Input() unreadNotificationsCount: number = 0;
 
@@ -55,6 +55,32 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   chatMessages: any[] = [];
   showClearChatConfirmModal: boolean = false;
   clearTargetType: 'all' | 'conversation' = 'all';
+
+  // Quản lý trả lời tin nhắn (Quote Reply như Zalo)
+  replyingToMessage: { id?: string; senderName?: string; text?: string } | null = null;
+
+  // Quản lý cuộc gọi thoại & video (Call Feature như Zalo)
+  activeCall: {
+    isOpen: boolean;
+    type: 'voice' | 'video';
+    isCaller: boolean;
+    partnerId: string;
+    partnerName: string;
+    partnerAvatar: string;
+    status: 'ringing' | 'connected' | 'ended';
+    durationSec: number;
+    isMuted: boolean;
+    isCameraOff: boolean;
+  } | null = null;
+
+  incomingCallPrompt: {
+    callerId: string;
+    callerName: string;
+    callerAvatar: string;
+    callType: 'voice' | 'video';
+  } | null = null;
+
+  private callTimerInterval: any = null;
 
   private chatBroadcastChannel: BroadcastChannel | null = null;
   private chatEventSource: EventSource | null = null;
@@ -374,6 +400,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.stopCallTimer();
     if (this.chatBroadcastChannel) {
       try {
         this.chatBroadcastChannel.close();
@@ -549,6 +576,8 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
             this.handleIncomingReadEvent(event.data.readerId, event.data.partnerId);
           } else if (event?.data?.type === 'messages_cleared') {
             this.handleIncomingClearEvent(event.data.userA, event.data.userB, event.data.clearAll);
+          } else if (event?.data?.type === 'call_signal') {
+            this.handleIncomingCallSignal(event.data);
           }
         };
       } catch (err) {
@@ -588,6 +617,8 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
               this.handleIncomingReadEvent(data.readerId, data.partnerId);
             } else if (data?.type === 'messages_cleared') {
               this.handleIncomingClearEvent(data.userA, data.userB, data.clearAll);
+            } else if (data?.type === 'call_signal') {
+              this.handleIncomingCallSignal(data);
             }
           } catch (_) {}
         };
@@ -1038,7 +1069,10 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     const now = new Date();
     const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-    const localMsg = {
+    const replyPayload = this.replyingToMessage ? { ...this.replyingToMessage } : null;
+    this.replyingToMessage = null;
+
+    const localMsg: any = {
       id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
       senderId,
       senderName,
@@ -1049,6 +1083,10 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
       timestamp: now.toISOString(),
       status: 'delivered'
     };
+
+    if (replyPayload) {
+      localMsg.replyTo = replyPayload;
+    }
 
     if (!this.chatMessages) this.chatMessages = [];
     this.chatMessages.push(localMsg);
@@ -1073,7 +1111,8 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
       senderName,
       receiverId,
       receiverName,
-      text
+      text,
+      replyTo: replyPayload
     }).subscribe({
       next: (res) => {
         if (res && res.success && res.message) {
@@ -1089,6 +1128,315 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
         console.warn('Lỗi gửi tin nhắn tới máy chủ:', err);
       }
     });
+  }
+
+  // ========================================================
+  // XỬ LÝ TRẢ LỜI TIN NHẮN (REPLY QUOTE NHƯ ZALO)
+  // ========================================================
+  startReply(msg: any): void {
+    if (!msg || msg.isCallLog) return;
+    this.replyingToMessage = {
+      id: msg.id,
+      senderName: this.isMsgFromMe(msg) ? 'Bạn' : (msg.senderName || this.activeContact?.name || 'Thầy/Cô'),
+      text: msg.text
+    };
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      const inputEl = document.querySelector('.chat-text-input') as HTMLInputElement;
+      if (inputEl) inputEl.focus();
+    }, 50);
+  }
+
+  cancelReply(): void {
+    this.replyingToMessage = null;
+    this.cdr.detectChanges();
+  }
+
+  // ========================================================
+  // XỬ LÝ CUỘC GỌI THOẠI & VIDEO NHƯ ZALO (VOICE & VIDEO CALL)
+  // ========================================================
+  initiateCall(type: 'voice' | 'video' = 'voice'): void {
+    if (!this.activeContact) return;
+    const partnerId = this.activeContact.id || this.activeContact.username;
+    const partnerName = this.activeContact.name || this.activeContact.title;
+    const partnerAvatar = this.activeContact.avatarEmoji || (partnerId === 'xuanngocit@gmail.com' ? '👨‍💼' : '👩‍🏫');
+
+    this.activeCall = {
+      isOpen: true,
+      type,
+      isCaller: true,
+      partnerId,
+      partnerName,
+      partnerAvatar,
+      status: 'ringing',
+      durationSec: 0,
+      isMuted: false,
+      isCameraOff: false
+    };
+
+    const myId = this.currentChatUserId;
+    const myName = this.currentChatUserName;
+    const myAvatar = myId === 'xuanngocit@gmail.com' ? '👨‍💼' : '👩‍🏫';
+
+    const signalData = {
+      signalType: 'call_start' as const,
+      callerId: myId,
+      callerName: myName,
+      callerAvatar: myAvatar,
+      receiverId: partnerId,
+      receiverName: partnerName,
+      callType: type
+    };
+
+    try {
+      if (this.chatBroadcastChannel) {
+        this.chatBroadcastChannel.postMessage({ type: 'call_signal', ...signalData });
+      }
+    } catch (_) {}
+
+    this.vneduService.sendCallSignal(signalData).subscribe({
+      next: () => {},
+      error: (err) => console.warn('Lỗi gửi tín hiệu bắt đầu cuộc gọi:', err)
+    });
+    this.cdr.detectChanges();
+  }
+
+  acceptIncomingCall(): void {
+    if (!this.incomingCallPrompt) return;
+    const incoming = { ...this.incomingCallPrompt };
+    this.incomingCallPrompt = null;
+
+    this.activeCall = {
+      isOpen: true,
+      type: incoming.callType,
+      isCaller: false,
+      partnerId: incoming.callerId,
+      partnerName: incoming.callerName,
+      partnerAvatar: incoming.callerAvatar,
+      status: 'connected',
+      durationSec: 0,
+      isMuted: false,
+      isCameraOff: false
+    };
+
+    this.startCallTimer();
+
+    const signalData = {
+      signalType: 'call_accept' as const,
+      callerId: incoming.callerId,
+      callerName: incoming.callerName,
+      receiverId: this.currentChatUserId,
+      receiverName: this.currentChatUserName,
+      callType: incoming.callType
+    };
+
+    try {
+      if (this.chatBroadcastChannel) {
+        this.chatBroadcastChannel.postMessage({ type: 'call_signal', ...signalData });
+      }
+    } catch (_) {}
+
+    this.vneduService.sendCallSignal(signalData).subscribe({
+      next: () => {},
+      error: (err) => console.warn('Lỗi gửi tín hiệu nhận cuộc gọi:', err)
+    });
+    this.cdr.detectChanges();
+  }
+
+  rejectIncomingCall(): void {
+    if (!this.incomingCallPrompt) return;
+    const incoming = { ...this.incomingCallPrompt };
+    this.incomingCallPrompt = null;
+
+    const signalData = {
+      signalType: 'call_reject' as const,
+      callerId: incoming.callerId,
+      callerName: incoming.callerName,
+      receiverId: this.currentChatUserId,
+      receiverName: this.currentChatUserName,
+      callType: incoming.callType
+    };
+
+    try {
+      if (this.chatBroadcastChannel) {
+        this.chatBroadcastChannel.postMessage({ type: 'call_signal', ...signalData });
+      }
+    } catch (_) {}
+
+    this.vneduService.sendCallSignal(signalData).subscribe({
+      next: () => {},
+      error: (err) => console.warn('Lỗi gửi tín hiệu từ chối cuộc gọi:', err)
+    });
+
+    this.logCallEnd(incoming.callerId, incoming.callerName, incoming.callType, 0, 'rejected');
+    this.cdr.detectChanges();
+  }
+
+  endCall(reason: 'completed' | 'missed' | 'rejected' = 'completed'): void {
+    if (!this.activeCall) return;
+    const call = { ...this.activeCall };
+    const duration = call.durationSec;
+    const partnerId = call.partnerId;
+    const partnerName = call.partnerName;
+    const callType = call.type;
+    const effectiveStatus = (call.status === 'ringing') ? 'missed' : 'completed';
+
+    this.stopCallTimer();
+    this.activeCall = null;
+    this.cdr.detectChanges();
+
+    const signalData = {
+      signalType: 'call_end' as const,
+      callerId: this.currentChatUserId,
+      callerName: this.currentChatUserName,
+      receiverId: partnerId,
+      receiverName: partnerName,
+      callType,
+      duration
+    };
+
+    try {
+      if (this.chatBroadcastChannel) {
+        this.chatBroadcastChannel.postMessage({ type: 'call_signal', ...signalData });
+      }
+    } catch (_) {}
+
+    this.vneduService.sendCallSignal(signalData).subscribe({
+      next: () => {},
+      error: (err) => console.warn('Lỗi gửi kết thúc cuộc gọi:', err)
+    });
+
+    this.logCallEnd(partnerId, partnerName, callType, duration, effectiveStatus);
+  }
+
+  startCallTimer(): void {
+    this.stopCallTimer();
+    this.callTimerInterval = setInterval(() => {
+      if (this.activeCall && this.activeCall.status === 'connected') {
+        this.activeCall.durationSec++;
+        this.cdr.detectChanges();
+      }
+    }, 1000);
+  }
+
+  stopCallTimer(): void {
+    if (this.callTimerInterval) {
+      clearInterval(this.callTimerInterval);
+      this.callTimerInterval = null;
+    }
+  }
+
+  toggleCallMute(): void {
+    if (this.activeCall) {
+      this.activeCall.isMuted = !this.activeCall.isMuted;
+      this.cdr.detectChanges();
+    }
+  }
+
+  toggleCallCamera(): void {
+    if (this.activeCall) {
+      this.activeCall.isCameraOff = !this.activeCall.isCameraOff;
+      this.cdr.detectChanges();
+    }
+  }
+
+  formatCallDuration(seconds: number): string {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  }
+
+  logCallEnd(partnerId: string, partnerName: string, callType: 'voice' | 'video', durationSec: number, status: 'completed' | 'missed' | 'rejected'): void {
+    const senderId = this.currentChatUserId;
+    const senderName = this.currentChatUserName;
+    const text = status === 'completed'
+      ? (callType === 'video' ? `📹 Cuộc gọi video (${this.formatCallDuration(durationSec)})` : `📞 Cuộc gọi thoại (${this.formatCallDuration(durationSec)})`)
+      : (callType === 'video' ? `📹 Cuộc gọi video nhỡ` : `📞 Cuộc gọi thoại nhỡ`);
+
+    const now = new Date();
+    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+    const localMsg: any = {
+      id: 'call_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      senderId,
+      senderName,
+      receiverId: partnerId,
+      receiverName: partnerName,
+      text,
+      time: timeStr,
+      timestamp: now.toISOString(),
+      status: 'delivered',
+      isCallLog: true,
+      callType,
+      callDuration: durationSec,
+      callStatus: status
+    };
+
+    if (!this.chatMessages) this.chatMessages = [];
+    this.chatMessages.push(localMsg);
+    if (this.activeContact && (this.activeContact.id === partnerId || this.activeContact.username === partnerId)) {
+      this.activeContact.lastMessage = text;
+      this.activeContact.lastTime = timeStr;
+    }
+    this.cdr.detectChanges();
+    setTimeout(() => this.scrollChatToBottom(), 50);
+
+    try {
+      if (this.chatBroadcastChannel) {
+        this.chatBroadcastChannel.postMessage({ type: 'new_message', message: localMsg });
+      }
+    } catch (_) {}
+
+    this.vneduService.sendChatMessage({
+      senderId,
+      senderName,
+      receiverId: partnerId,
+      receiverName: partnerName,
+      text,
+      isCallLog: true,
+      callType,
+      callDuration: durationSec,
+      callStatus: status
+    }).subscribe({
+      next: (res) => {
+        if (res?.success && res.message) {
+          localMsg.id = res.message.id;
+        }
+      },
+      error: (err) => console.warn('Lỗi ghi log cuộc gọi:', err)
+    });
+  }
+
+  handleIncomingCallSignal(data: any): void {
+    const myId = this.currentChatUserId;
+    if (!data) return;
+
+    if (data.signalType === 'call_start' && data.receiverId === myId) {
+      this.incomingCallPrompt = {
+        callerId: data.callerId,
+        callerName: data.callerName,
+        callerAvatar: data.callerAvatar || (data.callerId === 'xuanngocit@gmail.com' ? '👨‍💼' : '👩‍🏫'),
+        callType: data.callType || 'voice'
+      };
+      this.cdr.detectChanges();
+    } else if (data.signalType === 'call_accept' && this.activeCall && this.activeCall.isCaller && (data.receiverId === this.activeCall.partnerId || data.callerId === this.activeCall.partnerId)) {
+      this.activeCall.status = 'connected';
+      this.startCallTimer();
+      this.cdr.detectChanges();
+    } else if (data.signalType === 'call_reject' && this.activeCall && this.activeCall.isCaller && (data.receiverId === this.activeCall.partnerId || data.callerId === this.activeCall.partnerId)) {
+      this.stopCallTimer();
+      this.activeCall = null;
+      this.cdr.detectChanges();
+    } else if (data.signalType === 'call_end') {
+      if (this.incomingCallPrompt && this.incomingCallPrompt.callerId === data.callerId) {
+        this.incomingCallPrompt = null;
+      }
+      if (this.activeCall && (this.activeCall.partnerId === data.callerId || this.activeCall.partnerId === data.receiverId)) {
+        this.stopCallTimer();
+        this.activeCall = null;
+      }
+      this.cdr.detectChanges();
+    }
   }
 
   sendQuickReply(text: string): void {
