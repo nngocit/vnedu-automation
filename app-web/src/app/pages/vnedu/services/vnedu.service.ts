@@ -305,14 +305,16 @@ export class VnEduService {
   }
 
   sendCallSignal(signalData: {
-    signalType: 'call_start' | 'call_accept' | 'call_reject' | 'call_end';
+    signalType: 'call_start' | 'call_accept' | 'call_reject' | 'call_end' | 'call_offer' | 'call_answer' | 'call_ice';
     callerId: string;
-    callerName: string;
+    callerName?: string;
     callerAvatar?: string;
     receiverId: string;
-    receiverName: string;
+    receiverName?: string;
     callType?: 'voice' | 'video';
     duration?: number;
+    sdp?: any;
+    candidate?: any;
   }): Observable<{ success: boolean }> {
     return this.http.post<{ success: boolean }>(`${this.baseUrl}/chat/call/signal`, signalData, {
       headers: this.getHeaders()

@@ -1615,6 +1615,11 @@
           ⏱️ {{ formatCallDuration(activeCall.durationSec) }}
         </span>
       </div>
+      <div *ngIf="activeCall.status === 'connected'" class="mt-2">
+        <span class="badge bg-white-20 text-white rounded-pill px-3 py-1 fs-9 fw-semibold">
+          🎙️ WebRTC P2P Audio • Đang kết nối âm thanh Micro
+        </span>
+      </div>
     </div>
 
     <!-- Thanh điều khiển cuộc gọi dưới đáy -->

@@ -176,7 +176,8 @@ function clearAllChat() {
     // Cô Huyên bấm nút Đỏ [Kết thúc cuộc gọi]
     console.log('Cô Huyên bấm cúp máy...');
     await pageHuyen.locator('.btn-end-call').click();
-    await pageHuyen.waitForTimeout(1000);
+    await pageHuyen.waitForTimeout(1500);
+    await pageAdmin.waitForTimeout(1500);
 
     // Kiểm tra Call Overlay đã đóng trên cả 2 màn hình
     const callEndedHuyen = !(await pageHuyen.locator('.zalo-call-overlay').isVisible());

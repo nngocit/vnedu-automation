@@ -385,10 +385,10 @@ app.post('/api/chat/messages', (req, res) => {
     }
 });
 
-// API: Tín hiệu cuộc gọi thoại & video (Zalo Call Signal)
+// API: Tín hiệu cuộc gọi thoại & video (Zalo Call Signal & WebRTC P2P)
 app.post('/api/chat/call/signal', (req, res) => {
     try {
-        const { type, signalType, callerId, callerName, callerAvatar, receiverId, receiverName, callType, duration } = req.body;
+        const { type, signalType, callerId, callerName, callerAvatar, receiverId, receiverName, callType, duration, sdp, candidate } = req.body;
         const effectiveSignalType = signalType || type;
         const payload = JSON.stringify({
             type: 'call_signal',
@@ -400,6 +400,8 @@ app.post('/api/chat/call/signal', (req, res) => {
             receiverName,
             callType: callType || 'voice', // 'voice' | 'video'
             duration: duration || 0,
+            sdp,
+            candidate,
             timestamp: Date.now()
         });
         sseChatClients.forEach(c => {
