@@ -1421,7 +1421,8 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   // ========================================================
-  // BỘ PHÁT ÂM THANH CHUÔNG CUỘC GỌI (WEB AUDIO API CHUẨN ZALO)
+  // BỘ PHÁT ÂM THANH CHUÔNG CUỘC GỌI CAO CẤP (PRO MAX MARIMBA POP CHIME)
+  // Âm lượng lớn, giai điệu bắt tai, sôi động, không còn tiếng tít tít đơn điệu
   // ========================================================
   private playCallTone(type: 'outgoing' | 'incoming' | 'connected' | 'end'): void {
     if (typeof window === 'undefined') return;
@@ -1431,77 +1432,123 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
         if (AudioCtx) this.soundCtx = new AudioCtx();
       }
       if (this.soundCtx && this.soundCtx.state === 'suspended') {
-        this.soundCtx.resume();
+        this.soundCtx.resume().catch(() => {});
       }
       this.stopRingTone();
+      if (!this.soundCtx) return;
 
-      if (type === 'outgoing') {
-        // Tiếng tút tút khi gọi đi (425Hz)
-        const tone = () => {
-          if (!this.soundCtx) return;
-          const osc = this.soundCtx.createOscillator();
-          const gain = this.soundCtx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(425, this.soundCtx.currentTime);
-          gain.gain.setValueAtTime(0.08, this.soundCtx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, this.soundCtx.currentTime + 1.2);
-          osc.connect(gain);
-          gain.connect(this.soundCtx.destination);
-          osc.start();
-          osc.stop(this.soundCtx.currentTime + 1.2);
+      const ctx = this.soundCtx;
+
+      // Master Compressor & Peak Limiter để âm thanh to, rõ, lực và không vỡ tiếng
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.setValueAtTime(-10, ctx.currentTime);
+      comp.knee.setValueAtTime(6, ctx.currentTime);
+      comp.ratio.setValueAtTime(12, ctx.currentTime);
+      comp.attack.setValueAtTime(0.003, ctx.currentTime);
+      comp.release.setValueAtTime(0.2, ctx.currentTime);
+
+      const masterGain = ctx.createGain();
+      masterGain.gain.setValueAtTime(1.6, ctx.currentTime); // Khuếch đại âm lượng lớn
+      comp.connect(masterGain);
+      masterGain.connect(ctx.destination);
+
+      // Hàm phát một nốt Marimba / Kalimba chân thực (Dual Oscillator + Snappy Acoustic ADSR)
+      const playMarimbaNote = (freq: number, startTime: number, duration: number = 0.25, vol: number = 0.45) => {
+        try {
+          const osc1 = ctx.createOscillator();
+          const osc2 = ctx.createOscillator();
+          const noteGain = ctx.createGain();
+
+          osc1.type = 'triangle'; // Thân âm ấm áp, đầy đặn
+          osc1.frequency.setValueAtTime(freq, startTime);
+
+          osc2.type = 'sine'; // Họa âm sáng ngân vang
+          osc2.frequency.setValueAtTime(freq * 2.0, startTime);
+
+          noteGain.gain.setValueAtTime(0.0001, startTime);
+          noteGain.gain.linearRampToValueAtTime(vol, startTime + 0.006); // Attack đanh, nảy
+          noteGain.gain.exponentialRampToValueAtTime(vol * 0.35, startTime + 0.08); // Decay gõ
+          noteGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration); // Release êm
+
+          osc1.connect(noteGain);
+          osc2.connect(noteGain);
+          noteGain.connect(comp);
+
+          osc1.start(startTime);
+          osc2.start(startTime);
+          osc1.stop(startTime + duration);
+          osc2.stop(startTime + duration);
+        } catch (_) {}
+      };
+
+      if (type === 'incoming') {
+        // Giai điệu nhạc chuông Pop Marimba hiện đại, vui tươi, bắt tai (C major / A minor hook)
+        const notes = {
+          C4: 261.63, F4: 349.23, G4: 392.00, A4: 440.00,
+          G5: 783.99, A5: 880.00, C6: 1046.50, D6: 1174.66, E6: 1318.51, G6: 1567.98
         };
-        tone();
-        this.ringTimer = setInterval(tone, 3000);
-      } else if (type === 'incoming') {
-        // Nhạc chuông du dương khi nhận cuộc gọi đến (C5, E5, G5, C6)
-        const notes = [523.25, 659.25, 783.99, 1046.50];
-        const chime = () => {
+
+        const incomingPattern = [
+          // Câu mở đầu (Upbeat arpeggio hook)
+          { t: 0.00, f: notes.G5, b: notes.C4, d: 0.22, v: 0.48 },
+          { t: 0.12, f: notes.C6, d: 0.18, v: 0.45 },
+          { t: 0.24, f: notes.E6, d: 0.22, v: 0.50 },
+          { t: 0.38, f: notes.G6, d: 0.32, v: 0.55 },
+          // Nhịp chuyển êm tai
+          { t: 0.54, f: notes.E6, d: 0.20, v: 0.45 },
+          { t: 0.68, f: notes.D6, b: notes.A4, d: 0.22, v: 0.48 },
+          { t: 0.82, f: notes.E6, d: 0.20, v: 0.46 },
+          { t: 0.98, f: notes.C6, d: 0.35, v: 0.52 },
+          // Câu đáp ngân vang, sôi nổi
+          { t: 1.25, f: notes.A5, b: notes.F4, d: 0.20, v: 0.46 },
+          { t: 1.38, f: notes.C6, d: 0.20, v: 0.46 },
+          { t: 1.52, f: notes.D6, d: 0.24, v: 0.48 },
+          { t: 1.70, f: notes.E6, b: notes.G4, d: 0.22, v: 0.50 },
+          { t: 1.88, f: notes.D6, d: 0.20, v: 0.48 },
+          { t: 2.05, f: notes.C6, b: notes.C4, d: 0.48, v: 0.58 }
+        ];
+
+        const playIncomingRingtone = () => {
           if (!this.soundCtx) return;
-          notes.forEach((freq, idx) => {
-            const osc = this.soundCtx.createOscillator();
-            const gain = this.soundCtx.createGain();
-            const startTime = this.soundCtx.currentTime + idx * 0.18;
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(freq, startTime);
-            gain.gain.setValueAtTime(0.12, startTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
-            osc.connect(gain);
-            gain.connect(this.soundCtx.destination);
-            osc.start(startTime);
-            osc.stop(startTime + 0.35);
+          const now = this.soundCtx.currentTime;
+          incomingPattern.forEach(item => {
+            playMarimbaNote(item.f, now + item.t, item.d, item.v);
+            if (item.b) {
+              playMarimbaNote(item.b, now + item.t, item.d * 1.3, item.v * 0.7);
+            }
           });
         };
-        chime();
-        this.ringTimer = setInterval(chime, 2500);
+
+        playIncomingRingtone();
+        this.ringTimer = setInterval(playIncomingRingtone, 2800);
+      } else if (type === 'outgoing') {
+        // Chuông chờ gọi đi hiện đại (VoIP Crystal Chime - thay cho tiếng tút tút nhàm chán)
+        const playOutgoingChime = () => {
+          if (!this.soundCtx) return;
+          const now = this.soundCtx.currentTime;
+          // Hợp âm kính trong trẻo âm sắc cao (E5 + B5 rồi lướt lên G#5 + C#6)
+          playMarimbaNote(659.25, now, 0.28, 0.45);        // E5
+          playMarimbaNote(987.77, now + 0.05, 0.30, 0.40); // B5
+          playMarimbaNote(830.61, now + 0.22, 0.32, 0.48); // G#5
+          playMarimbaNote(1108.73, now + 0.28, 0.45, 0.52); // C#6
+        };
+
+        playOutgoingChime();
+        this.ringTimer = setInterval(playOutgoingChime, 2200);
       } else if (type === 'connected') {
-        // Bíp kết nối cuộc gọi
-        if (!this.soundCtx) return;
-        const osc = this.soundCtx.createOscillator();
-        const gain = this.soundCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, this.soundCtx.currentTime);
-        gain.gain.setValueAtTime(0.09, this.soundCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, this.soundCtx.currentTime + 0.25);
-        osc.connect(gain);
-        gain.connect(this.soundCtx.destination);
-        osc.start();
-        osc.stop(this.soundCtx.currentTime + 0.25);
+        // Hợp âm kết nối thành công (Tươi vui, phấn khởi: C5 -> E5 -> G5 -> C6)
+        const now = ctx.currentTime;
+        [
+          { f: 523.25, t: 0.00, v: 0.45 },
+          { f: 659.25, t: 0.09, v: 0.48 },
+          { f: 783.99, t: 0.18, v: 0.50 },
+          { f: 1046.50, t: 0.27, v: 0.55 }
+        ].forEach(n => playMarimbaNote(n.f, now + n.t, 0.25, n.v));
       } else if (type === 'end') {
-        // 3 tiếng tút báo cúp máy
-        if (!this.soundCtx) return;
-        [0, 0.22, 0.44].forEach(d => {
-          const osc = this.soundCtx.createOscillator();
-          const gain = this.soundCtx.createGain();
-          const st = this.soundCtx.currentTime + d;
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(425, st);
-          gain.gain.setValueAtTime(0.09, st);
-          gain.gain.exponentialRampToValueAtTime(0.001, st + 0.16);
-          osc.connect(gain);
-          gain.connect(this.soundCtx.destination);
-          osc.start(st);
-          osc.stop(st + 0.16);
-        });
+        // Hợp âm kết thúc cuộc gọi thanh thoát (G5 -> C5)
+        const now = ctx.currentTime;
+        playMarimbaNote(783.99, now, 0.18, 0.40);
+        playMarimbaNote(523.25, now + 0.14, 0.35, 0.45);
       }
     } catch (_) {}
   }
