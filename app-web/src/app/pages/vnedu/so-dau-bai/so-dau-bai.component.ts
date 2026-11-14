@@ -287,9 +287,11 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   private desktopRingAudioCtx: any = null;
   private desktopCallTimer: any = null;
   private desktopPendingOffer: any = null;
+  private desktopPendingIceCandidates: any[] = [];
   private desktopLocalStream: MediaStream | null = null;
   private desktopPeerConnection: RTCPeerConnection | null = null;
   private desktopRemoteAudioEl: HTMLAudioElement | null = null;
+  private desktopSoundCtx: any = null;
 
   constructor(
     private vneduService: VnEduService,
@@ -351,7 +353,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
       this.handleDesktopRemoteOffer(data);
     } else if (data.signalType === 'call_answer' && (isForMe || (this.activeDesktopCall && this.activeDesktopCall.status === 'connected'))) {
       this.handleDesktopRemoteAnswer(data);
-    } else if (data.signalType === 'call_ice') {
+    } else if (data.signalType === 'call_ice' && (isForMe || (this.activeDesktopCall && this.activeDesktopCall.partnerId === data.callerId) || (this.incomingCallPrompt && this.incomingCallPrompt.callerId === data.callerId))) {
       this.handleDesktopRemoteIce(data);
     } else if (data.signalType === 'call_end' || data.signalType === 'call_reject') {
       this.stopDesktopCallTone();
@@ -369,6 +371,21 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     this.stopDesktopCallTone();
     this.incomingCallPrompt = null;
     const myId = (this.isSuperAdminLoggedIn || this.currentLoggedInUser?.email === 'xuanngocit@gmail.com') ? 'xuanngocit@gmail.com' : (this.currentLoggedInUser?.username || '051197003685');
+
+    // Mở khóa audio element và AudioContext bằng user gesture click
+    try {
+      const audioEl = document.getElementById('vneduDesktopRemoteAudio') as HTMLAudioElement;
+      if (audioEl) {
+        audioEl.play().catch(() => {});
+      }
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        if (!this.desktopSoundCtx) this.desktopSoundCtx = new AudioCtx();
+        if (this.desktopSoundCtx.state === 'suspended') {
+          this.desktopSoundCtx.resume().catch(() => {});
+        }
+      }
+    } catch (_) {}
 
     // Mở màn hình đàm thoại Desktop
     this.activeDesktopCall = {
@@ -402,9 +419,6 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     } catch (_) {}
     this.vneduService.sendCallSignal(signalData).subscribe();
     this.cdr.detectChanges();
-
-    // Bắt đầu luồng WebRTC truyền nhận âm thanh 2 chiều với điện thoại
-    this.initDesktopWebRTC(false, incoming.callType, incoming.callerId);
   }
 
   endDesktopCall(): void {
@@ -474,43 +488,81 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   // ========================================================
   // WEBRTC PEER CONNECTION CHO DESKTOP
   // ========================================================
+  private async flushDesktopPendingIceCandidates(): Promise<void> {
+    if (!this.desktopPeerConnection || !this.desktopPeerConnection.remoteDescription) return;
+    const queued = [...this.desktopPendingIceCandidates];
+    this.desktopPendingIceCandidates = [];
+    for (const candidate of queued) {
+      try {
+        await this.desktopPeerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (e) {
+        console.warn('Desktop lỗi thêm pending ICE candidate:', e);
+      }
+    }
+  }
+
   async initDesktopWebRTC(isCaller: boolean, callType: 'voice' | 'video', partnerId: string): Promise<void> {
     if (typeof window === 'undefined') return;
     try {
-      this.cleanupDesktopMedia();
+      // Đóng peer connection cũ nếu có, bảo toàn pending offer & ice candidates đã nhận
+      if (this.desktopLocalStream) {
+        this.desktopLocalStream.getTracks().forEach(t => t.stop());
+        this.desktopLocalStream = null;
+      }
+      if (this.desktopPeerConnection) {
+        try { this.desktopPeerConnection.close(); } catch (_) {}
+        this.desktopPeerConnection = null;
+      }
 
-      // Truy cập micro thực tế trên máy tính
+      // Truy cập micro thực tế trên máy tính (hỗ trợ hủy tiếng vang, lọc ồn)
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         try {
           this.desktopLocalStream = await navigator.mediaDevices.getUserMedia({
             audio: {
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true
+              echoCancellation: { ideal: true },
+              noiseSuppression: { ideal: true },
+              autoGainControl: { ideal: true }
             },
             video: callType === 'video'
           });
-        } catch (e) {
-          console.warn('Microphone không khả dụng hoặc chưa cấp quyền, sử dụng audio generator fallback:', e);
+        } catch (e1) {
           try {
-            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-            if (AudioCtx) {
-              const ctx = new AudioCtx();
-              const osc = ctx.createOscillator();
-              const dst = ctx.createMediaStreamDestination();
-              osc.connect(dst);
-              osc.start();
-              this.desktopLocalStream = dst.stream;
-            }
-          } catch (_) {}
+            this.desktopLocalStream = await navigator.mediaDevices.getUserMedia({
+              audio: true,
+              video: callType === 'video'
+            });
+          } catch (e2) {
+            console.warn('Desktop microphone không khả dụng hoặc chưa cấp quyền:', e2);
+          }
         }
+      }
+
+      // Nếu không có micro thực tế, tạo fallback audio stream để duy trì kết nối WebRTC 2 chiều
+      if (!this.desktopLocalStream || this.desktopLocalStream.getAudioTracks().length === 0) {
+        try {
+          const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+          if (AudioCtx) {
+            const ctx = new AudioCtx();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            gain.gain.value = 0.001;
+            const dst = ctx.createMediaStreamDestination();
+            osc.connect(gain);
+            gain.connect(dst);
+            osc.start();
+            this.desktopLocalStream = dst.stream;
+          }
+        } catch (_) {}
       }
 
       const config: RTCConfiguration = {
         iceServers: [
           { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' }
-        ]
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' },
+          { urls: 'stun:stun.cloudflare.com:3478' }
+        ],
+        iceCandidatePoolSize: 10
       };
 
       if (typeof RTCPeerConnection !== 'undefined') {
@@ -522,17 +574,32 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
           });
         }
 
-        // Nhận âm thanh từ điện thoại phát ra loa máy tính
+        // Nhận âm thanh từ điện thoại phát ra loa máy tính (kết hợp Audio Element và Web Audio API)
         this.desktopPeerConnection.ontrack = (event) => {
-          if (!this.desktopRemoteAudioEl) {
-            this.desktopRemoteAudioEl = document.createElement('audio');
-            this.desktopRemoteAudioEl.autoplay = true;
-            (this.desktopRemoteAudioEl as any).playsInline = true;
-            document.body.appendChild(this.desktopRemoteAudioEl);
+          const stream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
+          let audioEl = document.getElementById('vneduDesktopRemoteAudio') as HTMLAudioElement;
+          if (!audioEl) {
+            audioEl = document.createElement('audio');
+            audioEl.id = 'vneduDesktopRemoteAudio';
+            audioEl.autoplay = true;
+            (audioEl as any).playsInline = true;
+            document.body.appendChild(audioEl);
           }
-          if (event.streams && event.streams[0]) {
-            this.desktopRemoteAudioEl.srcObject = event.streams[0];
-            this.desktopRemoteAudioEl.play().catch(() => {});
+          this.desktopRemoteAudioEl = audioEl;
+          audioEl.srcObject = stream;
+          audioEl.volume = 1.0;
+          audioEl.play().catch(e => console.warn('Desktop remote audio play error:', e));
+
+          try {
+            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+            if (AudioCtx) {
+              if (!this.desktopSoundCtx) this.desktopSoundCtx = new AudioCtx();
+              if (this.desktopSoundCtx.state === 'suspended') this.desktopSoundCtx.resume();
+              const src = this.desktopSoundCtx.createMediaStreamSource(stream);
+              src.connect(this.desktopSoundCtx.destination);
+            }
+          } catch (err) {
+            console.warn('Desktop Web Audio routing error:', err);
           }
         };
 
@@ -554,8 +621,9 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
         };
 
         // Nếu đã có SDP offer từ điện thoại gửi qua, tạo SDP answer gửi lại
-        if (!isCaller && this.desktopPendingOffer) {
+        if (!isCaller && this.desktopPendingOffer && !this.desktopPeerConnection.remoteDescription) {
           await this.desktopPeerConnection.setRemoteDescription(new RTCSessionDescription(this.desktopPendingOffer));
+          await this.flushDesktopPendingIceCandidates();
           const answer = await this.desktopPeerConnection.createAnswer();
           await this.desktopPeerConnection.setLocalDescription(answer);
           const myId = (this.isSuperAdminLoggedIn || this.currentLoggedInUser?.email === 'xuanngocit@gmail.com') ? 'xuanngocit@gmail.com' : (this.currentLoggedInUser?.username || '051197003685');
@@ -581,9 +649,13 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
 
   async handleDesktopRemoteOffer(data: any): Promise<void> {
     this.desktopPendingOffer = data.sdp;
-    if (this.desktopPeerConnection && data.sdp) {
+    if (!this.desktopPeerConnection && this.activeDesktopCall) {
+      await this.initDesktopWebRTC(false, data.callType || 'voice', data.callerId);
+    }
+    if (this.desktopPeerConnection && data.sdp && !this.desktopPeerConnection.remoteDescription) {
       try {
         await this.desktopPeerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        await this.flushDesktopPendingIceCandidates();
         const answer = await this.desktopPeerConnection.createAnswer();
         await this.desktopPeerConnection.setLocalDescription(answer);
         const myId = (this.isSuperAdminLoggedIn || this.currentLoggedInUser?.email === 'xuanngocit@gmail.com') ? 'xuanngocit@gmail.com' : (this.currentLoggedInUser?.username || '051197003685');
@@ -610,6 +682,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     if (this.desktopPeerConnection && data.sdp) {
       try {
         await this.desktopPeerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        await this.flushDesktopPendingIceCandidates();
       } catch (err) {
         console.warn('Lỗi Desktop xử lý SDP answer:', err);
       }
@@ -617,10 +690,16 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   }
 
   async handleDesktopRemoteIce(data: any): Promise<void> {
-    if (this.desktopPeerConnection && data.candidate) {
-      try {
-        await this.desktopPeerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-      } catch (_) {}
+    if (data && data.candidate) {
+      if (this.desktopPeerConnection && this.desktopPeerConnection.remoteDescription) {
+        try {
+          await this.desktopPeerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        } catch (e) {
+          console.warn('Desktop lỗi addIceCandidate:', e);
+        }
+      } else {
+        this.desktopPendingIceCandidates.push(data.candidate);
+      }
     }
   }
 
@@ -633,6 +712,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
       try { this.desktopPeerConnection.close(); } catch (_) {}
       this.desktopPeerConnection = null;
     }
+    this.desktopPendingIceCandidates = [];
     this.desktopPendingOffer = null;
   }
 

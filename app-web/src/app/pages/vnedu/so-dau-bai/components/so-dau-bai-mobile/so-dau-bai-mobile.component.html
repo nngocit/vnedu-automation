@@ -1832,6 +1832,18 @@
           🎙️ WebRTC P2P Audio • Âm thanh HD bảo mật
         </span>
       </div>
+
+      <!-- Banner cảnh báo nếu vào bằng HTTP thường trên điện thoại -->
+      <div *ngIf="!isSecureOrigin" class="alert p-2.5 mt-3 rounded-3 text-start fs-8 shadow-sm mx-auto"
+           style="background: rgba(245, 158, 11, 0.95); color: #78350f; max-width: 320px; border: 1px solid #d97706;">
+        <div class="fw-bold d-flex align-items-center gap-1.5 mb-1 fs-8">
+          <span>⚠️</span> Micro bị chặn do dùng HTTP
+        </div>
+        <div class="fs-9 mb-2 opacity-95">Trình duyệt điện thoại chặn Micro trên HTTP. Để nói chuyện 2 chiều hãy dùng HTTPS:</div>
+        <a [href]="getHttpsSwitchUrl()" class="btn btn-dark btn-sm rounded-pill w-100 py-1.5 fw-bold text-white fs-9 d-flex align-items-center justify-content-center gap-1 shadow-sm">
+          🔒 Mở qua HTTPS cổng 3443
+        </a>
+      </div>
     </div>
 
     <!-- Thanh điều khiển cuộc gọi dưới đáy -->
@@ -1949,3 +1961,6 @@
     </div>
   </div>
 </div>
+
+<!-- Kênh Audio WebRTC P2P Mobile -->
+<audio #mobileRemoteAudio id="vneduMobileRemoteAudio" autoplay playsinline style="display:none;"></audio>

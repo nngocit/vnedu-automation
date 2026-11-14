@@ -87,8 +87,10 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   private soundCtx: any = null;
   private ringTimer: any = null;
   private peerConnection: RTCPeerConnection | null = null;
+  private pendingIceCandidates: any[] = [];
   private localMediaStream: MediaStream | null = null;
   private remoteAudioElement: HTMLAudioElement | null = null;
+  isSecureOrigin: boolean = true;
 
   private chatBroadcastChannel: BroadcastChannel | null = null;
   private chatEventSource: EventSource | null = null;
@@ -397,6 +399,10 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnInit(): void {
+    if (typeof window !== 'undefined') {
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      this.isSecureOrigin = window.isSecureContext || isLocal;
+    }
     if (this.isSuperAdminLoggedIn || (this.currentLoggedInUser?.email === 'xuanngocit@gmail.com') || (this.currentLoggedInUser?.username === 'xuanngocit@gmail.com')) {
       this.currentChatRole = 'admin';
     } else {
@@ -1452,43 +1458,91 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   // ========================================================
   // QUẢN LÝ WEBRTC P2P VOICE & VIDEO (MICRO & CAMERA THỰC TẾ)
   // ========================================================
+  getHttpsSwitchUrl(): string {
+    if (typeof window === 'undefined') return '';
+    const host = window.location.hostname;
+    const path = window.location.pathname;
+    const search = window.location.search;
+    const hash = window.location.hash;
+    return `https://${host}:3443${path}${search}${hash}`;
+  }
+
+  private async flushPendingIceCandidates(): Promise<void> {
+    if (!this.peerConnection || !this.peerConnection.remoteDescription) return;
+    const queued = [...this.pendingIceCandidates];
+    this.pendingIceCandidates = [];
+    for (const candidate of queued) {
+      try {
+        await this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (e) {
+        console.warn('Mobile lỗi thêm pending ICE candidate:', e);
+      }
+    }
+  }
+
   private async initWebRTC(isCaller: boolean, callType: 'voice' | 'video'): Promise<void> {
     if (typeof window === 'undefined') return;
     try {
-      this.cleanupMedia();
+      // Dọn dẹp connection cũ nếu có, bảo toàn pending ice candidates
+      this.stopRingTone();
+      if (this.localMediaStream) {
+        this.localMediaStream.getTracks().forEach(t => t.stop());
+        this.localMediaStream = null;
+      }
+      if (this.peerConnection) {
+        try { this.peerConnection.close(); } catch (_) {}
+        this.peerConnection = null;
+      }
 
-      // Xin quyền truy cập micro & camera (nếu là video call)
+      // Xin quyền truy cập micro & camera (hỗ trợ lọc ồn, khử tiếng vang)
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         try {
           this.localMediaStream = await navigator.mediaDevices.getUserMedia({
             audio: {
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true
+              echoCancellation: { ideal: true },
+              noiseSuppression: { ideal: true },
+              autoGainControl: { ideal: true }
             },
-            video: callType === 'video' ? { width: 640, height: 480 } : false
+            video: callType === 'video' ? { width: { ideal: 640 }, height: { ideal: 480 } } : false
           });
-        } catch (e) {
-          console.warn('Thiết bị không có micro hoặc chưa cấp quyền, sử dụng WebRTC audio fallback:', e);
+        } catch (e1) {
           try {
-            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-            if (AudioCtx) {
-              const ctx = new AudioCtx();
-              const osc = ctx.createOscillator();
-              const dst = ctx.createMediaStreamDestination();
-              osc.connect(dst);
-              osc.start();
-              this.localMediaStream = dst.stream;
-            }
-          } catch (_) {}
+            this.localMediaStream = await navigator.mediaDevices.getUserMedia({
+              audio: true,
+              video: callType === 'video'
+            });
+          } catch (e2) {
+            console.warn('Mobile micro không khả dụng hoặc chưa cấp quyền:', e2);
+          }
         }
+      }
+
+      // Nếu không có micro (do dùng HTTP chưa cấp quyền), tạo fallback audio stream để giữ kết nối WebRTC RTP
+      if (!this.localMediaStream || this.localMediaStream.getAudioTracks().length === 0) {
+        try {
+          const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+          if (AudioCtx) {
+            const ctx = new AudioCtx();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            gain.gain.value = 0.001;
+            const dst = ctx.createMediaStreamDestination();
+            osc.connect(gain);
+            gain.connect(dst);
+            osc.start();
+            this.localMediaStream = dst.stream;
+          }
+        } catch (_) {}
       }
 
       const config: RTCConfiguration = {
         iceServers: [
           { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' }
-        ]
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' },
+          { urls: 'stun:stun.cloudflare.com:3478' }
+        ],
+        iceCandidatePoolSize: 10
       };
 
       if (typeof RTCPeerConnection !== 'undefined') {
@@ -1500,17 +1554,32 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
           });
         }
 
-        // Nhận luồng âm thanh từ bên kia truyền qua
+        // Nhận luồng âm thanh từ bên kia truyền qua (kết hợp Audio Element và Web Audio API)
         this.peerConnection.ontrack = (event) => {
-          if (!this.remoteAudioElement) {
-            this.remoteAudioElement = document.createElement('audio');
-            this.remoteAudioElement.autoplay = true;
-            (this.remoteAudioElement as any).playsInline = true;
-            document.body.appendChild(this.remoteAudioElement);
+          const stream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
+          let audioEl = document.getElementById('vneduMobileRemoteAudio') as HTMLAudioElement;
+          if (!audioEl) {
+            audioEl = document.createElement('audio');
+            audioEl.id = 'vneduMobileRemoteAudio';
+            audioEl.autoplay = true;
+            (audioEl as any).playsInline = true;
+            document.body.appendChild(audioEl);
           }
-          if (event.streams && event.streams[0]) {
-            this.remoteAudioElement.srcObject = event.streams[0];
-            this.remoteAudioElement.play().catch(() => {});
+          this.remoteAudioElement = audioEl;
+          audioEl.srcObject = stream;
+          audioEl.volume = 1.0;
+          audioEl.play().catch(e => console.warn('Mobile remote audio play error:', e));
+
+          try {
+            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+            if (AudioCtx) {
+              if (!this.soundCtx) this.soundCtx = new AudioCtx();
+              if (this.soundCtx.state === 'suspended') this.soundCtx.resume();
+              const src = this.soundCtx.createMediaStreamSource(stream);
+              src.connect(this.soundCtx.destination);
+            }
+          } catch (err) {
+            console.warn('Mobile Web Audio routing error:', err);
           }
         };
 
@@ -1561,7 +1630,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
         }
       }
     } catch (err) {
-      console.warn('Lỗi khởi tạo WebRTC:', err);
+      console.warn('Lỗi khởi tạo WebRTC trên Mobile:', err);
     }
   }
 
@@ -1569,9 +1638,10 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     if (!this.peerConnection) {
       await this.initWebRTC(false, data.callType || 'voice');
     }
-    if (this.peerConnection && data.sdp) {
+    if (this.peerConnection && data.sdp && !this.peerConnection.remoteDescription) {
       try {
         await this.peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        await this.flushPendingIceCandidates();
         const answer = await this.peerConnection.createAnswer();
         await this.peerConnection.setLocalDescription(answer);
 
@@ -1592,31 +1662,39 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
           error: () => {}
         });
       } catch (err) {
-        console.warn('Lỗi xử lý SDP offer:', err);
+        console.warn('Lỗi Mobile xử lý SDP offer:', err);
       }
     }
   }
 
   private async handleRemoteAnswer(data: any): Promise<void> {
-    if (this.peerConnection && data.sdp) {
+    if (this.peerConnection && data.sdp && !this.peerConnection.remoteDescription) {
       try {
         await this.peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        await this.flushPendingIceCandidates();
       } catch (err) {
-        console.warn('Lỗi xử lý SDP answer:', err);
+        console.warn('Lỗi Mobile xử lý SDP answer:', err);
       }
     }
   }
 
   private async handleRemoteIce(data: any): Promise<void> {
-    if (this.peerConnection && data.candidate) {
-      try {
-        await this.peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-      } catch (_) {}
+    if (data && data.candidate) {
+      if (this.peerConnection && this.peerConnection.remoteDescription) {
+        try {
+          await this.peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        } catch (e) {
+          console.warn('Mobile addIceCandidate error:', e);
+        }
+      } else {
+        this.pendingIceCandidates.push(data.candidate);
+      }
     }
   }
 
   private cleanupMedia(): void {
     this.stopRingTone();
+    this.pendingIceCandidates = [];
     if (this.localMediaStream) {
       this.localMediaStream.getTracks().forEach(t => t.stop());
       this.localMediaStream = null;
@@ -1653,6 +1731,21 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
       isMuted: false,
       isCameraOff: false
     };
+
+    // Mở khóa audio element và AudioContext bằng user gesture chạm màn hình
+    try {
+      const audioEl = document.getElementById('vneduMobileRemoteAudio') as HTMLAudioElement;
+      if (audioEl) {
+        audioEl.play().catch(() => {});
+      }
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        if (!this.soundCtx) this.soundCtx = new AudioCtx();
+        if (this.soundCtx.state === 'suspended') {
+          this.soundCtx.resume().catch(() => {});
+        }
+      }
+    } catch (_) {}
 
     // Phát chuông tút tút khi gọi đi (Web Audio API)
     this.playCallTone('outgoing');
@@ -1694,6 +1787,21 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
 
     // Ngắt chuông, phát tiếng bíp kết nối (Web Audio API)
     this.playCallTone('connected');
+
+    // Mở khóa audio element và AudioContext bằng user gesture click
+    try {
+      const audioEl = document.getElementById('vneduMobileRemoteAudio') as HTMLAudioElement;
+      if (audioEl) {
+        audioEl.play().catch(() => {});
+      }
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        if (!this.soundCtx) this.soundCtx = new AudioCtx();
+        if (this.soundCtx.state === 'suspended') {
+          this.soundCtx.resume().catch(() => {});
+        }
+      }
+    } catch (_) {}
 
     this.activeCall = {
       isOpen: true,
@@ -1972,7 +2080,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
         this.cdr.detectChanges();
       }
       this.handleRemoteAnswer(data);
-    } else if (data.signalType === 'call_ice') {
+    } else if (data.signalType === 'call_ice' && (isForMe || (this.activeCall && this.activeCall.partnerId === data.callerId) || (this.incomingCallPrompt && this.incomingCallPrompt.callerId === data.callerId))) {
       this.handleRemoteIce(data);
     }
   }

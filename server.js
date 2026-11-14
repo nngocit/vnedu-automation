@@ -1616,11 +1616,30 @@ if (fs.existsSync(DIST_DIR)) {
     });
 }
 
-app.listen(PORT, () => {
-    console.log(`🌐 Máy chủ vnEdu Fullstack đang chạy tại: http://localhost:${PORT}`);
+const https = require('https');
+const HTTPS_PORT = 3443;
+const keyPath = path.join(__dirname, 'ssl', 'cert.key');
+const certPath = path.join(__dirname, 'ssl', 'cert.crt');
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🌐 Máy chủ HTTP vnEdu đang chạy tại: http://localhost:${PORT} & http://192.168.1.9:${PORT}`);
     if (fs.existsSync(DIST_DIR)) {
         console.log(`📦 Đã nạp giao diện Angular từ: ${DIST_DIR}`);
     } else {
         console.log(`⚠️ Chưa thấy thư mục build Angular dist. Chạy 'ng build' để build giao diện.`);
     }
 });
+
+if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+    try {
+        const sslOptions = {
+            key: fs.readFileSync(keyPath),
+            cert: fs.readFileSync(certPath)
+        };
+        https.createServer(sslOptions, app).listen(HTTPS_PORT, '0.0.0.0', () => {
+            console.log(`🔒 Máy chủ HTTPS (kết nối bảo mật cấp quyền Micro điện thoại) đang chạy tại: https://192.168.1.9:${HTTPS_PORT}`);
+        });
+    } catch (e) {
+        console.warn('⚠️ Không thể khởi chạy máy chủ HTTPS:', e.message);
+    }
+}
