@@ -261,17 +261,35 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     isCurrentRealWeek: i + 1 === 10
   }));
 
-  // Quản lý thông báo cuộc gọi đến trên Desktop (Real-time BroadcastChannel & SSE)
+  // Quản lý thông báo cuộc gọi đến & Cuộc gọi đang kết nối trên Desktop (WebRTC P2P)
   incomingCallPrompt: {
     callerId: string;
     callerName: string;
     callerAvatar: string;
     callType: 'voice' | 'video';
   } | null = null;
+
+  activeDesktopCall: {
+    isOpen: boolean;
+    type: 'voice' | 'video';
+    partnerId: string;
+    partnerName: string;
+    partnerAvatar: string;
+    status: 'ringing' | 'connected';
+    durationSec: number;
+    isMuted: boolean;
+    isCameraOff: boolean;
+  } | null = null;
+
   private desktopBroadcastChannel: any = null;
   private desktopEventSource: any = null;
   private desktopRingTimer: any = null;
   private desktopRingAudioCtx: any = null;
+  private desktopCallTimer: any = null;
+  private desktopPendingOffer: any = null;
+  private desktopLocalStream: MediaStream | null = null;
+  private desktopPeerConnection: RTCPeerConnection | null = null;
+  private desktopRemoteAudioEl: HTMLAudioElement | null = null;
 
   constructor(
     private vneduService: VnEduService,
@@ -311,7 +329,9 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   handleDesktopCallSignal(data: any): void {
     if (!data || this.isMobile) return;
     const myId = (this.isSuperAdminLoggedIn || this.currentLoggedInUser?.email === 'xuanngocit@gmail.com') ? 'xuanngocit@gmail.com' : (this.currentLoggedInUser?.username || '051197003685');
-    if (data.callerId === myId) return;
+
+    // Chỉ bỏ qua nếu là cuộc gọi bắt đầu (call_start) do chính tài khoản mình phát ra
+    if (data.signalType === 'call_start' && data.callerId === myId) return;
 
     const isForMe = (data.receiverId === myId) ||
                     (myId === 'xuanngocit@gmail.com' && (data.receiverId === 'xuanngocit@gmail.com' || data.receiverId === 'admin')) ||
@@ -327,9 +347,18 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
       };
       this.playDesktopCallTone();
       this.cdr.detectChanges();
+    } else if (data.signalType === 'call_offer' && isForMe) {
+      this.handleDesktopRemoteOffer(data);
+    } else if (data.signalType === 'call_answer' && (isForMe || (this.activeDesktopCall && this.activeDesktopCall.status === 'connected'))) {
+      this.handleDesktopRemoteAnswer(data);
+    } else if (data.signalType === 'call_ice') {
+      this.handleDesktopRemoteIce(data);
     } else if (data.signalType === 'call_end' || data.signalType === 'call_reject') {
       this.stopDesktopCallTone();
+      this.stopDesktopCallTimer();
+      this.cleanupDesktopMedia();
       this.incomingCallPrompt = null;
+      this.activeDesktopCall = null;
       this.cdr.detectChanges();
     }
   }
@@ -340,6 +369,24 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     this.stopDesktopCallTone();
     this.incomingCallPrompt = null;
     const myId = (this.isSuperAdminLoggedIn || this.currentLoggedInUser?.email === 'xuanngocit@gmail.com') ? 'xuanngocit@gmail.com' : (this.currentLoggedInUser?.username || '051197003685');
+
+    // Mở màn hình đàm thoại Desktop
+    this.activeDesktopCall = {
+      isOpen: true,
+      type: incoming.callType,
+      partnerId: incoming.callerId,
+      partnerName: incoming.callerName,
+      partnerAvatar: incoming.callerAvatar,
+      status: 'connected',
+      durationSec: 0,
+      isMuted: false,
+      isCameraOff: false
+    };
+    this.startDesktopCallTimer();
+
+    // Khởi tạo WebRTC micro thực tế trên Desktop kết nối 2 chiều với điện thoại
+    this.initDesktopWebRTC(false, incoming.callType, incoming.callerId);
+
     const signalData = {
       signalType: 'call_accept' as const,
       callerId: incoming.callerId,
@@ -355,6 +402,238 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     } catch (_) {}
     this.vneduService.sendCallSignal(signalData).subscribe();
     this.cdr.detectChanges();
+
+    // Bắt đầu luồng WebRTC truyền nhận âm thanh 2 chiều với điện thoại
+    this.initDesktopWebRTC(false, incoming.callType, incoming.callerId);
+  }
+
+  endDesktopCall(): void {
+    if (!this.activeDesktopCall) return;
+    const partnerId = this.activeDesktopCall.partnerId;
+    const partnerName = this.activeDesktopCall.partnerName;
+    const callType = this.activeDesktopCall.type;
+    const duration = this.activeDesktopCall.durationSec;
+    const myId = (this.isSuperAdminLoggedIn || this.currentLoggedInUser?.email === 'xuanngocit@gmail.com') ? 'xuanngocit@gmail.com' : (this.currentLoggedInUser?.username || '051197003685');
+
+    this.stopDesktopCallTimer();
+    this.cleanupDesktopMedia();
+    this.activeDesktopCall = null;
+    this.cdr.detectChanges();
+
+    const signalData = {
+      signalType: 'call_end' as const,
+      callerId: myId,
+      callerName: this.teacherTitle,
+      receiverId: partnerId,
+      receiverName: partnerName,
+      callType,
+      duration
+    };
+    try {
+      if (this.desktopBroadcastChannel) {
+        this.desktopBroadcastChannel.postMessage({ type: 'call_signal', ...signalData });
+      }
+    } catch (_) {}
+    this.vneduService.sendCallSignal(signalData).subscribe();
+  }
+
+  toggleDesktopMute(): void {
+    if (!this.activeDesktopCall) return;
+    this.activeDesktopCall.isMuted = !this.activeDesktopCall.isMuted;
+    if (this.desktopLocalStream) {
+      this.desktopLocalStream.getAudioTracks().forEach(t => {
+        t.enabled = !this.activeDesktopCall!.isMuted;
+      });
+    }
+    this.cdr.detectChanges();
+  }
+
+  startDesktopCallTimer(): void {
+    this.stopDesktopCallTimer();
+    this.desktopCallTimer = setInterval(() => {
+      if (this.activeDesktopCall && this.activeDesktopCall.status === 'connected') {
+        this.activeDesktopCall.durationSec++;
+        this.cdr.detectChanges();
+      }
+    }, 1000);
+  }
+
+  stopDesktopCallTimer(): void {
+    if (this.desktopCallTimer) {
+      clearInterval(this.desktopCallTimer);
+      this.desktopCallTimer = null;
+    }
+  }
+
+  formatDesktopCallDuration(sec: number): string {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  }
+
+  // ========================================================
+  // WEBRTC PEER CONNECTION CHO DESKTOP
+  // ========================================================
+  async initDesktopWebRTC(isCaller: boolean, callType: 'voice' | 'video', partnerId: string): Promise<void> {
+    if (typeof window === 'undefined') return;
+    try {
+      this.cleanupDesktopMedia();
+
+      // Truy cập micro thực tế trên máy tính
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          this.desktopLocalStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            },
+            video: callType === 'video'
+          });
+        } catch (e) {
+          console.warn('Microphone không khả dụng hoặc chưa cấp quyền, sử dụng audio generator fallback:', e);
+          try {
+            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+            if (AudioCtx) {
+              const ctx = new AudioCtx();
+              const osc = ctx.createOscillator();
+              const dst = ctx.createMediaStreamDestination();
+              osc.connect(dst);
+              osc.start();
+              this.desktopLocalStream = dst.stream;
+            }
+          } catch (_) {}
+        }
+      }
+
+      const config: RTCConfiguration = {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' }
+        ]
+      };
+
+      if (typeof RTCPeerConnection !== 'undefined') {
+        this.desktopPeerConnection = new RTCPeerConnection(config);
+
+        if (this.desktopLocalStream) {
+          this.desktopLocalStream.getTracks().forEach(track => {
+            this.desktopPeerConnection!.addTrack(track, this.desktopLocalStream!);
+          });
+        }
+
+        // Nhận âm thanh từ điện thoại phát ra loa máy tính
+        this.desktopPeerConnection.ontrack = (event) => {
+          if (!this.desktopRemoteAudioEl) {
+            this.desktopRemoteAudioEl = document.createElement('audio');
+            this.desktopRemoteAudioEl.autoplay = true;
+            (this.desktopRemoteAudioEl as any).playsInline = true;
+            document.body.appendChild(this.desktopRemoteAudioEl);
+          }
+          if (event.streams && event.streams[0]) {
+            this.desktopRemoteAudioEl.srcObject = event.streams[0];
+            this.desktopRemoteAudioEl.play().catch(() => {});
+          }
+        };
+
+        this.desktopPeerConnection.onicecandidate = (event) => {
+          if (event.candidate) {
+            const signalData = {
+              signalType: 'call_ice' as const,
+              callerId: (this.isSuperAdminLoggedIn || this.currentLoggedInUser?.email === 'xuanngocit@gmail.com') ? 'xuanngocit@gmail.com' : (this.currentLoggedInUser?.username || '051197003685'),
+              receiverId: partnerId,
+              candidate: event.candidate
+            };
+            try {
+              if (this.desktopBroadcastChannel) {
+                this.desktopBroadcastChannel.postMessage({ type: 'call_signal', ...signalData });
+              }
+            } catch (_) {}
+            this.vneduService.sendCallSignal(signalData).subscribe();
+          }
+        };
+
+        // Nếu đã có SDP offer từ điện thoại gửi qua, tạo SDP answer gửi lại
+        if (!isCaller && this.desktopPendingOffer) {
+          await this.desktopPeerConnection.setRemoteDescription(new RTCSessionDescription(this.desktopPendingOffer));
+          const answer = await this.desktopPeerConnection.createAnswer();
+          await this.desktopPeerConnection.setLocalDescription(answer);
+          const myId = (this.isSuperAdminLoggedIn || this.currentLoggedInUser?.email === 'xuanngocit@gmail.com') ? 'xuanngocit@gmail.com' : (this.currentLoggedInUser?.username || '051197003685');
+          const signalData = {
+            signalType: 'call_answer' as const,
+            callerId: myId,
+            callerName: this.teacherTitle,
+            receiverId: partnerId,
+            sdp: answer
+          };
+          try {
+            if (this.desktopBroadcastChannel) {
+              this.desktopBroadcastChannel.postMessage({ type: 'call_signal', ...signalData });
+            }
+          } catch (_) {}
+          this.vneduService.sendCallSignal(signalData).subscribe();
+        }
+      }
+    } catch (err) {
+      console.warn('Lỗi khởi tạo WebRTC trên Desktop:', err);
+    }
+  }
+
+  async handleDesktopRemoteOffer(data: any): Promise<void> {
+    this.desktopPendingOffer = data.sdp;
+    if (this.desktopPeerConnection && data.sdp) {
+      try {
+        await this.desktopPeerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        const answer = await this.desktopPeerConnection.createAnswer();
+        await this.desktopPeerConnection.setLocalDescription(answer);
+        const myId = (this.isSuperAdminLoggedIn || this.currentLoggedInUser?.email === 'xuanngocit@gmail.com') ? 'xuanngocit@gmail.com' : (this.currentLoggedInUser?.username || '051197003685');
+        const signalData = {
+          signalType: 'call_answer' as const,
+          callerId: myId,
+          callerName: this.teacherTitle,
+          receiverId: data.callerId,
+          sdp: answer
+        };
+        try {
+          if (this.desktopBroadcastChannel) {
+            this.desktopBroadcastChannel.postMessage({ type: 'call_signal', ...signalData });
+          }
+        } catch (_) {}
+        this.vneduService.sendCallSignal(signalData).subscribe();
+      } catch (err) {
+        console.warn('Lỗi Desktop xử lý SDP offer:', err);
+      }
+    }
+  }
+
+  async handleDesktopRemoteAnswer(data: any): Promise<void> {
+    if (this.desktopPeerConnection && data.sdp) {
+      try {
+        await this.desktopPeerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+      } catch (err) {
+        console.warn('Lỗi Desktop xử lý SDP answer:', err);
+      }
+    }
+  }
+
+  async handleDesktopRemoteIce(data: any): Promise<void> {
+    if (this.desktopPeerConnection && data.candidate) {
+      try {
+        await this.desktopPeerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+      } catch (_) {}
+    }
+  }
+
+  cleanupDesktopMedia(): void {
+    if (this.desktopLocalStream) {
+      this.desktopLocalStream.getTracks().forEach(t => t.stop());
+      this.desktopLocalStream = null;
+    }
+    if (this.desktopPeerConnection) {
+      try { this.desktopPeerConnection.close(); } catch (_) {}
+      this.desktopPeerConnection = null;
+    }
+    this.desktopPendingOffer = null;
   }
 
   rejectDesktopIncomingCall(): void {
@@ -498,6 +777,8 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopDesktopCallTone();
+    this.stopDesktopCallTimer();
+    this.cleanupDesktopMedia();
     if (this.desktopBroadcastChannel) {
       try { this.desktopBroadcastChannel.close(); } catch (_) {}
       this.desktopBroadcastChannel = null;

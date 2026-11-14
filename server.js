@@ -356,9 +356,133 @@ app.get('/api/chat/users', (req, res) => {
     }
 });
 
+// API: Lấy danh sách cuộc hội thoại (Hỗ trợ phân loại: Ưu tiên / Khác / Tất cả & Tìm kiếm)
+app.get('/api/chat/conversations', (req, res) => {
+    try {
+        const { userId, category, search } = req.query;
+        const conversations = chatManager.getConversations(userId, category, search);
+        res.json({ success: true, conversations });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+// API: Lấy toàn bộ tin nhắn trong một cuộc hội thoại cụ thể
+app.get('/api/chat/conversations/:id/messages', (req, res) => {
+    try {
+        const { id } = req.params;
+        const messages = chatManager.getConversationMessages(id);
+        res.json({ success: true, messages });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+// API: Lấy danh bạ bạn bè (A-Z, phân loại tag: Anh Van, Gia đình, bà con, Bạn bè,...)
+app.get('/api/chat/contacts', (req, res) => {
+    try {
+        const { search, tag } = req.query;
+        const contacts = chatManager.getContacts(search, tag);
+        res.json({ success: true, contacts });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+// API: Tạo nhóm trò chuyện mới
+app.post('/api/chat/groups', (req, res) => {
+    try {
+        const { name, creatorId, creatorName, memberIds, avatar } = req.body;
+        const group = chatManager.createGroupChat({ name, creatorId, creatorName, memberIds, avatar });
+        
+        // Broadcast SSE thông báo nhóm mới tạo
+        const payload = JSON.stringify({ type: 'group_created', group });
+        sseChatClients.forEach(c => {
+            try { c.res.write(`data: ${payload}\n\n`); } catch (_) {}
+        });
+
+        res.json({ success: true, group });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+// API: Thu hồi tin nhắn ("Tin nhắn đã được thu hồi")
+app.post('/api/chat/messages/recall', (req, res) => {
+    try {
+        const { messageId, userId } = req.body;
+        const result = chatManager.recallChatMessage(messageId, userId);
+        if (result.success) {
+            const payload = JSON.stringify({ type: 'message_recalled', ...result });
+            sseChatClients.forEach(c => {
+                try { c.res.write(`data: ${payload}\n\n`); } catch (_) {}
+            });
+        }
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+// API: Xóa từng tin nhắn riêng lẻ
+app.post('/api/chat/messages/delete', (req, res) => {
+    try {
+        const { messageId, userId } = req.body;
+        const result = chatManager.deleteChatMessage(messageId, userId);
+        if (result.success) {
+            const payload = JSON.stringify({ type: 'message_deleted', ...result });
+            sseChatClients.forEach(c => {
+                try { c.res.write(`data: ${payload}\n\n`); } catch (_) {}
+            });
+        }
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+// API: Thả cảm xúc / Reaction (like 👍, heart ❤️,...)
+app.post('/api/chat/messages/react', (req, res) => {
+    try {
+        const { messageId, userId, reaction } = req.body;
+        const result = chatManager.reactChatMessage(messageId, userId, reaction || 'like');
+        if (result.success) {
+            const payload = JSON.stringify({ type: 'message_reacted', ...result });
+            sseChatClients.forEach(c => {
+                try { c.res.write(`data: ${payload}\n\n`); } catch (_) {}
+            });
+        }
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+// API: Ghim tin nhắn lên đầu hội thoại
+app.post('/api/chat/conversations/:id/pin', (req, res) => {
+    try {
+        const { id } = req.params;
+        const { messageId } = req.body;
+        const result = chatManager.pinChatMessage(id, messageId);
+        if (result.success) {
+            const payload = JSON.stringify({ type: 'message_pinned', ...result });
+            sseChatClients.forEach(c => {
+                try { c.res.write(`data: ${payload}\n\n`); } catch (_) {}
+            });
+        }
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
 app.get('/api/chat/messages', (req, res) => {
     try {
-        const { userA, userB } = req.query;
+        const { userA, userB, conversationId } = req.query;
+        if (conversationId) {
+            const messages = chatManager.getConversationMessages(conversationId);
+            return res.json({ success: true, messages });
+        }
         const messages = chatManager.getMessagesBetween(userA, userB);
         res.json({ success: true, messages });
     } catch (e) {
@@ -368,8 +492,43 @@ app.get('/api/chat/messages', (req, res) => {
 
 app.post('/api/chat/messages', (req, res) => {
     try {
-        const { senderId, senderName, receiverId, receiverName, text, replyTo, isCallLog, callType, callDuration, callStatus } = req.body;
-        const message = chatManager.sendMessage({ senderId, senderName, receiverId, receiverName, text, replyTo, isCallLog, callType, callDuration, callStatus });
+        const { conversationId, senderId, senderName, senderAvatar, receiverId, receiverName, text, content, replyTo, mentions, msgType, mediaUrl, fileName, fileSize, isCallLog, callType, callDuration, callStatus } = req.body;
+        
+        let message;
+        if (conversationId) {
+            message = chatManager.sendChatMessage({
+                conversationId,
+                senderId,
+                senderName,
+                senderAvatar,
+                receiverId,
+                receiverName,
+                text: text || content,
+                msgType: msgType || 'text',
+                mediaUrl,
+                fileName,
+                fileSize,
+                replyTo,
+                mentions,
+                isCallLog,
+                callType,
+                callDuration,
+                callStatus
+            });
+        } else {
+            message = chatManager.sendMessage({
+                senderId,
+                senderName,
+                receiverId,
+                receiverName,
+                text: text || content,
+                replyTo,
+                isCallLog,
+                callType,
+                callDuration,
+                callStatus
+            });
+        }
 
         // Phát sóng tức thời (Real-time Broadcast) tới toàn bộ các trình duyệt đang mở
         const payload = JSON.stringify({ type: 'new_message', message });

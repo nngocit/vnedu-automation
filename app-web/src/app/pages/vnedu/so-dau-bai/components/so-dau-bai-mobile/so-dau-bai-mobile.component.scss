@@ -1946,8 +1946,105 @@ $tnvn-text-muted: #64748b;
   }
 }
 
-.group-msg-item:hover .btn-reply-action {
-  opacity: 0.9;
+// ========================================================
+// FLOATING ACTION TOOLBAR (3 NÚT: "", ➜, ...) CHUẨN ZALO PC
+// ========================================================
+.msg-floating-actions {
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  transform: translateY(2px);
+  margin-bottom: 4px;
+
+  @media (max-width: 768px) {
+    opacity: 0.85;
+  }
+}
+
+.group-msg-item:hover .msg-floating-actions,
+.group-msg-item:focus-within .msg-floating-actions,
+.group-msg-item:active .msg-floating-actions,
+.msg-floating-actions:hover {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.btn-circle-action {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: #232738;
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+  transition: all 0.18s ease;
+
+  &:hover {
+    background: #33394f;
+    color: #ffffff;
+    transform: scale(1.12);
+  }
+}
+
+.btn-bubble-reaction {
+  bottom: -9px;
+  right: 12px;
+  background: #1e2235;
+  border: 1px solid #333a52;
+  border-radius: 12px;
+  padding: 1px 7px;
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  color: #94a3b8;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  transition: all 0.18s ease;
+
+  &:hover, &.active-reaction {
+    border-color: #3880ff;
+    color: #3880ff;
+    background: #172138;
+    transform: scale(1.1);
+  }
+}
+
+.msg-popup-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #1c2033;
+  border: 1px solid #2d344d;
+  min-width: 155px;
+  z-index: 1000;
+  color: #e2e8f0;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+
+  .dropdown-item {
+    color: #e2e8f0;
+    transition: background 0.15s ease;
+    cursor: pointer;
+    &:hover {
+      background: #2a314b;
+    }
+  }
+}
+
+.chat-mention {
+  color: #3880ff !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.chat-pinned-banner {
+  background: #f0f7ff;
+  border-bottom: 1px solid #bfdbfe;
 }
 
 .quoted-box {

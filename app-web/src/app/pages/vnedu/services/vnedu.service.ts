@@ -288,18 +288,79 @@ export class VnEduService {
   }
 
   sendChatMessage(data: {
+    conversationId?: string;
     senderId: string;
     senderName?: string;
-    receiverId: string;
+    senderAvatar?: string;
+    receiverId?: string;
     receiverName?: string;
-    text: string;
+    text?: string;
+    content?: string;
+    msgType?: string;
+    mediaUrl?: string;
+    fileName?: string;
+    fileSize?: string;
     replyTo?: { id?: string; senderName?: string; text?: string } | null;
+    mentions?: string[];
     isCallLog?: boolean;
     callType?: 'voice' | 'video';
     callDuration?: number;
     callStatus?: 'completed' | 'missed' | 'rejected';
   }): Observable<{ success: boolean; message: any }> {
     return this.http.post<{ success: boolean; message: any }>(`${this.baseUrl}/chat/messages`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  getConversations(userId?: string, category: string = 'all', search: string = ''): Observable<{ success: boolean; conversations: any[] }> {
+    let url = `${this.baseUrl}/chat/conversations?category=${encodeURIComponent(category)}`;
+    if (userId) url += `&userId=${encodeURIComponent(userId)}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    return this.http.get<{ success: boolean; conversations: any[] }>(url, {
+      headers: this.getHeaders()
+    });
+  }
+
+  getConversationMessages(conversationId: string): Observable<{ success: boolean; messages: any[] }> {
+    return this.http.get<{ success: boolean; messages: any[] }>(`${this.baseUrl}/chat/conversations/${encodeURIComponent(conversationId)}/messages`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  getContacts(search: string = '', tag: string = 'all'): Observable<{ success: boolean; contacts: any[] }> {
+    let url = `${this.baseUrl}/chat/contacts?tag=${encodeURIComponent(tag)}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    return this.http.get<{ success: boolean; contacts: any[] }>(url, {
+      headers: this.getHeaders()
+    });
+  }
+
+  createGroupChat(data: { name: string; creatorId: string; creatorName?: string; memberIds?: string[]; avatar?: string }): Observable<{ success: boolean; group: any }> {
+    return this.http.post<{ success: boolean; group: any }>(`${this.baseUrl}/chat/groups`, data, {
+      headers: this.getHeaders()
+    });
+  }
+
+  recallChatMessage(messageId: string, userId?: string): Observable<{ success: boolean; messageId?: string; content?: string }> {
+    return this.http.post<{ success: boolean; messageId?: string; content?: string }>(`${this.baseUrl}/chat/messages/recall`, { messageId, userId }, {
+      headers: this.getHeaders()
+    });
+  }
+
+  deleteChatMessage(messageId: string, userId?: string): Observable<{ success: boolean; messageId?: string }> {
+    return this.http.post<{ success: boolean; messageId?: string }>(`${this.baseUrl}/chat/messages/delete`, { messageId, userId }, {
+      headers: this.getHeaders()
+    });
+  }
+
+  reactChatMessage(messageId: string, userId: string, reaction: string = 'like'): Observable<{ success: boolean; messageId?: string; reactions?: any }> {
+    return this.http.post<{ success: boolean; messageId?: string; reactions?: any }>(`${this.baseUrl}/chat/messages/react`, { messageId, userId, reaction }, {
+      headers: this.getHeaders()
+    });
+  }
+
+  pinChatMessage(conversationId: string, messageId: string): Observable<{ success: boolean; conversationId?: string; pinnedMessage?: any }> {
+    return this.http.post<{ success: boolean; conversationId?: string; pinnedMessage?: any }>(`${this.baseUrl}/chat/conversations/${encodeURIComponent(conversationId)}/pin`, { messageId }, {
       headers: this.getHeaders()
     });
   }

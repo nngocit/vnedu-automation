@@ -1,4 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, OnDestroy, SimpleChanges, ChangeDetectorRef } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { VnEduSlot, WeekOption } from '../../../models/vnedu.model';
 import { VnEduService } from '../../../services/vnedu.service';
 
@@ -138,7 +139,8 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
 
   constructor(
     private vneduService: VnEduService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private sanitizer: DomSanitizer
   ) {}
 
   get currentChatUserId(): string {
@@ -1061,8 +1063,10 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     const myId = this.currentChatUserId;
     const contactId = this.activeContact.id || this.activeContact.username;
     return (this.chatMessages || []).filter(m =>
+      (m.conversationId && (m.conversationId === contactId || (this.activeContact.type === 'group' && m.conversationId === this.activeContact.id))) ||
       (m.senderId === myId && m.receiverId === contactId) ||
-      (m.senderId === contactId && m.receiverId === myId)
+      (m.senderId === contactId && m.receiverId === myId) ||
+      ((contactId === 'xuanngocit@gmail.com' || contactId === '051197003685') && (m.conversationId === 'conv_dieu_huyen' || (!m.conversationId && (m.senderId === '051197003685' || m.senderId === 'xuanngocit@gmail.com'))))
     );
   }
 
@@ -1072,12 +1076,19 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   getSenderAvatarEmoji(msg: any): string {
+    if (msg.senderAvatar) return msg.senderAvatar;
     if (msg.senderId === 'xuanngocit@gmail.com') return '👨‍💼';
+    if (msg.senderId === 'thai_cuong') return '🏎️';
+    if (msg.senderId === 'dk_hieu') return '🏸';
+    if (msg.senderId === 'hung_bao') return '💎';
+    if (msg.senderId === 'do_huong') return '🌸';
     return '👩‍🏫';
   }
 
   getSenderAvatarBg(msg: any): string {
     if (msg.senderId === 'xuanngocit@gmail.com') return '#eff6ff';
+    if (msg.senderId === 'thai_cuong') return '#fef2f2';
+    if (msg.senderId === 'dk_hieu') return '#f0fdf4';
     return '#fdf2f8';
   }
 
@@ -1096,16 +1107,26 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     const replyPayload = this.replyingToMessage ? { ...this.replyingToMessage } : null;
     this.replyingToMessage = null;
 
+    const mentions = (text.match(/@[A-ZÀ-Ỹa-zà-ỹ0-9_]+(?:\s+[A-ZÀ-Ỹa-zà-ỹ0-9_]+)?/g) || []);
+    const convId = (this.activeContact?.id === 'conv_ktdl_nhom' || this.activeContact?.type === 'group')
+      ? 'conv_ktdl_nhom'
+      : ((senderId === 'xuanngocit@gmail.com' || receiverId === 'xuanngocit@gmail.com') ? 'conv_dieu_huyen' : 'conv_' + receiverId);
+
     const localMsg: any = {
       id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      conversationId: convId,
       senderId,
       senderName,
+      senderAvatar: this.currentChatRole === 'admin' ? '👨‍💼' : '👩‍🏫',
       receiverId,
       receiverName,
+      content: text,
       text,
       time: timeStr,
       timestamp: now.toISOString(),
-      status: 'delivered'
+      status: 'delivered',
+      mentions,
+      reactions: {}
     };
 
     if (replyPayload) {
@@ -1117,6 +1138,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     this.activeContact.lastMessage = text;
     this.activeContact.lastTime = timeStr;
     this.messageInputText = '';
+    this.showMentionPopup = false;
     this.broadcastTyping(false);
     if (this.typingDebounceTimer) clearTimeout(this.typingDebounceTimer);
     this.cdr.detectChanges();
@@ -1131,12 +1153,14 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
 
     // Lưu vào Backend máy chủ và đẩy SSE cho các thiết bị khác
     this.vneduService.sendChatMessage({
+      conversationId: convId,
       senderId,
       senderName,
       receiverId,
       receiverName,
       text,
-      replyTo: replyPayload
+      replyTo: replyPayload,
+      mentions
     }).subscribe({
       next: (res) => {
         if (res && res.success && res.message) {
@@ -1174,6 +1198,162 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   cancelReply(): void {
     this.replyingToMessage = null;
     this.cdr.detectChanges();
+  }
+
+  // ========================================================
+  // QUẢN LÝ QUOTE, ACTION TOOLBAR ("", ➜, ...), TAG TÊN & XÓA TIN NHẮN
+  // ========================================================
+  activeMsgMenuId: string | null = null;
+  showMentionPopup: boolean = false;
+  mentionCandidates: any[] = [];
+  mentionQuery: string = '';
+  pinnedMessage: any = null;
+
+  deleteIndividualMessage(msg: any): void {
+    this.activeMsgMenuId = null;
+    if (!msg || !msg.id) return;
+    const myId = this.currentChatUserId;
+    this.chatMessages = (this.chatMessages || []).filter(m => m.id !== msg.id);
+    this.cdr.detectChanges();
+    try {
+      if (this.chatBroadcastChannel) {
+        this.chatBroadcastChannel.postMessage({ type: 'message_deleted', messageId: msg.id });
+      }
+    } catch (_) {}
+    this.vneduService.deleteChatMessage(msg.id, myId).subscribe();
+  }
+
+  recallMessage(msg: any): void {
+    this.activeMsgMenuId = null;
+    if (!msg || !msg.id) return;
+    const myId = this.currentChatUserId;
+    msg.isRecalled = true;
+    msg.content = 'Tin nhắn đã được thu hồi';
+    msg.text = 'Tin nhắn đã được thu hồi';
+    this.cdr.detectChanges();
+    try {
+      if (this.chatBroadcastChannel) {
+        this.chatBroadcastChannel.postMessage({ type: 'message_recalled', messageId: msg.id, content: 'Tin nhắn đã được thu hồi' });
+      }
+    } catch (_) {}
+    this.vneduService.recallChatMessage(msg.id, myId).subscribe();
+  }
+
+  toggleReaction(msg: any, reactionType: string = 'like'): void {
+    if (!msg || !msg.id) return;
+    const myId = this.currentChatUserId;
+    if (!msg.reactions) msg.reactions = {};
+    if (!msg.reactions[reactionType]) msg.reactions[reactionType] = [];
+    const idx = msg.reactions[reactionType].indexOf(myId);
+    if (idx >= 0) {
+      msg.reactions[reactionType].splice(idx, 1);
+    } else {
+      msg.reactions[reactionType].push(myId);
+    }
+    this.cdr.detectChanges();
+    try {
+      if (this.chatBroadcastChannel) {
+        this.chatBroadcastChannel.postMessage({ type: 'message_reacted', messageId: msg.id, reactions: msg.reactions });
+      }
+    } catch (_) {}
+    this.vneduService.reactChatMessage(msg.id, myId, reactionType).subscribe();
+  }
+
+  getReactionCount(msg: any, reactionType: string = 'like'): number {
+    return msg?.reactions?.[reactionType]?.length || 0;
+  }
+
+  pinMessage(msg: any): void {
+    this.activeMsgMenuId = null;
+    if (!msg || !msg.id) return;
+    const convId = msg.conversationId || (this.activeContact?.type ? this.activeContact.id : 'conv_ktdl_nhom');
+    const previewText = msg.isRecalled ? 'Tin nhắn đã được thu hồi' : (msg.content || msg.text || 'Tin nhắn');
+    const pinnedObj = {
+      id: msg.id,
+      senderName: msg.senderName || 'Người gửi',
+      text: previewText
+    };
+    this.pinnedMessage = pinnedObj;
+    this.cdr.detectChanges();
+    try {
+      if (this.chatBroadcastChannel) {
+        this.chatBroadcastChannel.postMessage({ type: 'message_pinned', conversationId: convId, pinnedMessage: pinnedObj });
+      }
+    } catch (_) {}
+    this.vneduService.pinChatMessage(convId, msg.id).subscribe();
+  }
+
+  unpinMessage(): void {
+    this.pinnedMessage = null;
+    this.cdr.detectChanges();
+  }
+
+  copyMessage(msg: any): void {
+    this.activeMsgMenuId = null;
+    const content = msg.isRecalled ? 'Tin nhắn đã được thu hồi' : (msg.content || msg.text || '');
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(content).catch(() => {});
+    }
+  }
+
+  forwardMessage(msg: any): void {
+    this.activeMsgMenuId = null;
+    this.messageInputText = (msg.isRecalled ? 'Tin nhắn đã được thu hồi' : (msg.content || msg.text || ''));
+    const inputEl = document.querySelector('.chat-text-input') as HTMLInputElement;
+    if (inputEl) inputEl.focus();
+  }
+
+  toggleMsgMenu(msgId: string, event: Event): void {
+    event.stopPropagation();
+    this.activeMsgMenuId = this.activeMsgMenuId === msgId ? null : msgId;
+  }
+
+  onInputTextChange(val: string): void {
+    const lastWord = (val || '').split(/\s+/).pop() || '';
+    if (lastWord.startsWith('@')) {
+      this.mentionQuery = lastWord.substring(1).toLowerCase();
+      this.showMentionPopup = true;
+      this.updateMentionCandidates();
+    } else {
+      this.showMentionPopup = false;
+    }
+  }
+
+  updateMentionCandidates(): void {
+    const defaultList = [
+      { name: 'Thái Cường', avatar: '🏎️', role: 'Thành viên' },
+      { name: 'Xuân Ngọc', avatar: '👨‍💼', role: 'Quản trị viên' },
+      { name: 'Diệu Huyên', avatar: '👩‍🏫', role: 'Giáo viên' },
+      { name: 'Đkhiếu', avatar: '🏸', role: 'Thành viên' },
+      { name: 'Hưng Bảo', avatar: '⭐', role: 'Thành viên' }
+    ];
+    if (this.mentionQuery) {
+      this.mentionCandidates = defaultList.filter(m => m.name.toLowerCase().includes(this.mentionQuery));
+    } else {
+      this.mentionCandidates = defaultList;
+    }
+  }
+
+  insertMention(user: any): void {
+    const name = user.name;
+    const words = (this.messageInputText || '').split(/\s+/);
+    words.pop();
+    words.push(`@${name} `);
+    this.messageInputText = words.join(' ');
+    this.showMentionPopup = false;
+    this.cdr.detectChanges();
+    const inputEl = document.querySelector('.chat-text-input') as HTMLInputElement;
+    if (inputEl) inputEl.focus();
+  }
+
+  formatMessageHtml(rawText: string): SafeHtml {
+    if (!rawText) return '';
+    const escaped = rawText
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    const formatted = escaped.replace(/(@[A-ZÀ-Ỹa-zà-ỹ0-9_]+(?:\s+[A-ZÀ-Ỹa-zà-ỹ0-9_]+)?)/g, '<span class="chat-mention fw-bold" style="color: #3880ff; cursor: pointer;">$1</span>');
+    return this.sanitizer.bypassSecurityTrustHtml(formatted);
   }
 
   // ========================================================
@@ -1281,11 +1461,26 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         try {
           this.localMediaStream = await navigator.mediaDevices.getUserMedia({
-            audio: true,
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            },
             video: callType === 'video' ? { width: 640, height: 480 } : false
           });
         } catch (e) {
           console.warn('Thiết bị không có micro hoặc chưa cấp quyền, sử dụng WebRTC audio fallback:', e);
+          try {
+            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+            if (AudioCtx) {
+              const ctx = new AudioCtx();
+              const osc = ctx.createOscillator();
+              const dst = ctx.createMediaStreamDestination();
+              osc.connect(dst);
+              osc.start();
+              this.localMediaStream = dst.stream;
+            }
+          } catch (_) {}
         }
       }
 
@@ -1310,10 +1505,12 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
           if (!this.remoteAudioElement) {
             this.remoteAudioElement = document.createElement('audio');
             this.remoteAudioElement.autoplay = true;
+            (this.remoteAudioElement as any).playsInline = true;
             document.body.appendChild(this.remoteAudioElement);
           }
           if (event.streams && event.streams[0]) {
             this.remoteAudioElement.srcObject = event.streams[0];
+            this.remoteAudioElement.play().catch(() => {});
           }
         };
 
@@ -1721,8 +1918,8 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     const myId = this.currentChatUserId;
     if (!data) return;
 
-    // Không tự báo chuông cho chính mình nếu cùng tài khoản phát cuộc gọi
-    if (data.callerId === myId) return;
+    // Chỉ bỏ qua nếu là sự kiện bắt đầu gọi (call_start) do chính tài khoản mình phát ra
+    if (data.signalType === 'call_start' && data.callerId === myId) return;
 
     const isForMe = (data.receiverId === myId) ||
                     (this.currentChatRole === 'admin' && (data.receiverId === 'xuanngocit@gmail.com' || data.receiverId === 'admin')) ||
@@ -1739,19 +1936,26 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
       // Phát nhạc chuông du dương báo cuộc gọi đến (Web Audio API)
       this.playCallTone('incoming');
       this.cdr.detectChanges();
-    } else if (data.signalType === 'call_accept' && this.activeCall && this.activeCall.isCaller && (data.receiverId === this.activeCall.partnerId || data.callerId === this.activeCall.partnerId)) {
-      // Đối phương đã nhận cuộc gọi: Dừng chuông chờ, phát tiếng bíp kết nối
-      this.playCallTone('connected');
-      this.activeCall.status = 'connected';
-      this.startCallTimer();
-      this.cdr.detectChanges();
-    } else if (data.signalType === 'call_reject' && this.activeCall && this.activeCall.isCaller && (data.receiverId === this.activeCall.partnerId || data.callerId === this.activeCall.partnerId)) {
-      this.playCallTone('end');
-      this.stopCallTimer();
-      this.cleanupMedia();
-      this.activeCall = null;
-      this.cdr.detectChanges();
+    } else if (data.signalType === 'call_accept') {
+      // Đối phương đã bấm nghe máy: Dừng ngay lập tức chuông đổ, chuyển sang đàm thoại
+      if (this.activeCall && (this.activeCall.isCaller || this.activeCall.status === 'ringing')) {
+        this.stopRingTone();
+        this.playCallTone('connected');
+        this.activeCall.status = 'connected';
+        this.startCallTimer();
+        this.cdr.detectChanges();
+      }
+    } else if (data.signalType === 'call_reject') {
+      if (this.activeCall && (this.activeCall.isCaller || this.activeCall.status === 'ringing')) {
+        this.stopRingTone();
+        this.playCallTone('end');
+        this.stopCallTimer();
+        this.cleanupMedia();
+        this.activeCall = null;
+        this.cdr.detectChanges();
+      }
     } else if (data.signalType === 'call_end') {
+      this.stopRingTone();
       this.playCallTone('end');
       this.cleanupMedia();
       this.incomingCallPrompt = null;
@@ -1760,9 +1964,15 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
       this.cdr.detectChanges();
     } else if (data.signalType === 'call_offer' && isForMe) {
       this.handleRemoteOffer(data);
-    } else if (data.signalType === 'call_answer' && isForMe) {
+    } else if (data.signalType === 'call_answer' && (isForMe || (this.activeCall && this.activeCall.isCaller))) {
+      this.stopRingTone();
+      if (this.activeCall) {
+        this.activeCall.status = 'connected';
+        this.startCallTimer();
+        this.cdr.detectChanges();
+      }
       this.handleRemoteAnswer(data);
-    } else if (data.signalType === 'call_ice' && isForMe) {
+    } else if (data.signalType === 'call_ice') {
       this.handleRemoteIce(data);
     }
   }

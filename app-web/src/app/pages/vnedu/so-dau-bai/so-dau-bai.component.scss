@@ -5549,6 +5549,15 @@ body.dark-mode {
 // ========================================================
 // INCOMING CALL BANNER TRÊN DESKTOP (UI/UX PRO MAX)
 // ========================================================
+.desktop-active-call-modal {
+  position: fixed !important;
+  top: 20px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 100001 !important;
+  animation: slideDownDynamicIsland 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
 .incoming-call-modal {
   position: fixed !important;
   top: 20px !important;

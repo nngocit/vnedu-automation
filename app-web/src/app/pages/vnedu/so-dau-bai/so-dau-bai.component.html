@@ -2056,3 +2056,58 @@
   </div>
 </div>
 
+<!-- ======================================================== -->
+<!-- MODAL CUỘC GỌI ĐANG KẾT NỐI TRÊN DESKTOP (ACTIVE CALL)   -->
+<!-- THIẾT KẾ UI/UX PRO MAX DYNAMIC ISLAND KÈM THỜI GIAN THỰC -->
+<!-- ======================================================== -->
+<div *ngIf="!isMobile && activeDesktopCall && activeDesktopCall.isOpen"
+     class="desktop-active-call-modal shadow-2xl"
+     style="position: fixed !important; top: 16px !important; left: 50% !important; transform: translateX(-50%) !important; z-index: 100001 !important;">
+  <div class="active-call-inner d-flex align-items-center justify-content-between p-3 px-4 gap-4 rounded-4 border shadow-lg"
+       style="min-width: 420px; background: rgba(18, 20, 36, 0.96) !important; backdrop-filter: blur(16px); border-color: rgba(255,255,255,0.18) !important;">
+    
+    <!-- Cụm trái: Avatar phát sáng + Tên + Thời gian đàm thoại đếm giây -->
+    <div class="d-flex align-items-center gap-3 min-w-0 flex-grow-1">
+      <div class="active-avatar-wrap position-relative flex-shrink-0">
+        <div class="active-avatar-circle rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+             style="width: 44px; height: 44px; font-size: 22px; background: rgba(255,255,255,0.12);">
+          <span>{{ activeDesktopCall.partnerAvatar }}</span>
+        </div>
+        <span class="active-pulse-dot position-absolute bottom-0 end-0 rounded-circle bg-success border border-dark animate-pulse"
+              style="width: 12px; height: 12px;"></span>
+      </div>
+      <div class="min-w-0">
+        <div class="fw-bold fs-7 text-white text-truncate">{{ activeDesktopCall.partnerName }}</div>
+        <div class="d-flex align-items-center gap-2 mt-0.5">
+          <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-2 py-0.5 fs-9 fw-bold">
+            ● {{ formatDesktopCallDuration(activeDesktopCall.durationSec) }}
+          </span>
+          <span class="text-white-50 fs-9">HD Voice • Đang đàm thoại</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cụm phải: Nút Tắt mic + Nút Kết thúc cuộc gọi -->
+    <div class="d-flex align-items-center gap-2 flex-shrink-0">
+      <button type="button"
+              class="btn-call-action rounded-circle border-0 d-flex align-items-center justify-content-center text-white transition-all"
+              [style.background]="activeDesktopCall.isMuted ? '#ef4444' : 'rgba(255,255,255,0.15)'"
+              style="width: 40px; height: 40px; font-size: 16px;"
+              (click)="toggleDesktopMute()"
+              [title]="activeDesktopCall.isMuted ? 'Bật mic' : 'Tắt tiếng mic'">
+        <span>{{ activeDesktopCall.isMuted ? '🔇' : '🎤' }}</span>
+      </button>
+
+      <button type="button"
+              class="btn-call-action btn-call-reject rounded-circle border-0 d-flex align-items-center justify-content-center shadow-lg transition-all"
+              style="width: 40px; height: 40px; background: #dc2626; color: white;"
+              (click)="endDesktopCall()"
+              title="Kết thúc cuộc gọi">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20" style="transform: rotate(135deg);">
+          <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.43-3.9-6.63-6.82l1.97-1.61c.24-.26.35-.64.24-1.01A11.36 11.36 0 0 1 8.92 4c0-.55-.45-1-1-1H4.35c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.62c0-.55-.45-1-1-1z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
