@@ -383,6 +383,18 @@ export class VnEduService {
     });
   }
 
+  getLatestCallSignals(userId: string, since: number = 0): Observable<{ success: boolean; signals: any[] }> {
+    return this.http.get<{ success: boolean; signals: any[] }>(`${this.baseUrl}/chat/call/signal/latest?userId=${encodeURIComponent(userId)}&since=${since}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  getIceServers(): Observable<{ success: boolean; iceServers: any[] }> {
+    return this.http.get<{ success: boolean; iceServers: any[] }>(`${this.baseUrl}/chat/ice-servers`, {
+      headers: this.getHeaders()
+    });
+  }
+
   markChatMessagesAsRead(readerId: string, partnerId?: string): Observable<{ success: boolean; result?: any }> {
     return this.http.post<{ success: boolean; result?: any }>(`${this.baseUrl}/chat/messages/read`, { readerId, partnerId }, {
       headers: this.getHeaders()

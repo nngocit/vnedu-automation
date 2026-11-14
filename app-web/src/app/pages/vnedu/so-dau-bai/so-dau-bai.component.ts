@@ -272,6 +272,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   activeDesktopCall: {
     isOpen: boolean;
     type: 'voice' | 'video';
+    isCaller?: boolean;
     partnerId: string;
     partnerName: string;
     partnerAvatar: string;
@@ -294,6 +295,8 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   private desktopSoundCtx: any = null;
   isDesktopSpeakerOn: boolean = true;
   private desktopGainNode: any = null;
+  private desktopCallSignalPollTimer: any = null;
+  private desktopLastCallSignalTimestamp: number = 0;
 
   constructor(
     private vneduService: VnEduService,
@@ -342,6 +345,10 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
                     (myId === '051197003685' && (data.receiverId === '051197003685' || data.receiverId === '051197003685@vnedu.vn')) ||
                     (this.currentLoggedInUser && (data.receiverId === this.currentLoggedInUser.username || data.receiverId === this.currentLoggedInUser.email));
 
+    if (data.timestamp && data.timestamp > this.desktopLastCallSignalTimestamp) {
+      this.desktopLastCallSignalTimestamp = data.timestamp;
+    }
+
     if (data.signalType === 'call_start' && isForMe) {
       this.incomingCallPrompt = {
         callerId: data.callerId,
@@ -350,7 +357,21 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
         callType: data.callType || 'voice'
       };
       this.playDesktopCallTone();
+      this.startDesktopCallSignalPolling();
       this.cdr.detectChanges();
+    } else if (data.signalType === 'call_accept') {
+      const isMyCall = this.activeDesktopCall && (
+        this.activeDesktopCall.isCaller ||
+        this.activeDesktopCall.status === 'ringing' ||
+        data.callerId === this.activeDesktopCall.partnerId ||
+        data.receiverId === this.activeDesktopCall.partnerId
+      );
+      if (isMyCall && this.activeDesktopCall) {
+        this.stopDesktopCallTone();
+        this.activeDesktopCall.status = 'connected';
+        this.startDesktopCallTimer();
+        this.cdr.detectChanges();
+      }
     } else if (data.signalType === 'call_offer' && isForMe) {
       this.handleDesktopRemoteOffer(data);
     } else if (data.signalType === 'call_answer' && (isForMe || (this.activeDesktopCall && this.activeDesktopCall.status === 'connected'))) {
@@ -367,6 +388,94 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     }
   }
 
+  private startDesktopCallSignalPolling(): void {
+    if (this.desktopCallSignalPollTimer) return;
+    const myId = (this.isSuperAdminLoggedIn || this.currentLoggedInUser?.email === 'xuanngocit@gmail.com') ? 'xuanngocit@gmail.com' : (this.currentLoggedInUser?.username || '051197003685');
+    this.desktopCallSignalPollTimer = setInterval(() => {
+      if (!this.activeDesktopCall && !this.incomingCallPrompt) {
+        this.stopDesktopCallSignalPolling();
+        return;
+      }
+      this.vneduService.getLatestCallSignals(myId, this.desktopLastCallSignalTimestamp).subscribe({
+        next: (res) => {
+          if (res?.success && Array.isArray(res.signals)) {
+            res.signals.forEach(sig => this.handleDesktopCallSignal(sig));
+          }
+        },
+        error: () => {}
+      });
+    }, 1000);
+  }
+
+  private stopDesktopCallSignalPolling(): void {
+    if (this.desktopCallSignalPollTimer) {
+      clearInterval(this.desktopCallSignalPollTimer);
+      this.desktopCallSignalPollTimer = null;
+    }
+  }
+
+  startDesktopCall(partnerId: string = '051197003685', partnerName: string = 'Cô Lê Thị Diệu Huyên', callType: 'voice' | 'video' = 'voice'): void {
+    const myId = (this.isSuperAdminLoggedIn || this.currentLoggedInUser?.email === 'xuanngocit@gmail.com') ? 'xuanngocit@gmail.com' : (this.currentLoggedInUser?.username || '051197003685');
+
+    // Mở khóa audio element và AudioContext bằng user click
+    try {
+      const audioEl = document.getElementById('vneduDesktopRemoteAudio') as HTMLAudioElement;
+      if (audioEl) {
+        audioEl.muted = false;
+        audioEl.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+        audioEl.play().then(() => {
+          audioEl.pause();
+          audioEl.removeAttribute('src');
+        }).catch(() => {});
+      }
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        if (!this.desktopSoundCtx) this.desktopSoundCtx = new AudioCtx();
+        if (this.desktopSoundCtx.state === 'suspended') {
+          this.desktopSoundCtx.resume().catch(() => {});
+        }
+      }
+    } catch (_) {}
+
+    this.activeDesktopCall = {
+      isOpen: true,
+      type: callType,
+      isCaller: true,
+      partnerId,
+      partnerName,
+      partnerAvatar: partnerId === 'xuanngocit@gmail.com' ? '👨‍💼' : '👩‍🏫',
+      status: 'ringing',
+      durationSec: 0,
+      isMuted: false,
+      isCameraOff: false
+    };
+
+    this.playDesktopCallTone();
+    this.startDesktopCallSignalPolling();
+
+    const signalData = {
+      signalType: 'call_start' as const,
+      callerId: myId,
+      callerName: this.teacherTitle,
+      callerAvatar: myId === 'xuanngocit@gmail.com' ? '👨‍💼' : '👩‍🏫',
+      receiverId: partnerId,
+      receiverName: partnerName,
+      callType
+    };
+
+    try {
+      if (this.desktopBroadcastChannel) {
+        this.desktopBroadcastChannel.postMessage({ type: 'call_signal', ...signalData });
+      }
+    } catch (_) {}
+
+    this.vneduService.sendCallSignal(signalData).subscribe();
+    this.cdr.detectChanges();
+
+    // Khởi tạo luồng WebRTC micro & SDP offer
+    this.initDesktopWebRTC(true, callType, partnerId);
+  }
+
   acceptDesktopIncomingCall(): void {
     if (!this.incomingCallPrompt) return;
     const incoming = { ...this.incomingCallPrompt };
@@ -378,7 +487,12 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     try {
       const audioEl = document.getElementById('vneduDesktopRemoteAudio') as HTMLAudioElement;
       if (audioEl) {
-        audioEl.play().catch(() => {});
+        audioEl.muted = false;
+        audioEl.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+        audioEl.play().then(() => {
+          audioEl.pause();
+          audioEl.removeAttribute('src');
+        }).catch(() => {});
       }
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (AudioCtx) {
@@ -402,16 +516,17 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
       isCameraOff: false
     };
     this.startDesktopCallTimer();
+    this.startDesktopCallSignalPolling();
 
     // Khởi tạo WebRTC micro thực tế trên Desktop kết nối 2 chiều với điện thoại
     this.initDesktopWebRTC(false, incoming.callType, incoming.callerId);
 
     const signalData = {
       signalType: 'call_accept' as const,
-      callerId: incoming.callerId,
-      callerName: incoming.callerName,
-      receiverId: myId,
-      receiverName: this.teacherTitle,
+      callerId: myId,
+      callerName: this.teacherTitle,
+      receiverId: incoming.callerId,
+      receiverName: incoming.callerName,
       callType: incoming.callType
     };
     try {
@@ -571,12 +686,32 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
         } catch (_) {}
       }
 
+      // Cấu hình STUN + TURN Relay Servers toàn cầu để vượt mọi rào cản NAT mạng 4G/5G và Reverse Proxy
       const config: RTCConfiguration = {
         iceServers: [
           { urls: 'stun:stun.l.google.com:19302' },
           { urls: 'stun:stun1.l.google.com:19302' },
           { urls: 'stun:stun2.l.google.com:19302' },
-          { urls: 'stun:stun.cloudflare.com:3478' }
+          { urls: 'stun:stun.cloudflare.com:3478' },
+          { urls: 'stun:relay.metered.ca:80' },
+          {
+            urls: [
+              'turn:relay.metered.ca:80',
+              'turn:relay.metered.ca:443',
+              'turn:relay.metered.ca:443?transport=tcp'
+            ],
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+          },
+          {
+            urls: [
+              'turn:openrelay.metered.ca:80',
+              'turn:openrelay.metered.ca:443',
+              'turn:openrelay.metered.ca:443?transport=tcp'
+            ],
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+          }
         ],
         iceCandidatePoolSize: 10
       };
@@ -603,8 +738,12 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
           }
           this.desktopRemoteAudioEl = audioEl;
           audioEl.srcObject = stream;
+          audioEl.muted = false;
           audioEl.volume = this.isDesktopSpeakerOn ? 1.0 : 0.6;
-          audioEl.play().catch(e => console.warn('Desktop remote audio play error:', e));
+          const p = audioEl.play();
+          if (p !== undefined) {
+            p.catch(e => console.warn('Desktop remote audio play error:', e));
+          }
 
           try {
             const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -620,6 +759,14 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
             }
           } catch (err) {
             console.warn('Desktop Web Audio routing error:', err);
+          }
+        };
+
+        this.desktopPeerConnection.oniceconnectionstatechange = () => {
+          console.log('Desktop WebRTC ICE Connection State:', this.desktopPeerConnection?.iceConnectionState);
+          if (this.desktopPeerConnection?.iceConnectionState === 'failed') {
+            console.warn('Desktop WebRTC ICE failed, restarting ICE...');
+            try { this.desktopPeerConnection.restartIce(); } catch (_) {}
           }
         };
 
@@ -640,8 +787,25 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
           }
         };
 
-        // Nếu đã có SDP offer từ điện thoại gửi qua, tạo SDP answer gửi lại
-        if (!isCaller && this.desktopPendingOffer && !this.desktopPeerConnection.remoteDescription) {
+        if (isCaller) {
+          const offer = await this.desktopPeerConnection.createOffer();
+          await this.desktopPeerConnection.setLocalDescription(offer);
+          const myId = (this.isSuperAdminLoggedIn || this.currentLoggedInUser?.email === 'xuanngocit@gmail.com') ? 'xuanngocit@gmail.com' : (this.currentLoggedInUser?.username || '051197003685');
+          const signalData = {
+            signalType: 'call_offer' as const,
+            callerId: myId,
+            callerName: this.teacherTitle,
+            receiverId: partnerId,
+            callType,
+            sdp: offer
+          };
+          try {
+            if (this.desktopBroadcastChannel) {
+              this.desktopBroadcastChannel.postMessage({ type: 'call_signal', ...signalData });
+            }
+          } catch (_) {}
+          this.vneduService.sendCallSignal(signalData).subscribe();
+        } else if (this.desktopPendingOffer && !this.desktopPeerConnection.remoteDescription) {
           await this.desktopPeerConnection.setRemoteDescription(new RTCSessionDescription(this.desktopPendingOffer));
           await this.flushDesktopPendingIceCandidates();
           const answer = await this.desktopPeerConnection.createAnswer();
@@ -724,6 +888,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   }
 
   cleanupDesktopMedia(): void {
+    this.stopDesktopCallSignalPolling();
     if (this.desktopLocalStream) {
       this.desktopLocalStream.getTracks().forEach(t => t.stop());
       this.desktopLocalStream = null;
@@ -738,16 +903,17 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
 
   rejectDesktopIncomingCall(): void {
     if (!this.incomingCallPrompt) return;
+    this.stopDesktopCallSignalPolling();
     const incoming = { ...this.incomingCallPrompt };
     this.stopDesktopCallTone();
     this.incomingCallPrompt = null;
     const myId = (this.isSuperAdminLoggedIn || this.currentLoggedInUser?.email === 'xuanngocit@gmail.com') ? 'xuanngocit@gmail.com' : (this.currentLoggedInUser?.username || '051197003685');
     const signalData = {
       signalType: 'call_reject' as const,
-      callerId: incoming.callerId,
-      callerName: incoming.callerName,
-      receiverId: myId,
-      receiverName: this.teacherTitle,
+      callerId: myId,
+      callerName: this.teacherTitle,
+      receiverId: incoming.callerId,
+      receiverName: incoming.callerName,
       callType: incoming.callType
     };
     try {

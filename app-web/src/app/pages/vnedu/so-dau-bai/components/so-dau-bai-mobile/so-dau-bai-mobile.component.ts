@@ -90,6 +90,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   private soundCtx: any = null;
   private ringTimer: any = null;
   private peerConnection: RTCPeerConnection | null = null;
+  private pendingOffer: any = null;
   private pendingIceCandidates: any[] = [];
   private localMediaStream: MediaStream | null = null;
   private remoteAudioElement: HTMLAudioElement | null = null;
@@ -98,6 +99,8 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   private chatBroadcastChannel: BroadcastChannel | null = null;
   private chatEventSource: EventSource | null = null;
   private chatPollingTimer: any = null;
+  private callSignalPollTimer: any = null;
+  private lastCallSignalTimestamp: number = 0;
 
   // Danh bạ khởi tạo mặc định từ các tài khoản thực tế đã đăng nhập hệ thống
   chatContacts: any[] = [
@@ -1538,7 +1541,6 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   private async initWebRTC(isCaller: boolean, callType: 'voice' | 'video'): Promise<void> {
     if (typeof window === 'undefined') return;
     try {
-      // Dọn dẹp connection cũ nếu có, bảo toàn pending ice candidates
       this.stopRingTone();
       if (this.localMediaStream) {
         this.localMediaStream.getTracks().forEach(t => t.stop());
@@ -1549,7 +1551,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
         this.peerConnection = null;
       }
 
-      // Xin quyền truy cập micro & camera (hỗ trợ lọc ồn, khử tiếng vang)
+      // Xin quyền truy cập micro & camera (hỗ trợ lọc ồn, khử tiếng vang, auto gain)
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         try {
           this.localMediaStream = await navigator.mediaDevices.getUserMedia({
@@ -1572,7 +1574,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
         }
       }
 
-      // Nếu không có micro (do dùng HTTP chưa cấp quyền), tạo fallback audio stream để giữ kết nối WebRTC RTP
+      // Fallback audio stream nếu không mở được micro phần cứng để WebRTC duy trì kênh truyền thông RTP
       if (!this.localMediaStream || this.localMediaStream.getAudioTracks().length === 0) {
         try {
           const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -1580,7 +1582,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
             const ctx = new AudioCtx();
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
-            gain.gain.value = 0.001;
+            gain.gain.value = 0.0001;
             const dst = ctx.createMediaStreamDestination();
             osc.connect(gain);
             gain.connect(dst);
@@ -1590,12 +1592,32 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
         } catch (_) {}
       }
 
+      // Cấu hình STUN + TURN Relay Servers toàn cầu để vượt mọi rào cản NAT mạng 4G/5G và Reverse Proxy
       const config: RTCConfiguration = {
         iceServers: [
           { urls: 'stun:stun.l.google.com:19302' },
           { urls: 'stun:stun1.l.google.com:19302' },
           { urls: 'stun:stun2.l.google.com:19302' },
-          { urls: 'stun:stun.cloudflare.com:3478' }
+          { urls: 'stun:stun.cloudflare.com:3478' },
+          { urls: 'stun:relay.metered.ca:80' },
+          {
+            urls: [
+              'turn:relay.metered.ca:80',
+              'turn:relay.metered.ca:443',
+              'turn:relay.metered.ca:443?transport=tcp'
+            ],
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+          },
+          {
+            urls: [
+              'turn:openrelay.metered.ca:80',
+              'turn:openrelay.metered.ca:443',
+              'turn:openrelay.metered.ca:443?transport=tcp'
+            ],
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+          }
         ],
         iceCandidatePoolSize: 10
       };
@@ -1609,7 +1631,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
           });
         }
 
-        // Nhận luồng âm thanh từ bên kia truyền qua (kết hợp Audio Element và Web Audio API)
+        // Nhận luồng âm thanh từ bên kia truyền qua và phát ra loa điện thoại
         this.peerConnection.ontrack = (event) => {
           const stream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
           let audioEl = document.getElementById('vneduMobileRemoteAudio') as HTMLAudioElement;
@@ -1622,8 +1644,12 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
           }
           this.remoteAudioElement = audioEl;
           audioEl.srcObject = stream;
+          audioEl.muted = false;
           audioEl.volume = this.isSpeakerOn ? 1.0 : 0.6;
-          audioEl.play().catch(e => console.warn('Mobile remote audio play error:', e));
+          const p = audioEl.play();
+          if (p !== undefined) {
+            p.catch(e => console.warn('Mobile remote audio play error:', e));
+          }
 
           try {
             const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -1643,23 +1669,30 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
         };
 
         this.peerConnection.onicecandidate = (event) => {
-          if (event.candidate && this.activeCall) {
-            const partnerId = this.activeCall.partnerId;
-            const signalData = {
-              signalType: 'call_ice' as const,
-              callerId: this.currentChatUserId,
-              receiverId: partnerId,
-              candidate: event.candidate
-            };
-            try {
-              if (this.chatBroadcastChannel) {
-                this.chatBroadcastChannel.postMessage({ type: 'call_signal', ...signalData });
-              }
-            } catch (_) {}
-            this.vneduService.sendCallSignal(signalData).subscribe({
-              next: () => {},
-              error: () => {}
-            });
+          if (event.candidate) {
+            const partnerId = this.activeCall?.partnerId || this.activeContact?.id || this.activeContact?.username;
+            if (partnerId) {
+              const signalData = {
+                signalType: 'call_ice' as const,
+                callerId: this.currentChatUserId,
+                receiverId: partnerId,
+                candidate: event.candidate
+              };
+              try {
+                if (this.chatBroadcastChannel) {
+                  this.chatBroadcastChannel.postMessage({ type: 'call_signal', ...signalData });
+                }
+              } catch (_) {}
+              this.vneduService.sendCallSignal(signalData).subscribe();
+            }
+          }
+        };
+
+        this.peerConnection.oniceconnectionstatechange = () => {
+          console.log('Mobile WebRTC ICE Connection State:', this.peerConnection?.iceConnectionState);
+          if (this.peerConnection?.iceConnectionState === 'failed') {
+            console.warn('Mobile WebRTC ICE failed, restarting ICE...');
+            try { this.peerConnection.restartIce(); } catch (_) {}
           }
         };
 
@@ -1681,10 +1714,29 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
                 this.chatBroadcastChannel.postMessage({ type: 'call_signal', ...signalData });
               }
             } catch (_) {}
-            this.vneduService.sendCallSignal(signalData).subscribe({
-              next: () => {},
-              error: () => {}
-            });
+            this.vneduService.sendCallSignal(signalData).subscribe();
+          }
+        } else if (this.pendingOffer && !this.peerConnection.remoteDescription) {
+          // Trả lời offer đã nhận được từ trước
+          await this.peerConnection.setRemoteDescription(new RTCSessionDescription(this.pendingOffer));
+          await this.flushPendingIceCandidates();
+          const answer = await this.peerConnection.createAnswer();
+          await this.peerConnection.setLocalDescription(answer);
+          const partnerId = this.activeCall?.partnerId || (this.incomingCallPrompt as any)?.callerId;
+          if (partnerId) {
+            const signalData = {
+              signalType: 'call_answer' as const,
+              callerId: this.currentChatUserId,
+              callerName: this.currentChatUserName,
+              receiverId: partnerId,
+              sdp: answer
+            };
+            try {
+              if (this.chatBroadcastChannel) {
+                this.chatBroadcastChannel.postMessage({ type: 'call_signal', ...signalData });
+              }
+            } catch (_) {}
+            this.vneduService.sendCallSignal(signalData).subscribe();
           }
         }
       }
@@ -1694,7 +1746,8 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   private async handleRemoteOffer(data: any): Promise<void> {
-    if (!this.peerConnection) {
+    this.pendingOffer = data.sdp;
+    if (!this.peerConnection && this.activeCall) {
       await this.initWebRTC(false, data.callType || 'voice');
     }
     if (this.peerConnection && data.sdp && !this.peerConnection.remoteDescription) {
@@ -1716,10 +1769,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
             this.chatBroadcastChannel.postMessage({ type: 'call_signal', ...signalData });
           }
         } catch (_) {}
-        this.vneduService.sendCallSignal(signalData).subscribe({
-          next: () => {},
-          error: () => {}
-        });
+        this.vneduService.sendCallSignal(signalData).subscribe();
       } catch (err) {
         console.warn('Lỗi Mobile xử lý SDP offer:', err);
       }
@@ -1753,6 +1803,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
 
   private cleanupMedia(): void {
     this.stopRingTone();
+    this.stopCallSignalPolling();
     this.pendingIceCandidates = [];
     if (this.localMediaStream) {
       this.localMediaStream.getTracks().forEach(t => t.stop());
@@ -1766,6 +1817,31 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     }
     if (this.remoteAudioElement) {
       this.remoteAudioElement.srcObject = null;
+    }
+  }
+
+  private startCallSignalPolling(): void {
+    if (this.callSignalPollTimer) return;
+    this.callSignalPollTimer = setInterval(() => {
+      if (!this.activeCall && !this.incomingCallPrompt) {
+        this.stopCallSignalPolling();
+        return;
+      }
+      this.vneduService.getLatestCallSignals(this.currentChatUserId, this.lastCallSignalTimestamp).subscribe({
+        next: (res) => {
+          if (res?.success && Array.isArray(res.signals)) {
+            res.signals.forEach(sig => this.handleIncomingCallSignal(sig));
+          }
+        },
+        error: () => {}
+      });
+    }, 1000);
+  }
+
+  private stopCallSignalPolling(): void {
+    if (this.callSignalPollTimer) {
+      clearInterval(this.callSignalPollTimer);
+      this.callSignalPollTimer = null;
     }
   }
 
@@ -1795,7 +1871,12 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     try {
       const audioEl = document.getElementById('vneduMobileRemoteAudio') as HTMLAudioElement;
       if (audioEl) {
-        audioEl.play().catch(() => {});
+        audioEl.muted = false;
+        audioEl.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+        audioEl.play().then(() => {
+          audioEl.pause();
+          audioEl.removeAttribute('src');
+        }).catch(() => {});
       }
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (AudioCtx) {
@@ -1808,6 +1889,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
 
     // Phát chuông tút tút khi gọi đi (Web Audio API)
     this.playCallTone('outgoing');
+    this.startCallSignalPolling();
 
     const myId = this.currentChatUserId;
     const myName = this.currentChatUserName;
@@ -1851,7 +1933,12 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     try {
       const audioEl = document.getElementById('vneduMobileRemoteAudio') as HTMLAudioElement;
       if (audioEl) {
-        audioEl.play().catch(() => {});
+        audioEl.muted = false;
+        audioEl.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+        audioEl.play().then(() => {
+          audioEl.pause();
+          audioEl.removeAttribute('src');
+        }).catch(() => {});
       }
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (AudioCtx) {
@@ -1876,13 +1963,14 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     };
 
     this.startCallTimer();
+    this.startCallSignalPolling();
 
     const signalData = {
       signalType: 'call_accept' as const,
-      callerId: incoming.callerId,
-      callerName: incoming.callerName,
-      receiverId: this.currentChatUserId,
-      receiverName: this.currentChatUserName,
+      callerId: this.currentChatUserId,
+      callerName: this.currentChatUserName,
+      receiverId: incoming.callerId,
+      receiverName: incoming.callerName,
       callType: incoming.callType
     };
 
@@ -2110,6 +2198,10 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
                     (this.currentChatRole === 'huyen' && (data.receiverId === '051197003685' || data.receiverId === '051197003685@vnedu.vn')) ||
                     (this.currentLoggedInUser && (data.receiverId === this.currentLoggedInUser.username || data.receiverId === this.currentLoggedInUser.email));
 
+    if (data.timestamp && data.timestamp > this.lastCallSignalTimestamp) {
+      this.lastCallSignalTimestamp = data.timestamp;
+    }
+
     if (data.signalType === 'call_start' && isForMe) {
       this.incomingCallPrompt = {
         callerId: data.callerId,
@@ -2119,10 +2211,17 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
       };
       // Phát nhạc chuông du dương báo cuộc gọi đến (Web Audio API)
       this.playCallTone('incoming');
+      this.startCallSignalPolling();
       this.cdr.detectChanges();
     } else if (data.signalType === 'call_accept') {
       // Đối phương đã bấm nghe máy: Dừng ngay lập tức chuông đổ, chuyển sang đàm thoại
-      if (this.activeCall && (this.activeCall.isCaller || this.activeCall.status === 'ringing')) {
+      const isMyCall = this.activeCall && (
+        this.activeCall.isCaller ||
+        this.activeCall.status === 'ringing' ||
+        data.callerId === this.activeCall.partnerId ||
+        data.receiverId === this.activeCall.partnerId
+      );
+      if (isMyCall && this.activeCall) {
         this.stopRingTone();
         this.playCallTone('connected');
         this.activeCall.status = 'connected';
@@ -2156,7 +2255,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
         this.cdr.detectChanges();
       }
       this.handleRemoteAnswer(data);
-    } else if (data.signalType === 'call_ice' && (isForMe || (this.activeCall && this.activeCall.partnerId === data.callerId) || (this.incomingCallPrompt && this.incomingCallPrompt.callerId === data.callerId))) {
+    } else if (data.signalType === 'call_ice' && (isForMe || (this.activeCall && (this.activeCall.partnerId === data.callerId || this.activeCall.partnerId === data.receiverId)) || (this.incomingCallPrompt && (this.incomingCallPrompt.callerId === data.callerId || this.incomingCallPrompt.callerId === data.receiverId)))) {
       this.handleRemoteIce(data);
     }
   }

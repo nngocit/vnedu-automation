@@ -317,11 +317,27 @@ app.post('/api/admin/teachers/save', (req, res) => {
 // HỖ TRỢ REAL-TIME PUSH QUA SERVER-SENT EVENTS (SSE)
 // ========================================================
 let sseChatClients = [];
+let recentCallSignals = [];
+
+// Helper phát sóng SSE tức thời hỗ trợ Nginx/LiteSpeed Reverse Proxy (Mắt Bão hosting)
+function broadcastSSE(payloadObj) {
+    const payloadStr = typeof payloadObj === 'string' ? payloadObj : JSON.stringify(payloadObj);
+    sseChatClients.forEach(c => {
+        try {
+            c.res.write(`data: ${payloadStr}\n\n`);
+            if (typeof c.res.flush === 'function') {
+                c.res.flush();
+            }
+        } catch (_) {}
+    });
+}
 
 app.get('/api/chat/stream', (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // Vô hiệu hóa proxy buffer Nginx / LiteSpeed
+    res.setHeader('Content-Encoding', 'none');
     res.setHeader('Access-Control-Allow-Origin', '*');
     if (res.flushHeaders) res.flushHeaders();
 
@@ -331,11 +347,13 @@ app.get('/api/chat/stream', (req, res) => {
 
     // Gửi thông báo kết nối thành công ban đầu
     res.write(`data: ${JSON.stringify({ type: 'connected', clientId })}\n\n`);
+    if (typeof res.flush === 'function') res.flush();
 
     // Gửi heartbeat định kỳ để giữ kết nối không bị ngắt
     const pingTimer = setInterval(() => {
         try {
             res.write(`: ping\n\n`);
+            if (typeof res.flush === 'function') res.flush();
         } catch (_) {
             clearInterval(pingTimer);
         }
@@ -397,9 +415,7 @@ app.post('/api/chat/groups', (req, res) => {
         
         // Broadcast SSE thông báo nhóm mới tạo
         const payload = JSON.stringify({ type: 'group_created', group });
-        sseChatClients.forEach(c => {
-            try { c.res.write(`data: ${payload}\n\n`); } catch (_) {}
-        });
+        broadcastSSE(payload);
 
         res.json({ success: true, group });
     } catch (e) {
@@ -413,10 +429,7 @@ app.post('/api/chat/messages/recall', (req, res) => {
         const { messageId, userId } = req.body;
         const result = chatManager.recallChatMessage(messageId, userId);
         if (result.success) {
-            const payload = JSON.stringify({ type: 'message_recalled', ...result });
-            sseChatClients.forEach(c => {
-                try { c.res.write(`data: ${payload}\n\n`); } catch (_) {}
-            });
+            broadcastSSE({ type: 'message_recalled', ...result });
         }
         res.json(result);
     } catch (e) {
@@ -430,10 +443,7 @@ app.post('/api/chat/messages/delete', (req, res) => {
         const { messageId, userId } = req.body;
         const result = chatManager.deleteChatMessage(messageId, userId);
         if (result.success) {
-            const payload = JSON.stringify({ type: 'message_deleted', ...result });
-            sseChatClients.forEach(c => {
-                try { c.res.write(`data: ${payload}\n\n`); } catch (_) {}
-            });
+            broadcastSSE({ type: 'message_deleted', ...result });
         }
         res.json(result);
     } catch (e) {
@@ -447,10 +457,7 @@ app.post('/api/chat/messages/react', (req, res) => {
         const { messageId, userId, reaction } = req.body;
         const result = chatManager.reactChatMessage(messageId, userId, reaction || 'like');
         if (result.success) {
-            const payload = JSON.stringify({ type: 'message_reacted', ...result });
-            sseChatClients.forEach(c => {
-                try { c.res.write(`data: ${payload}\n\n`); } catch (_) {}
-            });
+            broadcastSSE({ type: 'message_reacted', ...result });
         }
         res.json(result);
     } catch (e) {
@@ -465,10 +472,7 @@ app.post('/api/chat/conversations/:id/pin', (req, res) => {
         const { messageId } = req.body;
         const result = chatManager.pinChatMessage(id, messageId);
         if (result.success) {
-            const payload = JSON.stringify({ type: 'message_pinned', ...result });
-            sseChatClients.forEach(c => {
-                try { c.res.write(`data: ${payload}\n\n`); } catch (_) {}
-            });
+            broadcastSSE({ type: 'message_pinned', ...result });
         }
         res.json(result);
     } catch (e) {
@@ -534,11 +538,7 @@ app.post('/api/chat/messages', (req, res) => {
 
         // Phát sóng tức thời (Real-time Broadcast) tới toàn bộ các trình duyệt đang mở
         const payload = JSON.stringify({ type: 'new_message', message });
-        sseChatClients.forEach(c => {
-            try {
-                c.res.write(`data: ${payload}\n\n`);
-            } catch (_) {}
-        });
+        broadcastSSE(payload);
 
         res.json({ success: true, message });
     } catch (e) {
@@ -546,12 +546,44 @@ app.post('/api/chat/messages', (req, res) => {
     }
 });
 
+// API: Cung cấp danh sách STUN & TURN Ice Servers cho WebRTC vượt NAT qua Internet
+app.get('/api/chat/ice-servers', (req, res) => {
+    res.json({
+        success: true,
+        iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' },
+            { urls: 'stun:stun.cloudflare.com:3478' },
+            { urls: 'stun:relay.metered.ca:80' },
+            {
+                urls: [
+                    'turn:relay.metered.ca:80',
+                    'turn:relay.metered.ca:443',
+                    'turn:relay.metered.ca:443?transport=tcp'
+                ],
+                username: 'openrelayproject',
+                credential: 'openrelayproject'
+            },
+            {
+                urls: [
+                    'turn:openrelay.metered.ca:80',
+                    'turn:openrelay.metered.ca:443',
+                    'turn:openrelay.metered.ca:443?transport=tcp'
+                ],
+                username: 'openrelayproject',
+                credential: 'openrelayproject'
+            }
+        ]
+    });
+});
+
 // API: Tín hiệu cuộc gọi thoại & video (Zalo Call Signal & WebRTC P2P)
 app.post('/api/chat/call/signal', (req, res) => {
     try {
         const { type, signalType, callerId, callerName, callerAvatar, receiverId, receiverName, callType, duration, sdp, candidate } = req.body;
         const effectiveSignalType = signalType || type;
-        const payload = JSON.stringify({
+        const signalObj = {
             type: 'call_signal',
             signalType: effectiveSignalType,
             callerId,
@@ -564,13 +596,37 @@ app.post('/api/chat/call/signal', (req, res) => {
             sdp,
             candidate,
             timestamp: Date.now()
+        };
+
+        // Lưu vào bộ đệm tín hiệu gần nhất (hỗ trợ Polling dự phòng khi proxy ngắt kết nối SSE)
+        recentCallSignals.push(signalObj);
+        if (recentCallSignals.length > 50) {
+            recentCallSignals.shift();
+        }
+
+        // Phát sóng SSE tức thì
+        broadcastSSE(signalObj);
+
+        res.json({ success: true, timestamp: signalObj.timestamp });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+// API: Polling tín hiệu cuộc gọi dự phòng (Fallback khi mạng 4G/cPanel proxy ngắt kết nối SSE)
+app.get('/api/chat/call/signal/latest', (req, res) => {
+    try {
+        const userId = req.query.userId;
+        const since = parseInt(req.query.since || '0', 10);
+        const signals = recentCallSignals.filter(s => {
+            if (s.timestamp <= since) return false;
+            if (!userId) return true;
+            return s.receiverId === userId || s.callerId === userId ||
+                   s.receiverId === 'all' ||
+                   (userId === 'xuanngocit@gmail.com' && (s.receiverId === 'admin' || s.receiverId === 'xuanngocit@gmail.com')) ||
+                   (userId === '051197003685' && (s.receiverId === '051197003685' || s.receiverId === '051197003685@vnedu.vn' || s.receiverId === 'huyen'));
         });
-        sseChatClients.forEach(c => {
-            try {
-                c.res.write(`data: ${payload}\n\n`);
-            } catch (_) {}
-        });
-        res.json({ success: true });
+        res.json({ success: true, signals });
     } catch (e) {
         res.status(500).json({ success: false, error: e.message });
     }
@@ -583,12 +639,7 @@ app.post('/api/chat/messages/read', (req, res) => {
         const result = chatManager.markAsRead({ readerId, partnerId });
 
         // Phát sóng SSE để các tab cùng tài khoản cập nhật tức thì trạng thái đã đọc
-        const payload = JSON.stringify({ type: 'messages_read', readerId, partnerId });
-        sseChatClients.forEach(c => {
-            try {
-                c.res.write(`data: ${payload}\n\n`);
-            } catch (_) {}
-        });
+        broadcastSSE({ type: 'messages_read', readerId, partnerId });
 
         res.json({ success: true, result });
     } catch (e) {
@@ -603,12 +654,7 @@ app.post('/api/chat/messages/clear', (req, res) => {
         const result = chatManager.clearMessages({ userA, userB, clearAll });
 
         // Phát sóng SSE tới mọi client để xóa sạch tin nhắn tức thời
-        const payload = JSON.stringify({ type: 'messages_cleared', userA, userB, clearAll: !!clearAll });
-        sseChatClients.forEach(c => {
-            try {
-                c.res.write(`data: ${payload}\n\n`);
-            } catch (_) {}
-        });
+        broadcastSSE({ type: 'messages_cleared', userA, userB, clearAll: !!clearAll });
 
         res.json({ success: true, result });
     } catch (e) {
@@ -620,12 +666,7 @@ app.post('/api/chat/messages/clear', (req, res) => {
 app.post('/api/chat/typing', (req, res) => {
     try {
         const { senderId, receiverId, isTyping } = req.body;
-        const payload = JSON.stringify({ type: 'typing', senderId, receiverId, isTyping: !!isTyping });
-        sseChatClients.forEach(c => {
-            try {
-                c.res.write(`data: ${payload}\n\n`);
-            } catch (_) {}
-        });
+        broadcastSSE({ type: 'typing', senderId, receiverId, isTyping: !!isTyping });
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ success: false, error: e.message });
