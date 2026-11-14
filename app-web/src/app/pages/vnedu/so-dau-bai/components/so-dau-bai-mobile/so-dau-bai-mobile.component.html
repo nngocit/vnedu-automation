@@ -915,8 +915,8 @@
             </span>
           </div>
 
-          <!-- Các tin nhắn trong hội thoại -->
-          <ng-container *ngFor="let msg of activeMessages">
+          <!-- Các tin nhắn trong hội thoại (Tối ưu TrackBy mượt mà không bao giờ mất tin nhắn khi cuộn) -->
+          <ng-container *ngFor="let msg of activeMessages; trackBy: trackByMsgId">
             
             <!-- Trường hợp Log Cuộc Gọi Thoại / Video (Native Component UI/UX Pro Max) -->
             <div *ngIf="msg.isCallLog" class="chat-call-log-row d-flex justify-content-center my-2">
@@ -1893,6 +1893,28 @@
           </svg>
         </div>
         <span class="control-label fs-9 mt-1.5 fw-semibold">{{ activeCall.isCameraOff ? 'Bật cam' : 'Tắt cam' }}</span>
+      </button>
+
+      <!-- Nút Loa ngoài (Speakerphone Toggle) -->
+      <button type="button"
+              class="call-control-btn rounded-circle border-0 d-flex flex-column align-items-center justify-content-center text-white transition-all"
+              (click)="toggleSpeaker()"
+              [title]="isSpeakerOn ? 'Bật Loa trong' : 'Bật Loa ngoài'">
+        <div class="btn-icon-wrap d-flex align-items-center justify-content-center"
+             [style.background]="isSpeakerOn ? '#3b82f6' : 'rgba(255,255,255,0.18)'">
+          <!-- Loa ngoài ON SVG (có sóng âm) -->
+          <svg *ngIf="isSpeakerOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+          </svg>
+          <!-- Loa trong OFF SVG (loa không sóng) -->
+          <svg *ngIf="!isSpeakerOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+        </div>
+        <span class="control-label fs-9 mt-1.5 fw-semibold">{{ isSpeakerOn ? 'Loa ngoài' : 'Loa trong' }}</span>
       </button>
 
       <!-- Nút Cúp máy / Kết thúc (Lực nhấn & màu chuẩn Apple/Zalo Call) -->

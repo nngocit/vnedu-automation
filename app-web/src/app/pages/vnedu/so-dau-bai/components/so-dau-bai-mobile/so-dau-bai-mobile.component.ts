@@ -74,6 +74,9 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     isCameraOff: boolean;
   } | null = null;
 
+  isSpeakerOn: boolean = true;
+  private mobileGainNode: any = null;
+
   incomingCallPrompt: {
     callerId: string;
     callerName: string;
@@ -820,21 +823,36 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
           res.messages.forEach((srvMsg: any) => {
             const local = localMap.get(srvMsg.id);
             if (local) {
-              if (local.status !== srvMsg.status) {
+              if (local.status !== srvMsg.status ||
+                  local.isRecalled !== srvMsg.isRecalled ||
+                  JSON.stringify(local.reactions) !== JSON.stringify(srvMsg.reactions)) {
                 local.status = srvMsg.status;
+                local.isRecalled = srvMsg.isRecalled;
+                local.content = srvMsg.content;
+                local.text = srvMsg.text || srvMsg.content;
+                local.reactions = srvMsg.reactions;
                 changed = true;
               }
             } else {
               this.chatMessages.push(srvMsg);
+              localMap.set(srvMsg.id, srvMsg);
               changed = true;
               hasNew = true;
             }
           });
 
-          // Nếu tin nhắn bị xóa trên server, đồng bộ lại danh sách cục bộ
-          if (res.messages.length < this.chatMessages.length) {
-            const serverIds = new Set(res.messages.map((m: any) => m.id));
-            this.chatMessages = this.chatMessages.filter(m => serverIds.has(m.id));
+          // Chỉ đồng bộ xóa nếu tin nhắn không phải mới gửi trong 30s gần nhất
+          const nowMs = Date.now();
+          const serverIds = new Set(res.messages.map((m: any) => m.id));
+          const filtered = this.chatMessages.filter(m => {
+            if (serverIds.has(m.id)) return true;
+            const msgTime = new Date(m.timestamp || 0).getTime();
+            if (nowMs - msgTime < 30000) return true;
+            return false;
+          });
+
+          if (filtered.length !== this.chatMessages.length) {
+            this.chatMessages = filtered;
             changed = true;
           }
 
@@ -1064,16 +1082,47 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     return text.replace(/^[📞📹\s]+/, '').trim();
   }
 
+  trackByMsgId(index: number, msg: any): string {
+    return msg?.id || (msg?.senderId + '_' + (msg?.timestamp || index));
+  }
+
   get activeMessages(): any[] {
     if (!this.activeContact) return [];
     const myId = this.currentChatUserId;
     const contactId = this.activeContact.id || this.activeContact.username;
-    return (this.chatMessages || []).filter(m =>
-      (m.conversationId && (m.conversationId === contactId || (this.activeContact.type === 'group' && m.conversationId === this.activeContact.id))) ||
-      (m.senderId === myId && m.receiverId === contactId) ||
-      (m.senderId === contactId && m.receiverId === myId) ||
-      ((contactId === 'xuanngocit@gmail.com' || contactId === '051197003685') && (m.conversationId === 'conv_dieu_huyen' || (!m.conversationId && (m.senderId === '051197003685' || m.senderId === 'xuanngocit@gmail.com'))))
+    const isGroup = this.activeContact.type === 'group' || contactId === 'conv_ktdl_nhom';
+    const isDirectWithHuyen = (contactId === '051197003685' || contactId === 'xuanngocit@gmail.com');
+    const targetConvId = this.activeContact.conversationId || (
+      isGroup ? (this.activeContact.id || 'conv_ktdl_nhom') : (isDirectWithHuyen ? 'conv_dieu_huyen' : ('conv_' + contactId))
     );
+
+    return (this.chatMessages || []).filter(m => {
+      if (m.is_deleted || m.isDeleted) return false;
+      // 1. Khớp theo conversationId
+      if (m.conversationId && (m.conversationId === targetConvId || m.conversationId === contactId)) {
+        return true;
+      }
+      // 2. Với nhóm KTDL_NHOM hoặc group
+      if (isGroup && m.conversationId && (m.conversationId === 'conv_ktdl_nhom' || m.conversationId === this.activeContact.id)) {
+        return true;
+      }
+      // 3. Khớp trực tiếp 1-1 theo cặp người gửi / người nhận
+      if (!isGroup) {
+        if ((m.senderId === myId && m.receiverId === contactId) ||
+            (m.senderId === contactId && m.receiverId === myId)) {
+          return true;
+        }
+        // Trường hợp đặc biệt 1-1 giữa Diệu Huyên và Xuân Ngọc
+        if (isDirectWithHuyen && (m.conversationId === 'conv_dieu_huyen' ||
+            (!m.conversationId && (
+              (m.senderId === '051197003685' && m.receiverId === 'xuanngocit@gmail.com') ||
+              (m.senderId === 'xuanngocit@gmail.com' && m.receiverId === '051197003685')
+            )))) {
+          return true;
+        }
+      }
+      return false;
+    });
   }
 
   isMsgFromMe(msg: any): boolean {
@@ -1114,18 +1163,23 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     this.replyingToMessage = null;
 
     const mentions = (text.match(/@[A-ZÀ-Ỹa-zà-ỹ0-9_]+(?:\s+[A-ZÀ-Ỹa-zà-ỹ0-9_]+)?/g) || []);
-    const convId = (this.activeContact?.id === 'conv_ktdl_nhom' || this.activeContact?.type === 'group')
-      ? 'conv_ktdl_nhom'
-      : ((senderId === 'xuanngocit@gmail.com' || receiverId === 'xuanngocit@gmail.com') ? 'conv_dieu_huyen' : 'conv_' + receiverId);
+    const isGroup = (this.activeContact?.id === 'conv_ktdl_nhom' || this.activeContact?.type === 'group');
+    const isDirectWithHuyen = (senderId === 'xuanngocit@gmail.com' && receiverId === '051197003685') ||
+                              (senderId === '051197003685' && receiverId === 'xuanngocit@gmail.com');
+    const convId = isGroup
+      ? (this.activeContact.id || 'conv_ktdl_nhom')
+      : (isDirectWithHuyen ? 'conv_dieu_huyen' : ('conv_' + receiverId));
+
+    const msgId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
 
     const localMsg: any = {
-      id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      id: msgId,
       conversationId: convId,
       senderId,
       senderName,
       senderAvatar: this.currentChatRole === 'admin' ? '👨‍💼' : '👩‍🏫',
-      receiverId,
-      receiverName,
+      receiverId: isGroup ? null : receiverId,
+      receiverName: isGroup ? null : receiverName,
       content: text,
       text,
       time: timeStr,
@@ -1157,13 +1211,14 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
       }
     } catch (_) {}
 
-    // Lưu vào Backend máy chủ và đẩy SSE cho các thiết bị khác
+    // Lưu vào Backend máy chủ và đẩy SSE cho các thiết bị khác (đồng bộ id chính xác)
     this.vneduService.sendChatMessage({
+      id: msgId,
       conversationId: convId,
       senderId,
       senderName,
-      receiverId,
-      receiverName,
+      receiverId: isGroup ? null : receiverId,
+      receiverName: isGroup ? null : receiverName,
       text,
       replyTo: replyPayload,
       mentions
@@ -1567,7 +1622,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
           }
           this.remoteAudioElement = audioEl;
           audioEl.srcObject = stream;
-          audioEl.volume = 1.0;
+          audioEl.volume = this.isSpeakerOn ? 1.0 : 0.6;
           audioEl.play().catch(e => console.warn('Mobile remote audio play error:', e));
 
           try {
@@ -1576,7 +1631,11 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
               if (!this.soundCtx) this.soundCtx = new AudioCtx();
               if (this.soundCtx.state === 'suspended') this.soundCtx.resume();
               const src = this.soundCtx.createMediaStreamSource(stream);
-              src.connect(this.soundCtx.destination);
+              const gainNode = this.soundCtx.createGain();
+              gainNode.gain.value = this.isSpeakerOn ? 2.5 : 1.0;
+              src.connect(gainNode);
+              gainNode.connect(this.soundCtx.destination);
+              this.mobileGainNode = gainNode;
             }
           } catch (err) {
             console.warn('Mobile Web Audio routing error:', err);
@@ -1953,6 +2012,23 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
       }
       this.cdr.detectChanges();
     }
+  }
+
+  toggleSpeaker(): void {
+    this.isSpeakerOn = !this.isSpeakerOn;
+    if (this.mobileGainNode) {
+      try {
+        this.mobileGainNode.gain.value = this.isSpeakerOn ? 2.5 : 1.0;
+      } catch (_) {}
+    }
+    const audioEl = document.getElementById('vneduMobileRemoteAudio') as HTMLAudioElement;
+    if (audioEl) {
+      audioEl.volume = this.isSpeakerOn ? 1.0 : 0.6;
+      if ('setSinkId' in audioEl && typeof (audioEl as any).setSinkId === 'function') {
+        (audioEl as any).setSinkId(this.isSpeakerOn ? 'default' : '').catch(() => {});
+      }
+    }
+    this.cdr.detectChanges();
   }
 
   formatCallDuration(seconds: number): string {

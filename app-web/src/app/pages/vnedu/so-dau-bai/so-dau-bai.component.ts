@@ -292,6 +292,8 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   private desktopPeerConnection: RTCPeerConnection | null = null;
   private desktopRemoteAudioEl: HTMLAudioElement | null = null;
   private desktopSoundCtx: any = null;
+  isDesktopSpeakerOn: boolean = true;
+  private desktopGainNode: any = null;
 
   constructor(
     private vneduService: VnEduService,
@@ -462,6 +464,20 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  toggleDesktopSpeaker(): void {
+    this.isDesktopSpeakerOn = !this.isDesktopSpeakerOn;
+    if (this.desktopGainNode) {
+      try {
+        this.desktopGainNode.gain.value = this.isDesktopSpeakerOn ? 2.5 : 1.0;
+      } catch (_) {}
+    }
+    const audioEl = document.getElementById('vneduDesktopRemoteAudio') as HTMLAudioElement;
+    if (audioEl) {
+      audioEl.volume = this.isDesktopSpeakerOn ? 1.0 : 0.6;
+    }
+    this.cdr.detectChanges();
+  }
+
   startDesktopCallTimer(): void {
     this.stopDesktopCallTimer();
     this.desktopCallTimer = setInterval(() => {
@@ -587,7 +603,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
           }
           this.desktopRemoteAudioEl = audioEl;
           audioEl.srcObject = stream;
-          audioEl.volume = 1.0;
+          audioEl.volume = this.isDesktopSpeakerOn ? 1.0 : 0.6;
           audioEl.play().catch(e => console.warn('Desktop remote audio play error:', e));
 
           try {
@@ -596,7 +612,11 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
               if (!this.desktopSoundCtx) this.desktopSoundCtx = new AudioCtx();
               if (this.desktopSoundCtx.state === 'suspended') this.desktopSoundCtx.resume();
               const src = this.desktopSoundCtx.createMediaStreamSource(stream);
-              src.connect(this.desktopSoundCtx.destination);
+              const gainNode = this.desktopSoundCtx.createGain();
+              gainNode.gain.value = this.isDesktopSpeakerOn ? 2.5 : 1.0;
+              src.connect(gainNode);
+              gainNode.connect(this.desktopSoundCtx.destination);
+              this.desktopGainNode = gainNode;
             }
           } catch (err) {
             console.warn('Desktop Web Audio routing error:', err);

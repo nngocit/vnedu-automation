@@ -288,6 +288,7 @@ export class VnEduService {
   }
 
   sendChatMessage(data: {
+    id?: string;
     conversationId?: string;
     senderId: string;
     senderName?: string;

@@ -492,11 +492,12 @@ app.get('/api/chat/messages', (req, res) => {
 
 app.post('/api/chat/messages', (req, res) => {
     try {
-        const { conversationId, senderId, senderName, senderAvatar, receiverId, receiverName, text, content, replyTo, mentions, msgType, mediaUrl, fileName, fileSize, isCallLog, callType, callDuration, callStatus } = req.body;
+        const { id, conversationId, senderId, senderName, senderAvatar, receiverId, receiverName, text, content, replyTo, mentions, msgType, mediaUrl, fileName, fileSize, isCallLog, callType, callDuration, callStatus } = req.body;
         
         let message;
         if (conversationId) {
             message = chatManager.sendChatMessage({
+                id,
                 conversationId,
                 senderId,
                 senderName,
@@ -517,6 +518,7 @@ app.post('/api/chat/messages', (req, res) => {
             });
         } else {
             message = chatManager.sendMessage({
+                id,
                 senderId,
                 senderName,
                 receiverId,

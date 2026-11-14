@@ -483,11 +483,11 @@ function getConversationMessages(conversationId) {
 /**
  * Gửi tin nhắn mới (hỗ trợ text, quote, tag tên @, file đính kèm, ảnh)
  */
-function sendChatMessage({ conversationId, senderId, senderName, senderAvatar, receiverId, receiverName, text, msgType = 'text', mediaUrl, fileName, fileSize, replyTo, mentions, isCallLog, callType, callDuration, callStatus }) {
+function sendChatMessage({ id, conversationId, senderId, senderName, senderAvatar, receiverId, receiverName, text, msgType = 'text', mediaUrl, fileName, fileSize, replyTo, mentions, isCallLog, callType, callDuration, callStatus }) {
     if (!useSqlite || !sqliteDb) throw new Error('CSDL SQLite không khả dụng');
     if (!conversationId) throw new Error('Thiếu conversationId');
 
-    const msgId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+    const msgId = id || ('msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6));
     const now = new Date();
     const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     const timestampIso = now.toISOString();
@@ -854,12 +854,14 @@ function getMessagesBetween(userA, userB) {
 }
 
 function sendMessage(args) {
-    const convId = (args.senderId === 'xuanngocit@gmail.com' || args.receiverId === 'xuanngocit@gmail.com')
-        ? 'conv_dieu_huyen'
-        : 'conv_' + (args.receiverId || 'general');
+    const isDirectWithHuyen = (args.senderId === 'xuanngocit@gmail.com' && args.receiverId === '051197003685') ||
+                              (args.senderId === '051197003685' && args.receiverId === 'xuanngocit@gmail.com');
+    const convId = args.conversationId || (
+        isDirectWithHuyen ? 'conv_dieu_huyen' : ('conv_' + (args.receiverId || 'general'))
+    );
     return sendChatMessage({
-        conversationId: convId,
-        ...args
+        ...args,
+        conversationId: convId
     });
 }
 
