@@ -1640,6 +1640,9 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
             audioEl.id = 'vneduMobileRemoteAudio';
             audioEl.autoplay = true;
             (audioEl as any).playsInline = true;
+            audioEl.setAttribute('playsinline', 'true');
+            audioEl.setAttribute('webkit-playsinline', 'true');
+            audioEl.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0.01;pointer-events:none;';
             document.body.appendChild(audioEl);
           }
           this.remoteAudioElement = audioEl;
@@ -1648,23 +1651,17 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
           audioEl.volume = this.isSpeakerOn ? 1.0 : 0.6;
           const p = audioEl.play();
           if (p !== undefined) {
-            p.catch(e => console.warn('Mobile remote audio play error:', e));
-          }
-
-          try {
-            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-            if (AudioCtx) {
-              if (!this.soundCtx) this.soundCtx = new AudioCtx();
-              if (this.soundCtx.state === 'suspended') this.soundCtx.resume();
-              const src = this.soundCtx.createMediaStreamSource(stream);
-              const gainNode = this.soundCtx.createGain();
-              gainNode.gain.value = this.isSpeakerOn ? 2.5 : 1.0;
-              src.connect(gainNode);
-              gainNode.connect(this.soundCtx.destination);
-              this.mobileGainNode = gainNode;
-            }
-          } catch (err) {
-            console.warn('Mobile Web Audio routing error:', err);
+            p.catch(e => {
+              console.warn('Mobile remote audio play error:', e);
+              // Fallback mở khóa khi người dùng chạm màn hình
+              const retry = () => {
+                audioEl.play().catch(() => {});
+                window.removeEventListener('click', retry);
+                window.removeEventListener('touchstart', retry);
+              };
+              window.addEventListener('click', retry, { once: true });
+              window.addEventListener('touchstart', retry, { once: true });
+            });
           }
         };
 
@@ -1867,17 +1864,12 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
       isCameraOff: false
     };
 
-    // Mở khóa audio element và AudioContext bằng user gesture chạm màn hình
+    // Mở khóa audio element và AudioContext bằng user gesture chạm màn hình (dùng scratch audio an toàn)
     try {
-      const audioEl = document.getElementById('vneduMobileRemoteAudio') as HTMLAudioElement;
-      if (audioEl) {
-        audioEl.muted = false;
-        audioEl.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
-        audioEl.play().then(() => {
-          audioEl.pause();
-          audioEl.removeAttribute('src');
-        }).catch(() => {});
-      }
+      const unlockAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
+      unlockAudio.play().then(() => {
+        unlockAudio.pause();
+      }).catch(() => {});
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (AudioCtx) {
         if (!this.soundCtx) this.soundCtx = new AudioCtx();
@@ -1929,17 +1921,12 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     // Ngắt chuông, phát tiếng bíp kết nối (Web Audio API)
     this.playCallTone('connected');
 
-    // Mở khóa audio element và AudioContext bằng user gesture click
+    // Mở khóa audio element và AudioContext bằng user gesture click (dùng scratch audio an toàn)
     try {
-      const audioEl = document.getElementById('vneduMobileRemoteAudio') as HTMLAudioElement;
-      if (audioEl) {
-        audioEl.muted = false;
-        audioEl.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
-        audioEl.play().then(() => {
-          audioEl.pause();
-          audioEl.removeAttribute('src');
-        }).catch(() => {});
-      }
+      const unlockAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
+      unlockAudio.play().then(() => {
+        unlockAudio.pause();
+      }).catch(() => {});
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (AudioCtx) {
         if (!this.soundCtx) this.soundCtx = new AudioCtx();

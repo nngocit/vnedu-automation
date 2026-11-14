@@ -374,7 +374,13 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
       }
     } else if (data.signalType === 'call_offer' && isForMe) {
       this.handleDesktopRemoteOffer(data);
-    } else if (data.signalType === 'call_answer' && (isForMe || (this.activeDesktopCall && this.activeDesktopCall.status === 'connected'))) {
+    } else if (data.signalType === 'call_answer' && (isForMe || (this.activeDesktopCall && (this.activeDesktopCall.isCaller || this.activeDesktopCall.status === 'connected' || this.activeDesktopCall.status === 'ringing')))) {
+      if (this.activeDesktopCall) {
+        this.stopDesktopCallTone();
+        this.activeDesktopCall.status = 'connected';
+        this.startDesktopCallTimer();
+        this.cdr.detectChanges();
+      }
       this.handleDesktopRemoteAnswer(data);
     } else if (data.signalType === 'call_ice' && (isForMe || (this.activeDesktopCall && this.activeDesktopCall.partnerId === data.callerId) || (this.incomingCallPrompt && this.incomingCallPrompt.callerId === data.callerId))) {
       this.handleDesktopRemoteIce(data);
@@ -417,17 +423,12 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   startDesktopCall(partnerId: string = '051197003685', partnerName: string = 'Cô Lê Thị Diệu Huyên', callType: 'voice' | 'video' = 'voice'): void {
     const myId = (this.isSuperAdminLoggedIn || this.currentLoggedInUser?.email === 'xuanngocit@gmail.com') ? 'xuanngocit@gmail.com' : (this.currentLoggedInUser?.username || '051197003685');
 
-    // Mở khóa audio element và AudioContext bằng user click
+    // Mở khóa audio element và AudioContext bằng user click (dùng scratch audio an toàn)
     try {
-      const audioEl = document.getElementById('vneduDesktopRemoteAudio') as HTMLAudioElement;
-      if (audioEl) {
-        audioEl.muted = false;
-        audioEl.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
-        audioEl.play().then(() => {
-          audioEl.pause();
-          audioEl.removeAttribute('src');
-        }).catch(() => {});
-      }
+      const unlockAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
+      unlockAudio.play().then(() => {
+        unlockAudio.pause();
+      }).catch(() => {});
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (AudioCtx) {
         if (!this.desktopSoundCtx) this.desktopSoundCtx = new AudioCtx();
@@ -483,17 +484,12 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     this.incomingCallPrompt = null;
     const myId = (this.isSuperAdminLoggedIn || this.currentLoggedInUser?.email === 'xuanngocit@gmail.com') ? 'xuanngocit@gmail.com' : (this.currentLoggedInUser?.username || '051197003685');
 
-    // Mở khóa audio element và AudioContext bằng user gesture click
+    // Mở khóa audio element và AudioContext bằng user gesture click (dùng scratch audio an toàn)
     try {
-      const audioEl = document.getElementById('vneduDesktopRemoteAudio') as HTMLAudioElement;
-      if (audioEl) {
-        audioEl.muted = false;
-        audioEl.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
-        audioEl.play().then(() => {
-          audioEl.pause();
-          audioEl.removeAttribute('src');
-        }).catch(() => {});
-      }
+      const unlockAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
+      unlockAudio.play().then(() => {
+        unlockAudio.pause();
+      }).catch(() => {});
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (AudioCtx) {
         if (!this.desktopSoundCtx) this.desktopSoundCtx = new AudioCtx();
@@ -725,7 +721,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
           });
         }
 
-        // Nhận âm thanh từ điện thoại phát ra loa máy tính (kết hợp Audio Element và Web Audio API)
+        // Nhận âm thanh từ điện thoại phát ra loa máy tính
         this.desktopPeerConnection.ontrack = (event) => {
           const stream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
           let audioEl = document.getElementById('vneduDesktopRemoteAudio') as HTMLAudioElement;
@@ -734,6 +730,9 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
             audioEl.id = 'vneduDesktopRemoteAudio';
             audioEl.autoplay = true;
             (audioEl as any).playsInline = true;
+            audioEl.setAttribute('playsinline', 'true');
+            audioEl.setAttribute('webkit-playsinline', 'true');
+            audioEl.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0.01;pointer-events:none;';
             document.body.appendChild(audioEl);
           }
           this.desktopRemoteAudioEl = audioEl;
@@ -742,23 +741,14 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
           audioEl.volume = this.isDesktopSpeakerOn ? 1.0 : 0.6;
           const p = audioEl.play();
           if (p !== undefined) {
-            p.catch(e => console.warn('Desktop remote audio play error:', e));
-          }
-
-          try {
-            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-            if (AudioCtx) {
-              if (!this.desktopSoundCtx) this.desktopSoundCtx = new AudioCtx();
-              if (this.desktopSoundCtx.state === 'suspended') this.desktopSoundCtx.resume();
-              const src = this.desktopSoundCtx.createMediaStreamSource(stream);
-              const gainNode = this.desktopSoundCtx.createGain();
-              gainNode.gain.value = this.isDesktopSpeakerOn ? 2.5 : 1.0;
-              src.connect(gainNode);
-              gainNode.connect(this.desktopSoundCtx.destination);
-              this.desktopGainNode = gainNode;
-            }
-          } catch (err) {
-            console.warn('Desktop Web Audio routing error:', err);
+            p.catch(e => {
+              console.warn('Desktop remote audio play error:', e);
+              const retry = () => {
+                audioEl.play().catch(() => {});
+                window.removeEventListener('click', retry);
+              };
+              window.addEventListener('click', retry, { once: true });
+            });
           }
         };
 

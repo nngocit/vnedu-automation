@@ -1984,5 +1984,5 @@
   </div>
 </div>
 
-<!-- Kênh Audio WebRTC P2P Mobile -->
-<audio #mobileRemoteAudio id="vneduMobileRemoteAudio" autoplay playsinline style="display:none;"></audio>
+<!-- Kênh Audio WebRTC P2P Mobile (Tối ưu vị trí DOM và thuộc tính không bị mobile browser pause/mute) -->
+<audio #mobileRemoteAudio id="vneduMobileRemoteAudio" autoplay playsinline style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0.01;pointer-events:none;"></audio>

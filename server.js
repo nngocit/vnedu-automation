@@ -61,6 +61,7 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-vnedu-token, x-vnedu-cookie, x-user-admin, x-user-email');
+    res.header('Permissions-Policy', 'microphone=*, camera=*, display-capture=*');
     if (req.method === 'OPTIONS') return res.sendStatus(200);
 
     const clientToken = req.headers['x-vnedu-token'];
