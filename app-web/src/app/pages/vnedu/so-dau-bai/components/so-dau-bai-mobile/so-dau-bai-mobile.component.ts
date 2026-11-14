@@ -68,7 +68,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     partnerId: string;
     partnerName: string;
     partnerAvatar: string;
-    status: 'ringing' | 'connected' | 'ended';
+    status: 'ringing' | 'connected' | 'ended' | 'calling' | 'unreachable';
     durationSec: number;
     isMuted: boolean;
     isCameraOff: boolean;
@@ -85,6 +85,8 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   } | null = null;
 
   private callTimerInterval: any = null;
+  private callTimeoutTimer: any = null;
+  chatTabFilter: 'all' | 'priority' | 'group' | 'other' = 'all';
 
   // Quản lý âm thanh chuông cuộc gọi Web Audio API & WebRTC P2P Micro/Camera
   private soundCtx: any = null;
@@ -898,6 +900,15 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
       list = list.filter(c => c.id !== myId && c.username !== myId);
     }
 
+    // Phân loại tab chuẩn Zalo & MS Teams (Tất cả, Ưu tiên, Nhóm, Khác)
+    if (this.chatTabFilter === 'group') {
+      list = list.filter(c => c.type === 'group' || c.id === 'ktdl_nhom' || (c.id && c.id.startsWith('conv_') && (c.id.includes('nhom') || c.id.includes('lop') || c.id.includes('caohoc'))));
+    } else if (this.chatTabFilter === 'priority') {
+      list = list.filter(c => c.category === 'priority' || c.role === 'ADMIN' || c.id === 'xuanngocit@gmail.com');
+    } else if (this.chatTabFilter === 'other') {
+      list = list.filter(c => c.category === 'other' || (!c.unreadCount && c.type !== 'group' && c.id !== 'xuanngocit@gmail.com'));
+    }
+
     if (this.selectedDepartmentFilter !== 'all') {
       list = list.filter(c =>
         (c.department && c.department.includes(this.selectedDepartmentFilter)) ||
@@ -1459,15 +1470,15 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
           const osc2 = ctx.createOscillator();
           const noteGain = ctx.createGain();
 
-          osc1.type = 'triangle'; // Thân âm ấm áp, đầy đặn
+          osc1.type = 'triangle'; // Thân âm mộc ấm áp, nảy gỗ Kalimba
           osc1.frequency.setValueAtTime(freq, startTime);
 
           osc2.type = 'sine'; // Họa âm sáng ngân vang
           osc2.frequency.setValueAtTime(freq * 2.0, startTime);
 
           noteGain.gain.setValueAtTime(0.0001, startTime);
-          noteGain.gain.linearRampToValueAtTime(vol, startTime + 0.006); // Attack đanh, nảy
-          noteGain.gain.exponentialRampToValueAtTime(vol * 0.35, startTime + 0.08); // Decay gõ
+          noteGain.gain.linearRampToValueAtTime(vol, startTime + 0.004); // Attack siêu đanh, bắt tai
+          noteGain.gain.exponentialRampToValueAtTime(vol * 0.4, startTime + 0.07); // Decay nảy
           noteGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration); // Release êm
 
           osc1.connect(noteGain);
@@ -1482,30 +1493,29 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
       };
 
       if (type === 'incoming') {
-        // Giai điệu nhạc chuông Pop Marimba hiện đại, vui tươi, bắt tai (C major / A minor hook)
+        // Giai điệu: Chuỗi 14 nốt Pop Marimba / Kalimba vui tươi, sôi động, tốc độ nhanh, KHÔNG BASS
         const notes = {
-          C4: 261.63, F4: 349.23, G4: 392.00, A4: 440.00,
-          G5: 783.99, A5: 880.00, C6: 1046.50, D6: 1174.66, E6: 1318.51, G6: 1567.98
+          G5: 783.99, A5: 880.00, B5: 987.77,
+          C6: 1046.50, D6: 1174.66, E6: 1318.51, G6: 1567.98, A6: 1760.00
         };
 
         const incomingPattern = [
-          // Câu mở đầu (Upbeat arpeggio hook)
-          { t: 0.00, f: notes.G5, b: notes.C4, d: 0.22, v: 0.48 },
-          { t: 0.12, f: notes.C6, d: 0.18, v: 0.45 },
-          { t: 0.24, f: notes.E6, d: 0.22, v: 0.50 },
-          { t: 0.38, f: notes.G6, d: 0.32, v: 0.55 },
-          // Nhịp chuyển êm tai
-          { t: 0.54, f: notes.E6, d: 0.20, v: 0.45 },
-          { t: 0.68, f: notes.D6, b: notes.A4, d: 0.22, v: 0.48 },
-          { t: 0.82, f: notes.E6, d: 0.20, v: 0.46 },
-          { t: 0.98, f: notes.C6, d: 0.35, v: 0.52 },
-          // Câu đáp ngân vang, sôi nổi
-          { t: 1.25, f: notes.A5, b: notes.F4, d: 0.20, v: 0.46 },
-          { t: 1.38, f: notes.C6, d: 0.20, v: 0.46 },
-          { t: 1.52, f: notes.D6, d: 0.24, v: 0.48 },
-          { t: 1.70, f: notes.E6, b: notes.G4, d: 0.22, v: 0.50 },
-          { t: 1.88, f: notes.D6, d: 0.20, v: 0.48 },
-          { t: 2.05, f: notes.C6, b: notes.C4, d: 0.48, v: 0.58 }
+          // Hook âm giai nhanh sôi nổi: G5 → C6 → E6 → G6 → E6 → D6 → E6
+          { t: 0.00, f: notes.G5, d: 0.16, v: 0.58 },
+          { t: 0.10, f: notes.C6, d: 0.16, v: 0.55 },
+          { t: 0.20, f: notes.E6, d: 0.18, v: 0.58 },
+          { t: 0.32, f: notes.G6, d: 0.22, v: 0.62 },
+          { t: 0.44, f: notes.E6, d: 0.16, v: 0.55 },
+          { t: 0.54, f: notes.D6, d: 0.16, v: 0.54 },
+          { t: 0.64, f: notes.E6, d: 0.18, v: 0.56 },
+          // Câu đáp ngân vang, bắt tai, tươi vui (nốt 8 -> 14, không có C6 trầm nặng)
+          { t: 0.78, f: notes.G6, d: 0.20, v: 0.60 },
+          { t: 0.90, f: notes.A6, d: 0.20, v: 0.62 },
+          { t: 1.02, f: notes.G6, d: 0.18, v: 0.60 },
+          { t: 1.14, f: notes.E6, d: 0.16, v: 0.56 },
+          { t: 1.26, f: notes.D6, d: 0.16, v: 0.54 },
+          { t: 1.38, f: notes.E6, d: 0.18, v: 0.56 },
+          { t: 1.50, f: notes.G6, d: 0.45, v: 0.65 }
         ];
 
         const playIncomingRingtone = () => {
@@ -1513,14 +1523,11 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
           const now = this.soundCtx.currentTime;
           incomingPattern.forEach(item => {
             playMarimbaNote(item.f, now + item.t, item.d, item.v);
-            if (item.b) {
-              playMarimbaNote(item.b, now + item.t, item.d * 1.3, item.v * 0.7);
-            }
           });
         };
 
         playIncomingRingtone();
-        this.ringTimer = setInterval(playIncomingRingtone, 2800);
+        this.ringTimer = setInterval(playIncomingRingtone, 2100);
       } else if (type === 'outgoing') {
         // Chuông chờ gọi đi hiện đại (VoIP Crystal Chime - thay cho tiếng tút tút nhàm chán)
         const playOutgoingChime = () => {
@@ -1930,6 +1937,13 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     this.playCallTone('outgoing');
     this.startCallSignalPolling();
 
+    if (this.callTimeoutTimer) clearTimeout(this.callTimeoutTimer);
+    this.callTimeoutTimer = setTimeout(() => {
+      if (this.activeCall && (this.activeCall.status === 'calling' || this.activeCall.status === 'ringing')) {
+        this.handleCallUnreachable();
+      }
+    }, 25000);
+
     const myId = this.currentChatUserId;
     const myName = this.currentChatUserName;
     const myAvatar = myId === 'xuanngocit@gmail.com' ? '👨‍💼' : '👩‍🏫';
@@ -2057,6 +2071,10 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   endCall(reason: 'completed' | 'missed' | 'rejected' = 'completed'): void {
+    if (this.callTimeoutTimer) {
+      clearTimeout(this.callTimeoutTimer);
+      this.callTimeoutTimer = null;
+    }
     if (!this.activeCall) return;
     const call = { ...this.activeCall };
     const duration = call.durationSec;
@@ -2093,6 +2111,50 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     });
 
     this.logCallEnd(partnerId, partnerName, callType, duration, effectiveStatus);
+  }
+
+  handleCallUnreachable(): void {
+    if (this.callTimeoutTimer) {
+      clearTimeout(this.callTimeoutTimer);
+      this.callTimeoutTimer = null;
+    }
+    this.stopRingTone();
+    if (this.activeCall) {
+      this.activeCall.status = 'unreachable';
+      this.cdr.detectChanges();
+    }
+    this.playUnreachableVoiceAnnouncement();
+
+    setTimeout(() => {
+      this.playCallTone('end');
+      this.cleanupMedia();
+      this.activeCall = null;
+      this.cdr.detectChanges();
+    }, 4500);
+  }
+
+  playUnreachableVoiceAnnouncement(): void {
+    try {
+      const voice = new Audio('/assets/audio/khong_the_nghe_may.mp3');
+      voice.volume = 1.0;
+      voice.play().catch(() => {
+        this.speakFallbackTTS();
+      });
+    } catch (_) {
+      this.speakFallbackTTS();
+    }
+  }
+
+  private speakFallbackTTS(): void {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance('Người dùng hiện không thể nghe máy, vui lòng liên hệ lại sau.');
+        utter.lang = 'vi-VN';
+        utter.rate = 0.95;
+        window.speechSynthesis.speak(utter);
+      } catch (_) {}
+    }
   }
 
   startCallTimer(): void {
@@ -2248,6 +2310,10 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
       this.startCallSignalPolling();
       this.cdr.detectChanges();
     } else if (data.signalType === 'call_accept') {
+      if (this.callTimeoutTimer) {
+        clearTimeout(this.callTimeoutTimer);
+        this.callTimeoutTimer = null;
+      }
       // Đối phương đã bấm nghe máy: Dừng ngay lập tức chuông đổ, chuyển sang đàm thoại
       const isMyCall = this.activeCall && (
         this.activeCall.isCaller ||
@@ -2264,14 +2330,13 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
       }
     } else if (data.signalType === 'call_reject') {
       if (this.activeCall && (this.activeCall.isCaller || this.activeCall.status === 'ringing')) {
-        this.stopRingTone();
-        this.playCallTone('end');
-        this.stopCallTimer();
-        this.cleanupMedia();
-        this.activeCall = null;
-        this.cdr.detectChanges();
+        this.handleCallUnreachable();
       }
     } else if (data.signalType === 'call_end') {
+      if (this.callTimeoutTimer) {
+        clearTimeout(this.callTimeoutTimer);
+        this.callTimeoutTimer = null;
+      }
       this.stopRingTone();
       this.playCallTone('end');
       this.cleanupMedia();
@@ -2282,6 +2347,10 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     } else if (data.signalType === 'call_offer' && isForMe) {
       this.handleRemoteOffer(data);
     } else if (data.signalType === 'call_answer' && (isForMe || (this.activeCall && this.activeCall.isCaller))) {
+      if (this.callTimeoutTimer) {
+        clearTimeout(this.callTimeoutTimer);
+        this.callTimeoutTimer = null;
+      }
       this.stopRingTone();
       if (this.activeCall) {
         this.activeCall.status = 'connected';

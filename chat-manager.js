@@ -753,6 +753,35 @@ function createGroupChat({ name, creatorId, creatorName, memberIds, avatar = '�
 // 4. BACKWARD COMPATIBILITY CHO ROUTE CŨ
 // ========================================================
 function getRealChatUsers() {
+    if (useSqlite && sqliteDb) {
+        try {
+            const convs = getConversations('', 'all', '');
+            if (convs && convs.length > 0) {
+                return convs.map(c => ({
+                    id: c.id,
+                    username: c.id,
+                    email: `${c.id}@vnedu.vn`,
+                    name: c.name,
+                    title: c.name,
+                    department: c.type === 'group' ? 'Nhóm Thảo Luận' : 'Tổ Chuyên Môn THCS An Lập',
+                    subject: c.type === 'group' ? 'Nhóm' : 'Giáo viên',
+                    school: 'Trường THCS An Lập',
+                    role: c.id === 'xuanngocit@gmail.com' ? 'ADMIN' : (c.type === 'group' ? 'GROUP' : 'TEACHER'),
+                    accountType: c.id === 'xuanngocit@gmail.com' ? 'Quản Trị Viên' : (c.type === 'group' ? 'Nhóm Trò Chuyện' : 'Giáo Viên vnEdu'),
+                    avatarEmoji: c.avatar || (c.type === 'group' ? '👥' : '👤'),
+                    avatarBg: c.type === 'group' ? '#e0f2fe' : (c.id === 'xuanngocit@gmail.com' ? '#eff6ff' : '#fdf2f8'),
+                    isOnline: true,
+                    type: c.type,
+                    category: c.category || (c.type === 'group' ? 'group' : 'priority'),
+                    lastMessage: c.lastMessage || 'Chưa có tin nhắn',
+                    lastTime: c.lastTime || 'Hôm nay',
+                    unreadCount: c.unreadCount || 0,
+                    pinnedMessage: c.pinnedMessage
+                }));
+            }
+        } catch (_) {}
+    }
+
     const contactList = getContacts().map(c => ({
         id: c.id,
         username: c.id,
@@ -770,29 +799,6 @@ function getRealChatUsers() {
         unreadCount: 0
     }));
 
-    if (useSqlite && sqliteDb) {
-        try {
-            const groupRows = sqliteDb.prepare("SELECT * FROM chat_conversations WHERE type = 'group'").all();
-            const groupList = groupRows.map(g => ({
-                id: g.id,
-                username: g.id,
-                email: `${g.id}@vnedu.group`,
-                name: g.name,
-                title: g.name,
-                department: 'Nhóm thảo luận KTDL',
-                subject: 'Nhóm',
-                school: 'vnEdu & Zalo',
-                role: 'GROUP',
-                type: 'group',
-                accountType: 'Nhóm Trò Chuyện',
-                avatarEmoji: g.avatar || '👥',
-                avatarBg: '#fef3c7',
-                isOnline: true,
-                unreadCount: g.unread_count || 0
-            }));
-            return [...groupList, ...contactList];
-        } catch (_) {}
-    }
     return contactList;
 }
 

@@ -2110,86 +2110,320 @@ $tnvn-text-muted: #64748b;
   }
 }
 
+// ========================================================
+// META ASTRYX DESIGN SYSTEM TOKENS & NATIVE CHAT / CALL
+// ========================================================
+:root {
+  --astryx-primary: #2563eb;
+  --astryx-primary-hover: #1d4ed8;
+  --astryx-primary-subtle: #eff6ff;
+  --astryx-success: #22c55e;
+  --astryx-danger: #ef4444;
+  --astryx-warning: #f59e0b;
+  --astryx-surface: #ffffff;
+  --astryx-surface-subtle: #f8fafc;
+  --astryx-surface-hover: #f1f5f9;
+  --astryx-border: #e2e8f0;
+  --astryx-border-subtle: #f1f5f9;
+  --astryx-text-main: #0f172a;
+  --astryx-text-muted: #64748b;
+  --astryx-radius-sm: 8px;
+  --astryx-radius-md: 12px;
+  --astryx-radius-lg: 16px;
+  --astryx-radius-pill: 9999px;
+  --astryx-shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+// --------------------------------------------------------
+// GIAO DIỆN CHAT NATIVE CHUẨN MS TEAMS & ZALO (ASTRYX UI)
+// --------------------------------------------------------
+.native-chat-view {
+  min-height: 100%;
+  background: #ffffff;
+
+  .native-chat-top-panel {
+    background: #ffffff;
+    border-bottom: 1px solid #f1f5f9;
+
+    .btn-native-role-chip {
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      &:active {
+        transform: scale(0.96);
+      }
+    }
+  }
+
+  .native-search-panel {
+    .native-search-box {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+      &:focus-within {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+        background: #ffffff;
+      }
+    }
+  }
+
+  .native-category-tabs {
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    .native-cat-pill {
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+
+      &:active {
+        transform: scale(0.95);
+      }
+    }
+  }
+
+  .native-chat-list {
+    .native-chat-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      cursor: pointer;
+      position: relative;
+      background: #ffffff;
+      border-bottom: 1px solid #f8fafc;
+      transition: background-color 0.15s ease;
+
+      &:hover, &:active {
+        background-color: #f8fafc;
+      }
+
+      .native-avatar-wrap {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        flex-shrink: 0;
+
+        .native-avatar-emoji {
+          font-size: 24px;
+          line-height: 1;
+        }
+
+        .native-online-dot {
+          width: 12px;
+          height: 12px;
+          background: #22c55e;
+          border: 2px solid #ffffff;
+          border-radius: 50%;
+          position: absolute;
+          bottom: 0;
+          right: 0;
+        }
+      }
+
+      .native-chat-content {
+        min-width: 0;
+        flex: 1;
+
+        .native-chat-name {
+          font-size: 15px;
+          font-weight: 700;
+          color: #0f172a;
+        }
+
+        .native-role-tag {
+          font-size: 10px;
+          font-weight: 600;
+        }
+
+        .native-chat-time {
+          font-size: 11px;
+          color: #94a3b8;
+          font-weight: 500;
+        }
+
+        .native-chat-last-msg {
+          font-size: 13px;
+          color: #64748b;
+          line-height: 1.4;
+        }
+
+        .native-unread-badge {
+          background-color: #ef4444 !important;
+          color: #ffffff;
+          font-size: 10px;
+          font-weight: 700;
+          padding: 2px 7px;
+          border-radius: 9999px;
+          box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
+        }
+      }
+    }
+  }
+}
+
+// --------------------------------------------------------
+// MODAL CUỘC GỌI TOÀN MÀN HÌNH CHUẨN META ASTRYX / ZALO CALL
+// (KHỚP HOÀN TOÀN ẢNH USER GỬI: media_1794660536115_856e7608.jpg)
+// --------------------------------------------------------
 .zalo-call-overlay {
   animation: fadeIn 0.25s ease-out;
   user-select: none;
-}
+  background: linear-gradient(180deg, #0b0f19 0%, #111827 50%, #0f172a 100%) !important;
 
-.call-control-btn {
-  width: 64px;
-  height: 64px;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  transition: all 0.2s ease;
-  &:hover {
-    background: rgba(255, 255, 255, 0.25);
-    transform: scale(1.05);
+  .astryx-call-topbar {
+    .call-type-icon-badge {
+      transition: transform 0.2s ease;
+    }
+    .call-quality-pill {
+      font-size: 11px;
+      letter-spacing: 0.3px;
+    }
+  }
+
+  .call-center-stage {
+    .avatar-ring-container {
+      position: relative;
+      margin: 0 auto;
+
+      .pulse-ring {
+        position: absolute;
+        border-radius: 50%;
+        border: 1.5px solid rgba(59, 130, 246, 0.45);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+      }
+
+      .ring-1 {
+        width: 120px;
+        height: 120px;
+        border-color: rgba(59, 130, 246, 0.6);
+        animation: radarRingAnim 2.4s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+        animation-delay: 0s;
+      }
+
+      .ring-2 {
+        width: 148px;
+        height: 148px;
+        border-color: rgba(59, 130, 246, 0.4);
+        animation: radarRingAnim 2.4s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+        animation-delay: 0.7s;
+      }
+
+      .ring-3 {
+        width: 176px;
+        height: 176px;
+        border-color: rgba(59, 130, 246, 0.25);
+        animation: radarRingAnim 2.4s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+        animation-delay: 1.4s;
+      }
+
+      .call-main-avatar {
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6), 0 0 0 4px rgba(255, 255, 255, 0.1);
+      }
+    }
+
+    .call-partner-name {
+      letter-spacing: -0.02em;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  // Khối 3 nút điều khiển dưới đáy
+  .call-controls-bar {
+    .call-action-col {
+      width: 80px;
+
+      .call-circle-btn {
+        width: 62px;
+        height: 62px;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        cursor: pointer;
+
+        &:active {
+          transform: scale(0.92);
+        }
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.22);
+        }
+
+        &.btn-speaker-active {
+          background: #2563eb !important;
+          border-color: #3b82f6 !important;
+          box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5) !important;
+
+          &:hover {
+            background: #1d4ed8 !important;
+          }
+        }
+
+        &.btn-end-call {
+          width: 66px !important;
+          height: 66px !important;
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
+          box-shadow: 0 8px 24px rgba(239, 68, 68, 0.55) !important;
+
+          &:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+            transform: scale(1.04);
+          }
+
+          &:active {
+            transform: scale(0.92);
+          }
+        }
+
+        &.btn-active-muted {
+          background: #f59e0b !important;
+          border-color: #d97706 !important;
+          box-shadow: 0 6px 18px rgba(245, 158, 11, 0.45) !important;
+        }
+
+        &.btn-active-camoff {
+          background: #64748b !important;
+          border-color: #475569 !important;
+        }
+      }
+
+      .control-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.9) !important;
+        text-align: center;
+        margin-top: 4px;
+        letter-spacing: 0.2px;
+        white-space: nowrap;
+      }
+    }
   }
 }
 
-.btn-end-call {
-  width: 68px !important;
-  height: 68px !important;
-  background: #ef4444 !important;
-  &:hover {
-    background: #dc2626 !important;
-    transform: scale(1.08);
-  }
-}
-
-.btn-active-muted {
-  background: #f59e0b !important;
-  color: #ffffff !important;
-}
-
-.btn-active-camoff {
-  background: #64748b !important;
-  color: #ffffff !important;
-}
-
-.pulse-ring-container {
-  position: relative;
-}
-
-.pulse-ring {
-  position: absolute;
-  border-radius: 50%;
-  border: 2px solid rgba(59, 130, 246, 0.45);
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  animation: pulseRingAnim 2.2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
-}
-
-.ring-1 {
-  width: 105px;
-  height: 105px;
-  animation-delay: 0s;
-}
-
-.ring-2 {
-  width: 130px;
-  height: 130px;
-  animation-delay: 0.6s;
-}
-
-.ring-3 {
-  width: 155px;
-  height: 155px;
-  animation-delay: 1.2s;
-}
-
-@keyframes pulseRingAnim {
+@keyframes radarRingAnim {
   0% {
-    transform: translate(-50%, -50%) scale(0.85);
-    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(0.9);
+    opacity: 0.8;
   }
   50% {
-    transform: translate(-50%, -50%) scale(1.15);
-    opacity: 0.4;
+    transform: translate(-50%, -50%) scale(1.18);
+    opacity: 0.45;
   }
   100% {
-    transform: translate(-50%, -50%) scale(1.35);
+    transform: translate(-50%, -50%) scale(1.4);
     opacity: 0;
   }
 }

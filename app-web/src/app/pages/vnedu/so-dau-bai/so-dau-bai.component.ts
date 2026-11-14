@@ -276,7 +276,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     partnerId: string;
     partnerName: string;
     partnerAvatar: string;
-    status: 'ringing' | 'connected';
+    status: 'ringing' | 'connected' | 'ended' | 'calling' | 'unreachable';
     durationSec: number;
     isMuted: boolean;
     isCameraOff: boolean;
@@ -297,6 +297,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   private desktopGainNode: any = null;
   private desktopCallSignalPollTimer: any = null;
   private desktopLastCallSignalTimestamp: number = 0;
+  private desktopCallTimeoutTimer: any = null;
 
   constructor(
     private vneduService: VnEduService,
@@ -360,6 +361,10 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
       this.startDesktopCallSignalPolling();
       this.cdr.detectChanges();
     } else if (data.signalType === 'call_accept') {
+      if (this.desktopCallTimeoutTimer) {
+        clearTimeout(this.desktopCallTimeoutTimer);
+        this.desktopCallTimeoutTimer = null;
+      }
       const isMyCall = this.activeDesktopCall && (
         this.activeDesktopCall.isCaller ||
         this.activeDesktopCall.status === 'ringing' ||
@@ -375,6 +380,10 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     } else if (data.signalType === 'call_offer' && isForMe) {
       this.handleDesktopRemoteOffer(data);
     } else if (data.signalType === 'call_answer' && (isForMe || (this.activeDesktopCall && (this.activeDesktopCall.isCaller || this.activeDesktopCall.status === 'connected' || this.activeDesktopCall.status === 'ringing')))) {
+      if (this.desktopCallTimeoutTimer) {
+        clearTimeout(this.desktopCallTimeoutTimer);
+        this.desktopCallTimeoutTimer = null;
+      }
       if (this.activeDesktopCall) {
         this.stopDesktopCallTone();
         this.activeDesktopCall.status = 'connected';
@@ -384,7 +393,15 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
       this.handleDesktopRemoteAnswer(data);
     } else if (data.signalType === 'call_ice' && (isForMe || (this.activeDesktopCall && this.activeDesktopCall.partnerId === data.callerId) || (this.incomingCallPrompt && this.incomingCallPrompt.callerId === data.callerId))) {
       this.handleDesktopRemoteIce(data);
-    } else if (data.signalType === 'call_end' || data.signalType === 'call_reject') {
+    } else if (data.signalType === 'call_reject') {
+      if (this.activeDesktopCall && (this.activeDesktopCall.isCaller || this.activeDesktopCall.status === 'ringing')) {
+        this.handleDesktopCallUnreachable();
+      }
+    } else if (data.signalType === 'call_end') {
+      if (this.desktopCallTimeoutTimer) {
+        clearTimeout(this.desktopCallTimeoutTimer);
+        this.desktopCallTimeoutTimer = null;
+      }
       this.stopDesktopCallTone();
       this.stopDesktopCallTimer();
       this.cleanupDesktopMedia();
@@ -453,6 +470,13 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
 
     this.playDesktopCallTone('outgoing');
     this.startDesktopCallSignalPolling();
+
+    if (this.desktopCallTimeoutTimer) clearTimeout(this.desktopCallTimeoutTimer);
+    this.desktopCallTimeoutTimer = setTimeout(() => {
+      if (this.activeDesktopCall && (this.activeDesktopCall.status === 'calling' || this.activeDesktopCall.status === 'ringing')) {
+        this.handleDesktopCallUnreachable();
+      }
+    }, 25000);
 
     const signalData = {
       signalType: 'call_start' as const,
@@ -562,6 +586,50 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
       }
     } catch (_) {}
     this.vneduService.sendCallSignal(signalData).subscribe();
+  }
+
+  handleDesktopCallUnreachable(): void {
+    if (this.desktopCallTimeoutTimer) {
+      clearTimeout(this.desktopCallTimeoutTimer);
+      this.desktopCallTimeoutTimer = null;
+    }
+    this.stopDesktopCallTone();
+    if (this.activeDesktopCall) {
+      this.activeDesktopCall.status = 'unreachable';
+      this.cdr.detectChanges();
+    }
+    this.playDesktopUnreachableVoiceAnnouncement();
+
+    setTimeout(() => {
+      this.playDesktopCallTone('end');
+      this.cleanupDesktopMedia();
+      this.activeDesktopCall = null;
+      this.cdr.detectChanges();
+    }, 4500);
+  }
+
+  playDesktopUnreachableVoiceAnnouncement(): void {
+    try {
+      const voice = new Audio('/assets/audio/khong_the_nghe_may.mp3');
+      voice.volume = 1.0;
+      voice.play().catch(() => {
+        this.speakDesktopFallbackTTS();
+      });
+    } catch (_) {
+      this.speakDesktopFallbackTTS();
+    }
+  }
+
+  private speakDesktopFallbackTTS(): void {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance('Người dùng hiện không thể nghe máy, vui lòng liên hệ lại sau.');
+        utter.lang = 'vi-VN';
+        utter.rate = 0.95;
+        window.speechSynthesis.speak(utter);
+      } catch (_) {}
+    }
   }
 
   toggleDesktopMute(): void {
@@ -955,15 +1023,15 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
           const osc2 = ctx.createOscillator();
           const noteGain = ctx.createGain();
 
-          osc1.type = 'triangle'; // Thân âm ấm áp, đầy đặn
+          osc1.type = 'triangle'; // Thân âm mộc ấm áp, nảy gỗ Kalimba
           osc1.frequency.setValueAtTime(freq, startTime);
 
           osc2.type = 'sine'; // Họa âm sáng ngân vang
           osc2.frequency.setValueAtTime(freq * 2.0, startTime);
 
           noteGain.gain.setValueAtTime(0.0001, startTime);
-          noteGain.gain.linearRampToValueAtTime(vol, startTime + 0.006); // Attack đanh, nảy
-          noteGain.gain.exponentialRampToValueAtTime(vol * 0.35, startTime + 0.08); // Decay gõ
+          noteGain.gain.linearRampToValueAtTime(vol, startTime + 0.004); // Attack siêu đanh, nảy
+          noteGain.gain.exponentialRampToValueAtTime(vol * 0.4, startTime + 0.07); // Decay nảy
           noteGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration); // Release êm
 
           osc1.connect(noteGain);
@@ -978,30 +1046,29 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
       };
 
       if (type === 'incoming') {
-        // Giai điệu nhạc chuông Pop Marimba hiện đại, vui tươi, bắt tai (C major / A minor hook)
+        // Giai điệu: Chuỗi 14 nốt Pop Marimba / Kalimba vui tươi, sôi động, tốc độ nhanh, KHÔNG BASS
         const notes = {
-          C4: 261.63, F4: 349.23, G4: 392.00, A4: 440.00,
-          G5: 783.99, A5: 880.00, C6: 1046.50, D6: 1174.66, E6: 1318.51, G6: 1567.98
+          G5: 783.99, A5: 880.00, B5: 987.77,
+          C6: 1046.50, D6: 1174.66, E6: 1318.51, G6: 1567.98, A6: 1760.00
         };
 
         const incomingPattern = [
-          // Câu mở đầu (Upbeat arpeggio hook)
-          { t: 0.00, f: notes.G5, b: notes.C4, d: 0.22, v: 0.48 },
-          { t: 0.12, f: notes.C6, d: 0.18, v: 0.45 },
-          { t: 0.24, f: notes.E6, d: 0.22, v: 0.50 },
-          { t: 0.38, f: notes.G6, d: 0.32, v: 0.55 },
-          // Nhịp chuyển êm tai
-          { t: 0.54, f: notes.E6, d: 0.20, v: 0.45 },
-          { t: 0.68, f: notes.D6, b: notes.A4, d: 0.22, v: 0.48 },
-          { t: 0.82, f: notes.E6, d: 0.20, v: 0.46 },
-          { t: 0.98, f: notes.C6, d: 0.35, v: 0.52 },
-          // Câu đáp ngân vang, sôi nổi
-          { t: 1.25, f: notes.A5, b: notes.F4, d: 0.20, v: 0.46 },
-          { t: 1.38, f: notes.C6, d: 0.20, v: 0.46 },
-          { t: 1.52, f: notes.D6, d: 0.24, v: 0.48 },
-          { t: 1.70, f: notes.E6, b: notes.G4, d: 0.22, v: 0.50 },
-          { t: 1.88, f: notes.D6, d: 0.20, v: 0.48 },
-          { t: 2.05, f: notes.C6, b: notes.C4, d: 0.48, v: 0.58 }
+          // Hook âm giai nhanh sôi nổi: G5 → C6 → E6 → G6 → E6 → D6 → E6
+          { t: 0.00, f: notes.G5, d: 0.16, v: 0.58 },
+          { t: 0.10, f: notes.C6, d: 0.16, v: 0.55 },
+          { t: 0.20, f: notes.E6, d: 0.18, v: 0.58 },
+          { t: 0.32, f: notes.G6, d: 0.22, v: 0.62 },
+          { t: 0.44, f: notes.E6, d: 0.16, v: 0.55 },
+          { t: 0.54, f: notes.D6, d: 0.16, v: 0.54 },
+          { t: 0.64, f: notes.E6, d: 0.18, v: 0.56 },
+          // Câu đáp ngân vang, bắt tai, tươi vui (nốt 8 -> 14, không có C6 trầm nặng)
+          { t: 0.78, f: notes.G6, d: 0.20, v: 0.60 },
+          { t: 0.90, f: notes.A6, d: 0.20, v: 0.62 },
+          { t: 1.02, f: notes.G6, d: 0.18, v: 0.60 },
+          { t: 1.14, f: notes.E6, d: 0.16, v: 0.56 },
+          { t: 1.26, f: notes.D6, d: 0.16, v: 0.54 },
+          { t: 1.38, f: notes.E6, d: 0.18, v: 0.56 },
+          { t: 1.50, f: notes.G6, d: 0.45, v: 0.65 }
         ];
 
         const playIncomingRingtone = () => {
@@ -1009,14 +1076,11 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
           const now = this.desktopRingAudioCtx.currentTime;
           incomingPattern.forEach(item => {
             playMarimbaNote(item.f, now + item.t, item.d, item.v);
-            if (item.b) {
-              playMarimbaNote(item.b, now + item.t, item.d * 1.3, item.v * 0.7);
-            }
           });
         };
 
         playIncomingRingtone();
-        this.desktopRingTimer = setInterval(playIncomingRingtone, 2800);
+        this.desktopRingTimer = setInterval(playIncomingRingtone, 2100);
       } else if (type === 'outgoing') {
         // Chuông chờ gọi đi hiện đại (VoIP Crystal Chime - thay cho tiếng tút tút nhàm chán)
         const playOutgoingChime = () => {

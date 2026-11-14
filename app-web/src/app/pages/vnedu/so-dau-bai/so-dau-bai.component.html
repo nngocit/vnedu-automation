@@ -2076,14 +2076,21 @@
         <span class="active-pulse-dot position-absolute bottom-0 end-0 rounded-circle bg-success border border-dark animate-pulse"
               style="width: 12px; height: 12px;"></span>
       </div>
-      <div class="min-w-0">
+      <div class="min-w-0" *ngIf="activeDesktopCall.status !== 'unreachable'">
         <div class="fw-bold fs-7 text-white text-truncate">{{ activeDesktopCall.partnerName }}</div>
         <div class="d-flex align-items-center gap-2 mt-0.5">
-          <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-2 py-0.5 fs-9 fw-bold">
+          <span *ngIf="activeDesktopCall.status === 'connected'" class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-2 py-0.5 fs-9 fw-bold">
             ● {{ formatDesktopCallDuration(activeDesktopCall.durationSec) }}
           </span>
-          <span class="text-white-50 fs-9">HD Voice • Đang đàm thoại</span>
+          <span *ngIf="activeDesktopCall.status === 'ringing'" class="badge rounded-pill bg-warning-subtle text-warning border border-warning-subtle px-2 py-0.5 fs-9 fw-bold">
+            ● Đang đổ chuông...
+          </span>
+          <span class="text-white-50 fs-9">{{ activeDesktopCall.status === 'connected' ? 'HD Voice • Đang đàm thoại' : 'Chờ người nhận...' }}</span>
         </div>
+      </div>
+      <div class="min-w-0" *ngIf="activeDesktopCall.status === 'unreachable'">
+        <div class="fw-bold fs-7 text-danger text-truncate">📵 Người dùng hiện không thể nghe máy</div>
+        <div class="text-white-50 fs-9">Vui lòng liên hệ lại sau...</div>
       </div>
     </div>
 
