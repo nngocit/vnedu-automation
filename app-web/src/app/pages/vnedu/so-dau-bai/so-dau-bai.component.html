@@ -2007,3 +2007,52 @@
 <!-- TRỢ LÝ AI VNEDU (AI ASSISTANT CHATBOT WIDGET) -->
 <app-ai-assistant-widget [currentWeek]="currentWeek" [slots]="slots"></app-ai-assistant-widget>
 
+<!-- ======================================================== -->
+<!-- MODAL BÁO CUỘC GỌI ĐẾN TỨC THỜI TRÊN DESKTOP               -->
+<!-- THIẾT KẾ UI/UX PRO MAX CHUẨN DYNAMIC ISLAND                -->
+<!-- ======================================================== -->
+<div *ngIf="!isMobile && incomingCallPrompt"
+     class="incoming-call-modal"
+     style="z-index: 100000;">
+  <div class="incoming-call-inner d-flex align-items-center justify-content-between p-3 gap-3">
+    <!-- Cụm trái: Avatar phát sáng viền + Thông tin người gọi -->
+    <div class="d-flex align-items-center gap-3 min-w-0 flex-grow-1">
+      <div class="incoming-avatar-wrap position-relative flex-shrink-0">
+        <div class="incoming-avatar-circle d-flex align-items-center justify-content-center">
+          <span>{{ incomingCallPrompt.callerAvatar }}</span>
+        </div>
+        <div class="incoming-radar-ring"></div>
+      </div>
+      <div class="min-w-0">
+        <div class="fw-bold fs-7 text-truncate text-white line-clamp-1">{{ incomingCallPrompt.callerName }}</div>
+        <div class="call-type-badge d-flex align-items-center gap-1.5 mt-0.5">
+          <span class="live-pulse-dot"></span>
+          <span class="call-type-text fs-9 fw-semibold">
+            {{ incomingCallPrompt.callType === 'video' ? 'Cuộc gọi video đến...' : 'Cuộc gọi thoại đến...' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cụm phải: Nút Từ chối & Nút Trả lời -->
+    <div class="d-flex align-items-center gap-2.5 flex-shrink-0">
+      <button type="button"
+              class="btn-call-action btn-call-reject rounded-circle border-0 d-flex align-items-center justify-content-center shadow-lg transition-all"
+              (click)="rejectDesktopIncomingCall()"
+              title="Từ chối cuộc gọi">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20" style="transform: rotate(135deg);">
+          <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.43-3.9-6.63-6.82l1.97-1.61c.24-.26.35-.64.24-1.01A11.36 11.36 0 0 1 8.92 4c0-.55-.45-1-1-1H4.35c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.62c0-.55-.45-1-1-1z"/>
+        </svg>
+      </button>
+      <button type="button"
+              class="btn-call-action btn-call-accept rounded-circle border-0 d-flex align-items-center justify-content-center shadow-lg transition-all"
+              (click)="acceptDesktopIncomingCall()"
+              title="Nhận cuộc gọi">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+          <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.43-3.9-6.63-6.82l1.97-1.61c.24-.26.35-.64.24-1.01A11.36 11.36 0 0 1 8.92 4c0-.55-.45-1-1-1H4.35c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.62c0-.55-.45-1-1-1z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+

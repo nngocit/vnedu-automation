@@ -2,74 +2,161 @@
   <!-- ======================================================== -->
   <!-- 1. TOP APP BAR NATIVE CHUẨN APP THANH NIÊN VIỆT NAM      -->
   <!-- ======================================================== -->
-  <header class="mobile-youth-header">
-    <div class="header-top-row d-flex align-items-center justify-content-between px-3 pt-3 pb-2">
-      <!-- Nút góc trái: Nếu ở tab con thì thành nút Back ←, nếu ở Lịch dạy thì thành icon Cá nhân -->
-      <button *ngIf="activeTab === 'schedule'"
-              type="button"
-              class="header-nav-btn"
-              (click)="activeTab = 'profile'"
-              title="Thông tin cá nhân & Tài khoản">
-        <svg class="header-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-          <circle cx="12" cy="7" r="4"></circle>
-        </svg>
-      </button>
+  <header class="mobile-youth-header" [class.chat-header-mode]="activeTab === 'messages' && !!activeContact">
+    <!-- ======================================================== -->
+    <!-- 1A. CHẾ ĐỘ NATIVE CHAT APP BAR KHI ĐANG TRÒ CHUYỆN      -->
+    <!-- ======================================================== -->
+    <div *ngIf="activeTab === 'messages' && !!activeContact"
+         class="chat-topbar-native d-flex align-items-center justify-content-between px-2.5 py-2">
+      <!-- Cụm trái: Nút Quay lại + Avatar + Tên & Trạng thái -->
+      <div class="d-flex align-items-center gap-2 min-w-0 flex-grow-1 me-2">
+        <button type="button"
+                class="btn-chat-nav-back rounded-circle border-0 d-flex align-items-center justify-content-center"
+                (click)="closeConversation()"
+                title="Quay lại danh bạ">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </button>
 
-      <button *ngIf="activeTab !== 'schedule'"
-              type="button"
-              class="header-nav-btn"
-              (click)="activeTab === 'messages' && activeContact ? activeContact = null : activeTab = 'schedule'"
-              title="Quay lại">
-        <svg class="header-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="19" y1="12" x2="5" y2="12"></line>
-          <polyline points="12 19 5 12 12 5"></polyline>
-        </svg>
-      </button>
+        <div class="chat-topbar-avatar position-relative flex-shrink-0"
+             [style.background]="activeContact.avatarBg">
+          <span>{{ activeContact.avatarEmoji }}</span>
+          <span *ngIf="activeContact.isOnline" class="chat-topbar-online-dot"></span>
+        </div>
 
-      <!-- Tiêu đề trung tâm linh hoạt theo từng tab -->
-      <div class="header-title-box text-center">
-        <ng-container [ngSwitch]="activeTab">
-          <ng-container *ngSwitchCase="'schedule'">
-            <h1 class="header-app-title mb-0">Sổ Đầu Bài & Lịch Dạy</h1>
-            <span class="header-app-sub">Hệ thống đồng bộ vnEdu</span>
-          </ng-container>
-          <ng-container *ngSwitchCase="'sync'">
-            <h1 class="header-app-title mb-0">Trung Tâm Đồng Bộ</h1>
-            <span class="header-app-sub">Quản lý CSDL vnEdu & Giám thị</span>
-          </ng-container>
-          <ng-container *ngSwitchCase="'profile'">
-            <h1 class="header-app-title mb-0">Cá Nhân</h1>
-            <span class="header-app-sub">Hồ sơ giáo viên & Đăng xuất</span>
-          </ng-container>
-          <ng-container *ngSwitchCase="'messages'">
-            <h1 class="header-app-title mb-0">{{ activeContact ? activeContact.name : 'Tin Nhắn Nội Bộ' }}</h1>
-            <span class="header-app-sub">{{ activeContact ? (activeContact.department + ' • ' + (activeContact.isOnline ? 'Trực tuyến' : 'Ngoại tuyến')) : 'Trao đổi chuyên môn với Thầy/Cô' }}</span>
-          </ng-container>
-          <ng-container *ngSwitchCase="'discover'">
-            <h1 class="header-app-title mb-0">Khám Phá</h1>
-            <span class="header-app-sub">Tiện ích giáo dục</span>
-          </ng-container>
-        </ng-container>
+        <div class="chat-topbar-meta min-w-0 flex-grow-1">
+          <div class="d-flex align-items-center gap-1.5 flex-nowrap">
+            <span class="chat-topbar-name text-truncate">{{ activeContact.name }}</span>
+            <span *ngIf="unreadSentMessagesCountForActiveContact > 0"
+                  class="chat-topbar-badge badge-unread flex-shrink-0"
+                  title="Chưa xem">
+              ● {{ unreadSentMessagesCountForActiveContact }} chưa xem
+            </span>
+            <span *ngIf="unreadSentMessagesCountForActiveContact === 0 && hasSentMessagesToActiveContact"
+                  class="chat-topbar-badge badge-seen flex-shrink-0"
+                  title="Đã xem">
+              ✓ Đã xem
+            </span>
+          </div>
+          <div class="chat-topbar-sub text-truncate">
+            <span *ngIf="isPartnerTyping" class="chat-topbar-typing">
+              <span>✍️</span> <span>Đang soạn tin...</span>
+            </span>
+            <span *ngIf="!isPartnerTyping" class="chat-topbar-status">
+              <span class="dot-status" [class.online]="activeContact.isOnline">●</span>
+              {{ activeContact.isOnline ? 'Đang trực tuyến' : 'Ngoại tuyến' }} • {{ activeContact.department }}
+            </span>
+          </div>
+        </div>
       </div>
 
-      <!-- Nút góc phải: Chuông thông báo 🔔 với chấm đỏ -->
-      <button type="button"
-              class="header-nav-btn position-relative"
-              (click)="showNotificationSheet = !showNotificationSheet"
-              title="Thông báo hệ thống">
-        <svg class="header-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-        </svg>
-        <span *ngIf="unreadNotificationsCount > 0"
-              class="header-badge-dot position-absolute top-0 end-0 translate-middle p-1 bg-danger border border-light rounded-circle">
-        </span>
-      </button>
+      <!-- Cụm phải: 3 nút biểu tượng Gọi thoại, Gọi video, Xóa chat -->
+      <div class="chat-topbar-actions d-flex align-items-center gap-1.5 flex-shrink-0">
+        <button type="button"
+                class="btn-chat-topbar-icon"
+                (click)="initiateCall('voice')"
+                title="Gọi thoại cho Thầy/Cô">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+          </svg>
+        </button>
+
+        <button type="button"
+                class="btn-chat-topbar-icon"
+                (click)="initiateCall('video')"
+                title="Gọi video cho Thầy/Cô">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+            <polygon points="23 7 16 12 23 17 23 7"></polygon>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+          </svg>
+        </button>
+
+        <button type="button"
+                class="btn-chat-topbar-icon btn-chat-delete-icon"
+                (click)="promptClearCurrentConversation()"
+                title="Xóa toàn bộ cuộc trò chuyện">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </button>
+      </div>
     </div>
 
-    <!-- Phông nền xanh mở rộng làm điểm tựa cho Card Profile chồng lên -->
-    <div class="header-curve-backdrop"></div>
+    <!-- ======================================================== -->
+    <!-- 1B. CHẾ ĐỘ HEADER BÌNH THƯỜNG (CÁC TAB KHÁC & DANH BẠ)  -->
+    <!-- ======================================================== -->
+    <ng-container *ngIf="!(activeTab === 'messages' && !!activeContact)">
+      <div class="header-top-row d-flex align-items-center justify-content-between px-3 pt-3 pb-2">
+        <!-- Nút góc trái: Nếu ở tab con thì thành nút Back ←, nếu ở Lịch dạy thì thành icon Cá nhân -->
+        <button *ngIf="activeTab === 'schedule'"
+                type="button"
+                class="header-nav-btn"
+                (click)="activeTab = 'profile'"
+                title="Thông tin cá nhân & Tài khoản">
+          <svg class="header-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </button>
+
+        <button *ngIf="activeTab !== 'schedule'"
+                type="button"
+                class="header-nav-btn"
+                (click)="activeTab === 'messages' && activeContact ? activeContact = null : activeTab = 'schedule'"
+                title="Quay lại">
+          <svg class="header-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </button>
+
+        <!-- Tiêu đề trung tâm linh hoạt theo từng tab -->
+        <div class="header-title-box text-center">
+          <ng-container [ngSwitch]="activeTab">
+            <ng-container *ngSwitchCase="'schedule'">
+              <h1 class="header-app-title mb-0">Sổ Đầu Bài & Lịch Dạy</h1>
+              <span class="header-app-sub">Hệ thống đồng bộ vnEdu</span>
+            </ng-container>
+            <ng-container *ngSwitchCase="'sync'">
+              <h1 class="header-app-title mb-0">Trung Tâm Đồng Bộ</h1>
+              <span class="header-app-sub">Quản lý CSDL vnEdu & Giám thị</span>
+            </ng-container>
+            <ng-container *ngSwitchCase="'profile'">
+              <h1 class="header-app-title mb-0">Cá Nhân</h1>
+              <span class="header-app-sub">Hồ sơ giáo viên & Đăng xuất</span>
+            </ng-container>
+            <ng-container *ngSwitchCase="'messages'">
+              <h1 class="header-app-title mb-0">{{ activeContact ? activeContact.name : 'Tin Nhắn Nội Bộ' }}</h1>
+              <span class="header-app-sub">{{ activeContact ? (activeContact.department + ' • ' + (activeContact.isOnline ? 'Trực tuyến' : 'Ngoại tuyến')) : 'Trao đổi chuyên môn với Thầy/Cô' }}</span>
+            </ng-container>
+            <ng-container *ngSwitchCase="'discover'">
+              <h1 class="header-app-title mb-0">Khám Phá</h1>
+              <span class="header-app-sub">Tiện ích giáo dục</span>
+            </ng-container>
+          </ng-container>
+        </div>
+
+        <!-- Nút góc phải: Chuông thông báo 🔔 với chấm đỏ -->
+        <button type="button"
+                class="header-nav-btn position-relative"
+                (click)="showNotificationSheet = !showNotificationSheet"
+                title="Thông báo hệ thống">
+          <svg class="header-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span *ngIf="unreadNotificationsCount > 0"
+                class="header-badge-dot position-absolute top-0 end-0 translate-middle p-1 bg-danger border border-light rounded-circle">
+          </span>
+        </button>
+      </div>
+
+      <!-- Phông nền xanh mở rộng làm điểm tựa cho Card Profile chồng lên -->
+      <div class="header-curve-backdrop"></div>
+    </ng-container>
   </header>
 
   <!-- ======================================================== -->
@@ -644,59 +731,65 @@
       <!-- ============================================== -->
       <div *ngIf="!activeContact" class="chat-list-view px-3 pt-3 pb-5 d-flex flex-column gap-3">
         <!-- Banner thông tin danh bạ thực tế từ CSDL vnEdu -->
-        <div class="chat-header-banner p-3 rounded-4 bg-white shadow-xs d-flex align-items-center justify-content-between">
-          <div class="d-flex align-items-center gap-2.5">
-            <div class="chat-school-icon-badge">
+        <div class="chat-header-banner p-3.5 rounded-4 bg-white shadow-xs border border-gray-100 d-flex align-items-center justify-content-between gap-2">
+          <div class="d-flex align-items-center gap-3 min-w-0">
+            <div class="chat-school-icon-badge rounded-circle bg-light-primary text-primary d-flex align-items-center justify-content-center flex-shrink-0"
+                 style="width: 44px; height: 44px; font-size: 22px;">
               🏫
             </div>
-            <div>
-              <h2 class="chat-banner-title mb-0 fw-bold text-gray-900 fs-6">Danh Bạ vnEdu Đã Đăng Nhập</h2>
-              <span class="chat-banner-sub text-muted fs-8">{{ teacherSchool }} • {{ filteredContacts.length }} tài khoản thực</span>
+            <div class="min-w-0">
+              <h2 class="chat-banner-title mb-0.5 fw-bold text-gray-900 fs-6 text-truncate">Danh Bạ vnEdu Đã Đăng Nhập</h2>
+              <span class="chat-banner-sub text-muted fs-8 d-block text-truncate">{{ teacherSchool }} • {{ filteredContacts.length }} tài khoản</span>
             </div>
           </div>
-          <div class="d-flex align-items-center gap-1.5 flex-wrap justify-content-end">
-            <span class="badge bg-light-success text-success fw-bold px-2.5 py-1.5 rounded-pill fs-8">
-              ✓ CSDL Thực Tế
+          <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
+            <span class="badge bg-light-success text-success fw-bold px-2.5 py-1.5 rounded-pill fs-8 d-none d-sm-inline-flex align-items-center gap-1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              CSDL Thật
             </span>
             <button type="button"
-                    class="btn btn-sm btn-outline-danger border-danger-subtle rounded-pill px-2.5 py-1 fs-9 fw-bold d-flex align-items-center gap-1 shadow-2xs"
+                    class="btn btn-sm btn-outline-danger border-danger-subtle rounded-pill px-2.5 py-1.5 fs-8 fw-bold d-flex align-items-center gap-1 shadow-2xs hover-lift"
                     (click)="promptClearAllMessages()"
                     title="Xóa toàn bộ lịch sử tin nhắn">
-              <span>🗑️</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
               <span>Xóa lịch sử</span>
             </button>
           </div>
         </div>
 
         <!-- Khung chuyển đổi vai trò người gửi (Demo & Kiểm thử chat 2 chiều thực tế) -->
-        <div class="chat-role-card p-3 rounded-4 bg-white shadow-xs border border-primary-subtle d-flex align-items-center justify-content-between gap-2">
-          <div class="d-flex align-items-center gap-2.5 min-w-0">
-            <div class="role-avatar-badge rounded-circle d-flex align-items-center justify-content-center shadow-2xs"
+        <div class="chat-role-card p-3 rounded-4 bg-white shadow-xs border border-primary-subtle d-flex align-items-center justify-content-between gap-2.5">
+          <div class="d-flex align-items-center gap-3 min-w-0">
+            <div class="role-avatar-badge rounded-circle d-flex align-items-center justify-content-center shadow-2xs flex-shrink-0"
                  [style.background]="currentChatRole === 'admin' ? '#eff6ff' : '#fdf2f8'"
-                 style="width: 40px; height: 40px; font-size: 18px; border: 2px solid"
+                 style="width: 42px; height: 42px; font-size: 20px; border: 2px solid"
                  [style.border-color]="currentChatRole === 'admin' ? '#3b82f6' : '#ec4899'">
               <span>{{ currentChatRole === 'admin' ? '👨‍💼' : '👩‍🏫' }}</span>
             </div>
             <div class="min-w-0">
-              <div class="d-flex align-items-center gap-1.5 mb-0.5">
-                <span class="fs-9 text-muted fw-bold text-uppercase">Bạn đang nhắn với tư cách:</span>
-                <span class="badge rounded-pill px-1.5 py-0.5 fs-9 fw-bold"
-                      [ngClass]="currentChatRole === 'admin' ? 'bg-primary text-white' : 'bg-pink-100 text-pink-700'"
-                      style="font-size: 10px;">
+              <div class="d-flex align-items-center gap-1.5 mb-0.5 flex-wrap">
+                <span class="fs-9 text-muted fw-bold text-uppercase tracking-wider">Đang chat với tư cách:</span>
+                <span class="badge rounded-pill px-2 py-0.5 fs-9 fw-bold shadow-2xs"
+                      [ngClass]="currentChatRole === 'admin' ? 'bg-primary text-white' : 'bg-pink-100 text-pink-700'">
                   {{ currentChatRole === 'admin' ? 'Admin' : 'Giáo viên' }}
                 </span>
               </div>
-              <div class="fw-bold text-gray-900 fs-7 text-truncate">
+              <div class="fw-bold text-gray-900 fs-6 text-truncate">
                 {{ currentChatUserName }}
               </div>
             </div>
           </div>
           <button type="button"
-                  class="btn-switch-role btn btn-sm py-1.5 px-3 rounded-pill fs-8 fw-bold d-flex align-items-center gap-1.5 border-0 shadow-2xs"
+                  class="btn-switch-role btn btn-sm py-1.5 px-3 rounded-pill fs-8 fw-bold d-flex align-items-center gap-1.5 border-0 shadow-2xs flex-shrink-0"
                   [style.background]="currentChatRole === 'admin' ? '#fdf2f8' : '#eff6ff'"
                   [style.color]="currentChatRole === 'admin' ? '#be185d' : '#1d4ed8'"
                   (click)="toggleChatRole()">
-            <span>🔄</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14">
+              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+            </svg>
             <span>Đổi vai trò</span>
           </button>
         </div>
@@ -728,10 +821,10 @@
           </div>
 
           <div *ngFor="let contact of filteredContacts"
-               class="chat-contact-card p-3 bg-white rounded-4 shadow-xs d-flex align-items-center justify-content-between gap-2 overflow-hidden"
+               class="chat-contact-card p-3 bg-white rounded-4 shadow-xs border border-gray-100 d-flex align-items-center justify-content-between gap-2.5 overflow-hidden transition-all"
                (click)="selectContact(contact)">
             
-            <div class="d-flex align-items-center gap-2.5 min-w-0 flex-grow-1 overflow-hidden">
+            <div class="d-flex align-items-center gap-3 min-w-0 flex-grow-1 overflow-hidden">
               <!-- Avatar tròn với chấm Online -->
               <div class="contact-avatar-wrap position-relative flex-shrink-0"
                    [style.background]="contact.avatarBg">
@@ -741,37 +834,38 @@
 
               <!-- Tên, Đơn vị & Tin nhắn cuối -->
               <div class="min-w-0 flex-grow-1 overflow-hidden">
-                <div class="d-flex align-items-center gap-1.5 mb-0.5">
+                <div class="d-flex align-items-center gap-1.5 mb-1 flex-wrap">
                   <h3 class="contact-name mb-0 fw-bold text-gray-900 text-truncate fs-6">
                     {{ contact.name }}
                   </h3>
-                  <span class="badge rounded-pill px-1.5 py-0.5 fs-9 fw-bold flex-shrink-0"
-                        [ngClass]="contact.role === 'ADMIN' ? 'bg-primary text-white' : 'bg-light-success text-success border border-success-subtle'">
-                    {{ contact.accountType || (contact.role === 'ADMIN' ? 'Admin' : 'Giáo Viên') }}
+                  <span class="badge rounded-pill px-2 py-0.5 fs-9 fw-bold flex-shrink-0"
+                        [ngClass]="contact.role === 'ADMIN' ? 'bg-primary text-white shadow-2xs' : 'bg-light-success text-success border border-success-subtle'">
+                    {{ contact.accountType || (contact.role === 'ADMIN' ? 'Quản Trị Viên' : 'Giáo Viên') }}
                   </span>
                 </div>
-                <div class="text-muted fs-8 text-truncate mb-0.5">
+                <div class="text-muted fs-8 text-truncate mb-1">
                   <span class="fw-semibold text-gray-700">{{ contact.department }}</span>
                 </div>
-                <p class="contact-last-msg mb-0 text-muted fs-8 text-truncate">
-                  {{ contact.lastMessage || 'Chưa có tin nhắn' }}
+                <p class="contact-last-msg mb-0 text-muted fs-8 text-truncate d-flex align-items-center gap-1">
+                  <span class="last-msg-text text-truncate">{{ contact.lastMessage || 'Chưa có tin nhắn' }}</span>
                 </p>
               </div>
             </div>
 
             <!-- Thời gian & Nút hành động / Badge chưa đọc -->
-            <div class="text-end flex-shrink-0 d-flex flex-column align-items-end gap-1" style="min-width: 86px;">
-              <span class="contact-time text-muted fs-9">{{ contact.lastTime }}</span>
+            <div class="text-end flex-shrink-0 d-flex flex-column align-items-end justify-content-center gap-1.5" style="min-width: 90px;">
+              <span class="contact-time text-muted fs-9 fw-semibold">{{ contact.lastTime }}</span>
 
               <!-- Badge số tin chưa đọc màu đỏ nổi bật (hiển thị số lượng chính xác) -->
               <span *ngIf="getUnreadCountForContact(contact) > 0"
-                    class="badge bg-danger text-white rounded-pill px-2 py-0.5 fs-9 fw-bold shadow-xs animate-pulse">
-                {{ getUnreadCountForContact(contact) }} tin chưa đọc
+                    class="badge bg-danger text-white rounded-pill px-2.5 py-1 fs-9 fw-bold shadow-xs animate-pulse">
+                {{ getUnreadCountForContact(contact) }} tin mới
               </span>
 
               <span *ngIf="getUnreadCountForContact(contact) === 0"
-                    class="badge bg-light-primary text-primary rounded-pill px-2 py-0.5 fs-9 fw-bold">
-                Nhắn tin ❯
+                    class="badge bg-light-primary text-primary rounded-pill px-2.5 py-1 fs-8 fw-bold d-inline-flex align-items-center gap-1 hover-lift">
+                <span>Nhắn tin</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><polyline points="9 18 15 12 9 6"></polyline></svg>
               </span>
             </div>
           </div>
@@ -782,97 +876,6 @@
       <!-- GIAO DIỆN 2: KHUNG CHAT TRỰC TIẾP VỚI GIÁO VIÊN -->
       <!-- ============================================== -->
       <div *ngIf="activeContact" class="chat-conversation-view d-flex flex-column">
-        <!-- Top bar nhỏ trong phòng chat -->
-        <div class="chat-conv-header px-3 py-2.5 bg-white border-bottom border-gray-200 d-flex align-items-center justify-content-between">
-          <div class="d-flex align-items-center gap-2.5 min-w-0">
-            <!-- Nút Back quay lại danh bạ -->
-            <button type="button"
-                    class="btn-back-chat rounded-circle border-0 bg-light p-2 d-flex align-items-center justify-content-center"
-                    (click)="closeConversation()"
-                    title="Quay lại danh bạ">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#2b59ff" stroke-width="2.5" width="18" height="18">
-                <line x1="19" y1="12" x2="5" y2="12"></line>
-                <polyline points="12 19 5 12 12 5"></polyline>
-              </svg>
-            </button>
-
-            <!-- Avatar & Tên người nhận -->
-            <div class="contact-avatar-sm position-relative flex-shrink-0"
-                 [style.background]="activeContact.avatarBg">
-              <span>{{ activeContact.avatarEmoji }}</span>
-              <span *ngIf="activeContact.isOnline" class="online-indicator-dot-sm position-absolute bottom-0 end-0"></span>
-            </div>
-
-            <div class="min-w-0">
-              <div class="d-flex align-items-center gap-1.5 mb-0.5 flex-wrap">
-                <h3 class="conv-partner-name mb-0 fw-bold text-gray-900 text-truncate fs-6">
-                  {{ activeContact.name }}
-                </h3>
-                <!-- Trạng thái xem tin nhắn đối phương như Zalo -->
-                <span *ngIf="unreadSentMessagesCountForActiveContact > 0"
-                      class="badge bg-danger text-white rounded-pill px-2 py-0.5 fs-9 fw-bold shadow-xs animate-pulse"
-                      title="Đối phương chưa xem tin nhắn bạn gửi">
-                  ● Chưa xem ({{ unreadSentMessagesCountForActiveContact }})
-                </span>
-                <span *ngIf="unreadSentMessagesCountForActiveContact === 0 && hasSentMessagesToActiveContact"
-                      class="badge bg-light-success text-success border border-success-subtle rounded-pill px-2 py-0.5 fs-9 fw-semibold"
-                      title="Đối phương đã xem tất cả tin nhắn">
-                  ✓ Đã xem
-                </span>
-              </div>
-              <div class="conv-partner-sub text-muted fs-8 d-flex align-items-center gap-1.5">
-                <span class="badge-dept-micro">{{ activeContact.department }}</span>
-                <span>•</span>
-                <span *ngIf="isPartnerTyping" class="text-primary fw-bold animate-pulse d-inline-flex align-items-center gap-1">
-                  <span>✍️</span>
-                  <span>Đang soạn tin...</span>
-                </span>
-                <span *ngIf="!isPartnerTyping" [class.text-success]="activeContact.isOnline" class="fw-semibold">
-                  {{ activeContact.isOnline ? 'Đang trực tuyến' : 'Ngoại tuyến' }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
-            <!-- Nút gọi thoại (Voice Call) -->
-            <button type="button"
-                    class="btn-call-voice rounded-circle border-0 p-2 d-flex align-items-center justify-content-center text-primary bg-light-primary"
-                    (click)="initiateCall('voice')"
-                    title="Gọi thoại cho Thầy/Cô">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-              </svg>
-            </button>
-
-            <!-- Nút gọi video (Video Call) -->
-            <button type="button"
-                    class="btn-call-video rounded-circle border-0 p-2 d-flex align-items-center justify-content-center text-primary bg-light-primary"
-                    (click)="initiateCall('video')"
-                    title="Gọi video cho Thầy/Cô">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17">
-                <polygon points="23 7 16 12 23 17 23 7"></polygon>
-                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-              </svg>
-            </button>
-
-            <!-- Nút xóa cuộc hội thoại này -->
-            <button type="button"
-                    class="btn-delete-conv rounded-pill btn-light-danger px-2.5 py-1.5 fs-8 text-danger border-0 fw-semibold d-flex align-items-center gap-1 shadow-2xs"
-                    (click)="promptClearCurrentConversation()"
-                    title="Xóa toàn bộ cuộc trò chuyện này">
-              <span>🗑️</span>
-              <span>Xóa chat</span>
-            </button>
-
-            <!-- Nút thao tác nhanh: Đóng chat -->
-            <button type="button"
-                    class="btn-close-conv rounded-pill btn-light px-2.5 py-1.5 fs-8 text-muted border-0 fw-semibold"
-                    (click)="closeConversation()">
-              ✕ Đóng
-            </button>
-          </div>
-        </div>
 
         <!-- Khung luồng tin nhắn (Chat Message Stream) -->
         <div class="chat-messages-scroll flex-grow-1 px-3 py-3 d-flex flex-column gap-3 overflow-y-auto">
@@ -894,22 +897,33 @@
           <!-- Các tin nhắn trong hội thoại -->
           <ng-container *ngFor="let msg of activeMessages">
             
-            <!-- Trường hợp Log Cuộc Gọi Thoại / Video -->
-            <div *ngIf="msg.isCallLog" class="chat-call-log-row d-flex justify-content-center my-1">
-              <div class="call-log-badge px-3 py-2 rounded-4 shadow-2xs border d-flex align-items-center gap-2.5"
-                   [class.border-success-subtle]="msg.callStatus === 'completed'"
-                   [class.bg-light-success]="msg.callStatus === 'completed'"
-                   [class.border-danger-subtle]="msg.callStatus !== 'completed'"
-                   [class.bg-light-danger]="msg.callStatus !== 'completed'">
-                <span class="call-badge-icon fs-5">{{ msg.callType === 'video' ? '📹' : '📞' }}</span>
+            <!-- Trường hợp Log Cuộc Gọi Thoại / Video (Native Component UI/UX Pro Max) -->
+            <div *ngIf="msg.isCallLog" class="chat-call-log-row d-flex justify-content-center my-2">
+              <div class="call-log-card px-3 py-2 rounded-4 shadow-2xs d-flex align-items-center gap-2.5"
+                   [class.call-completed]="msg.callStatus === 'completed'"
+                   [class.call-missed]="msg.callStatus !== 'completed'">
+                <!-- Single crisp SVG icon badge -->
+                <div class="call-card-icon-badge rounded-circle d-flex align-items-center justify-content-center flex-shrink-0">
+                  <!-- Video Call Icon -->
+                  <svg *ngIf="msg.callType === 'video'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                    <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                  </svg>
+                  <!-- Voice Call Icon -->
+                  <svg *ngIf="msg.callType !== 'video'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                  </svg>
+                </div>
                 <div class="min-w-0">
-                  <div class="fw-bold fs-8" [class.text-success]="msg.callStatus === 'completed'" [class.text-danger]="msg.callStatus !== 'completed'">
-                    {{ msg.text }}
+                  <div class="call-card-title fw-bold">
+                    {{ cleanCallLogText(msg.text) }}
                   </div>
-                  <div class="text-muted fs-9 d-flex align-items-center gap-1.5">
+                  <div class="call-card-meta text-muted d-flex align-items-center gap-1.5">
                     <span>{{ msg.time }}</span>
                     <span>•</span>
-                    <span>{{ msg.callStatus === 'completed' ? 'Đã hoàn tất' : 'Cuộc gọi nhỡ / Bị từ chối' }}</span>
+                    <span [class.text-success]="msg.callStatus === 'completed'" [class.text-danger]="msg.callStatus !== 'completed'">
+                      {{ msg.callStatus === 'completed' ? 'Đã hoàn tất' : 'Cuộc gọi nhỡ / Bị từ chối' }}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1031,23 +1045,25 @@
             </button>
           </div>
 
-          <!-- Input gửi text -->
+          <!-- Input gửi text chuẩn Native Mobile UI/UX Pro Max -->
           <div class="chat-input-controls d-flex align-items-center gap-2">
-            <input type="text"
-                   class="form-control-tnvn chat-text-input flex-grow-1 px-3 py-2.5 rounded-pill bg-light border-0 fs-7"
-                   [(ngModel)]="messageInputText"
-                   (input)="onMessageInputChange()"
-                   (keyup.enter)="sendMessage()"
-                   placeholder="Nhập tin nhắn với Thầy/Cô..."
-                   title="Nhập tin nhắn văn bản">
+            <div class="chat-input-pill-wrapper flex-grow-1 position-relative">
+              <input type="text"
+                     class="chat-native-input w-100"
+                     [(ngModel)]="messageInputText"
+                     (input)="onMessageInputChange()"
+                     (keyup.enter)="sendMessage()"
+                     placeholder="Nhập tin nhắn với Thầy/Cô..."
+                     title="Nhập tin nhắn văn bản">
+            </div>
 
+            <!-- Nút gửi dạng tròn chuẩn Native Mobile Action Button -->
             <button type="button"
-                    class="btn-send-chat rounded-pill px-3.5 py-2.5 d-flex align-items-center gap-1.5 fw-bold"
+                    class="btn-native-send rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
                     [disabled]="!messageInputText?.trim()"
                     (click)="sendMessage()"
                     title="Gửi tin nhắn">
-              <span>Gửi</span>
-              <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
                 <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
               </svg>
             </button>
@@ -1604,92 +1620,143 @@
         </div>
       </div>
 
-      <h2 class="call-partner-name text-white fw-bold fs-4 mb-1">{{ activeCall.partnerName }}</h2>
+      <h2 class="call-partner-name text-white fw-bold fs-3 mb-1 tracking-tight">{{ activeCall.partnerName }}</h2>
 
       <!-- Trạng thái kết nối / Đồng hồ đếm giờ -->
       <div class="call-status-indicator mt-3">
-        <span *ngIf="activeCall.status === 'ringing'" class="badge bg-warning text-dark rounded-pill px-3.5 py-1.5 fs-7 fw-bold animate-pulse">
-          🔔 Đang đổ chuông...
-        </span>
-        <span *ngIf="activeCall.status === 'connected'" class="badge bg-success text-white rounded-pill px-4 py-2 fs-6 fw-bold shadow-md">
-          ⏱️ {{ formatCallDuration(activeCall.durationSec) }}
-        </span>
+        <div *ngIf="activeCall.status === 'ringing'" 
+             class="call-ringing-pill d-inline-flex align-items-center gap-2 px-4 py-2 rounded-pill shadow-lg animate-pulse"
+             style="background: rgba(251, 191, 36, 0.2); border: 1px solid rgba(251, 191, 36, 0.4); backdrop-filter: blur(8px);">
+          <span class="ringing-dot rounded-circle bg-warning" style="width: 8px; height: 8px;"></span>
+          <span class="fs-7 fw-bold text-warning">Đang đổ chuông...</span>
+        </div>
+        <div *ngIf="activeCall.status === 'connected'" 
+             class="call-timer-pill d-inline-flex align-items-center gap-2 px-4.5 py-2 rounded-pill shadow-lg"
+             style="background: rgba(34, 197, 94, 0.2); border: 1px solid rgba(34, 197, 94, 0.4); backdrop-filter: blur(8px);">
+          <span class="connected-dot rounded-circle bg-success animate-pulse" style="width: 8px; height: 8px;"></span>
+          <span class="fs-6 fw-bold text-white tracking-wider font-monospace">{{ formatCallDuration(activeCall.durationSec) }}</span>
+        </div>
       </div>
-      <div *ngIf="activeCall.status === 'connected'" class="mt-2">
-        <span class="badge bg-white-20 text-white rounded-pill px-3 py-1 fs-9 fw-semibold">
-          🎙️ WebRTC P2P Audio • Đang kết nối âm thanh Micro
+      <div *ngIf="activeCall.status === 'connected'" class="mt-2.5">
+        <span class="badge rounded-pill px-3 py-1 fs-9 fw-semibold text-white-75"
+              style="background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.15); backdrop-filter: blur(6px);">
+          🎙️ WebRTC P2P Audio • Âm thanh HD bảo mật
         </span>
       </div>
     </div>
 
     <!-- Thanh điều khiển cuộc gọi dưới đáy -->
-    <div class="call-controls-bar d-flex align-items-center justify-content-center gap-4 pb-4">
+    <div class="call-controls-bar d-flex align-items-center justify-content-center gap-4 pb-5 pt-3">
       <!-- Nút Mic -->
       <button type="button"
-              class="call-control-btn rounded-circle border-0 d-flex flex-column align-items-center justify-content-center text-white"
+              class="call-control-btn rounded-circle border-0 d-flex flex-column align-items-center justify-content-center text-white transition-all"
               [class.btn-active-muted]="activeCall.isMuted"
               (click)="toggleCallMute()"
               title="Bật/Tắt Micro">
-        <span class="fs-4">{{ activeCall.isMuted ? '🔇' : '🎤' }}</span>
-        <span class="fs-9 mt-1">{{ activeCall.isMuted ? 'Bật mic' : 'Tắt tiếng' }}</span>
+        <div class="btn-icon-wrap d-flex align-items-center justify-content-center">
+          <!-- Mic ON SVG -->
+          <svg *ngIf="!activeCall.isMuted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+          </svg>
+          <!-- Mic OFF SVG -->
+          <svg *ngIf="activeCall.isMuted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
+            <line x1="1" y1="1" x2="23" y2="23"></line>
+            <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
+            <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+          </svg>
+        </div>
+        <span class="control-label fs-9 mt-1.5 fw-semibold">{{ activeCall.isMuted ? 'Bật mic' : 'Tắt tiếng' }}</span>
       </button>
 
       <!-- Nút Camera (nếu là video call) -->
       <button *ngIf="activeCall.type === 'video'"
               type="button"
-              class="call-control-btn rounded-circle border-0 d-flex flex-column align-items-center justify-content-center text-white"
+              class="call-control-btn rounded-circle border-0 d-flex flex-column align-items-center justify-content-center text-white transition-all"
               [class.btn-active-camoff]="activeCall.isCameraOff"
               (click)="toggleCallCamera()"
               title="Bật/Tắt Camera">
-        <span class="fs-4">{{ activeCall.isCameraOff ? '🚫' : '📷' }}</span>
-        <span class="fs-9 mt-1">{{ activeCall.isCameraOff ? 'Bật cam' : 'Tắt cam' }}</span>
+        <div class="btn-icon-wrap d-flex align-items-center justify-content-center">
+          <svg *ngIf="!activeCall.isCameraOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="22" height="22">
+            <polygon points="23 7 16 12 23 17 23 7"></polygon>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+          </svg>
+          <svg *ngIf="activeCall.isCameraOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="22" height="22">
+            <line x1="1" y1="1" x2="23" y2="23"></line>
+            <path d="M21 21l-3.34-3.34L16 16.34V12l7 5v-4l-7-5v1.34L10 3.34 3 1.34 1 3.34"></path>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+          </svg>
+        </div>
+        <span class="control-label fs-9 mt-1.5 fw-semibold">{{ activeCall.isCameraOff ? 'Bật cam' : 'Tắt cam' }}</span>
       </button>
 
-      <!-- Nút Cúp máy / Kết thúc -->
+      <!-- Nút Cúp máy / Kết thúc (Lực nhấn & màu chuẩn Apple/Zalo Call) -->
       <button type="button"
-              class="call-control-btn btn-end-call rounded-circle border-0 d-flex flex-column align-items-center justify-content-center text-white bg-danger shadow-xl"
+              class="call-control-btn btn-end-call rounded-circle border-0 d-flex flex-column align-items-center justify-content-center text-white shadow-xl transition-all"
               (click)="endCall()"
               title="Kết thúc cuộc gọi">
-        <span class="fs-4">📞</span>
-        <span class="fs-9 mt-1 fw-bold">Kết thúc</span>
+        <div class="btn-icon-wrap d-flex align-items-center justify-content-center">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24" style="transform: rotate(135deg);">
+            <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.43-3.9-6.63-6.82l1.97-1.61c.24-.26.35-.64.24-1.01A11.36 11.36 0 0 1 8.92 4c0-.55-.45-1-1-1H4.35c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.62c0-.55-.45-1-1-1z"/>
+          </svg>
+        </div>
+        <span class="control-label fs-9 mt-1.5 fw-bold">Kết thúc</span>
       </button>
     </div>
   </div>
 
   <!-- ======================================================== -->
   <!-- MODAL BÁO CUỘC GỌI ĐẾN TỨC THỜI (INCOMING CALL POPUP)       -->
+  <!-- THIẾT KẾ UI/UX PRO MAX CHUẨN DYNAMIC ISLAND / APPLE & ZALO  -->
   <!-- ======================================================== -->
   <div *ngIf="incomingCallPrompt"
-       class="incoming-call-modal position-fixed top-3 start-50 translate-middle-x p-3 text-white rounded-4 shadow-2xl d-flex align-items-center justify-content-between gap-3 animate-bounce-in"
-       style="z-index: 10060; width: 92%; max-width: 420px; backdrop-filter: blur(16px); background: rgba(15, 23, 42, 0.95); border: 1.5px solid rgba(255,255,255,0.2);">
-    <div class="d-flex align-items-center gap-2.5 min-w-0">
-      <div class="incoming-avatar-badge rounded-circle p-2 bg-white text-dark d-flex align-items-center justify-content-center fs-3 flex-shrink-0 animate-pulse" style="width: 48px; height: 48px;">
-        {{ incomingCallPrompt.callerAvatar }}
-      </div>
-      <div class="min-w-0">
-        <div class="fw-bold fs-7 text-truncate text-white">{{ incomingCallPrompt.callerName }}</div>
-        <div class="fs-9 text-success fw-bold d-flex align-items-center gap-1">
-          <span class="online-indicator-dot-sm"></span>
-          <span>{{ incomingCallPrompt.callType === 'video' ? '📹 Cuộc gọi video đến...' : '📞 Cuộc gọi thoại đến...' }}</span>
+       class="incoming-call-modal"
+       style="z-index: 100000;">
+    <div class="incoming-call-inner d-flex align-items-center justify-content-between p-3 gap-3">
+      <!-- Cụm trái: Avatar phát sáng viền + Thông tin người gọi -->
+      <div class="d-flex align-items-center gap-3 min-w-0 flex-grow-1">
+        <div class="incoming-avatar-wrap position-relative flex-shrink-0">
+          <div class="incoming-avatar-circle d-flex align-items-center justify-content-center">
+            <span>{{ incomingCallPrompt.callerAvatar }}</span>
+          </div>
+          <div class="incoming-radar-ring"></div>
+        </div>
+        <div class="min-w-0">
+          <div class="fw-bold fs-7 text-truncate text-white line-clamp-1">{{ incomingCallPrompt.callerName }}</div>
+          <div class="call-type-badge d-flex align-items-center gap-1.5 mt-0.5">
+            <span class="live-pulse-dot"></span>
+            <span class="call-type-text fs-9 fw-semibold">
+              {{ incomingCallPrompt.callType === 'video' ? 'Cuộc gọi video đến...' : 'Cuộc gọi thoại đến...' }}
+            </span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="d-flex align-items-center gap-2 flex-shrink-0">
-      <!-- Nút từ chối -->
-      <button type="button"
-              class="btn btn-danger btn-sm rounded-circle p-2.5 d-flex align-items-center justify-content-center shadow-md"
-              (click)="rejectIncomingCall()"
-              title="Từ chối cuộc gọi">
-        <span class="fs-6 fw-bold">✕</span>
-      </button>
-      <!-- Nút trả lời -->
-      <button type="button"
-              class="btn btn-success btn-sm rounded-circle p-2.5 d-flex align-items-center justify-content-center shadow-md animate-pulse"
-              (click)="acceptIncomingCall()"
-              title="Nhận cuộc gọi">
-        <span class="fs-6">📞</span>
-      </button>
+      <!-- Cụm phải: Nút Từ chối (Đỏ) & Nút Trả lời (Xanh lá) với SVG Pro Max -->
+      <div class="d-flex align-items-center gap-2.5 flex-shrink-0">
+        <!-- Nút từ chối -->
+        <button type="button"
+                class="btn-call-action btn-call-reject rounded-circle border-0 d-flex align-items-center justify-content-center shadow-lg transition-all"
+                (click)="rejectIncomingCall()"
+                title="Từ chối cuộc gọi">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20" style="transform: rotate(135deg);">
+            <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.43-3.9-6.63-6.82l1.97-1.61c.24-.26.35-.64.24-1.01A11.36 11.36 0 0 1 8.92 4c0-.55-.45-1-1-1H4.35c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.62c0-.55-.45-1-1-1z"/>
+          </svg>
+        </button>
+        <!-- Nút trả lời -->
+        <button type="button"
+                class="btn-call-action btn-call-accept rounded-circle border-0 d-flex align-items-center justify-content-center shadow-lg transition-all"
+                (click)="acceptIncomingCall()"
+                title="Nhận cuộc gọi">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+            <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.43-3.9-6.63-6.82l1.97-1.61c.24-.26.35-.64.24-1.01A11.36 11.36 0 0 1 8.92 4c0-.55-.45-1-1-1H4.35c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.62c0-.55-.45-1-1-1z"/>
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 </div>

@@ -15,11 +15,11 @@ const PORT = 3000;
 // Tìm thư mục chứa bản build tĩnh của Angular thông minh (Luôn ưu tiên thư mục có index.html mới nhất)
 function resolveDistDir() {
     const candidates = [
-        path.join(__dirname, '..', 'APP WEB', 'dist', 'demo1', 'browser'),
-        path.join(__dirname, 'app-web', 'dist', 'demo1', 'browser'),
         path.join(__dirname, 'public'),
-        path.join(__dirname, '..', 'dist', 'demo1', 'browser'),
+        path.join(__dirname, 'app-web', 'dist', 'demo1', 'browser'),
         path.join(__dirname, 'dist', 'demo1', 'browser'),
+        path.join(__dirname, '..', 'APP WEB', 'dist', 'demo1', 'browser'),
+        path.join(__dirname, '..', 'dist', 'demo1', 'browser'),
         path.join(__dirname, '..', 'app-web', 'dist', 'demo1', 'browser'),
         path.join(__dirname, '..', 'public')
     ];

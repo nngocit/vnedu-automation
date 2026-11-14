@@ -20,7 +20,7 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   @Input() isFutureWeek: boolean = false;
   @Input() isSavingBatch: boolean = false;
   @Input() isLoading: boolean = false;
-  @Input() appVersion: string = 'v2.8.20';
+  @Input() appVersion: string = 'v2.8.21';
   @Input() notifications: any[] = [];
   @Input() unreadNotificationsCount: number = 0;
 
@@ -398,7 +398,13 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     if (this.isSuperAdminLoggedIn || (this.currentLoggedInUser?.email === 'xuanngocit@gmail.com') || (this.currentLoggedInUser?.username === 'xuanngocit@gmail.com')) {
       this.currentChatRole = 'admin';
     } else {
-      this.currentChatRole = 'huyen';
+      // Đọc vai trò đã chọn từ sessionStorage để ghi nhớ trạng thái đổi vai trò khi mở tab khác
+      const savedRole = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('vnedu_chat_role') : null;
+      if (savedRole === 'admin' || savedRole === 'huyen') {
+        this.currentChatRole = savedRole as any;
+      } else {
+        this.currentChatRole = 'huyen';
+      }
     }
     this.initSelectedDay();
     this.loadChatUsersFromBackend();
@@ -838,6 +844,11 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
 
   toggleChatRole(): void {
     this.currentChatRole = this.currentChatRole === 'admin' ? 'huyen' : 'admin';
+    if (typeof sessionStorage !== 'undefined') {
+      try {
+        sessionStorage.setItem('vnedu_chat_role', this.currentChatRole);
+      } catch (_) {}
+    }
     // Đóng cuộc hội thoại nếu đang trò chuyện với chính mình
     if (this.activeContact) {
       const myId = this.currentChatUserId;
@@ -1038,6 +1049,11 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
   closeConversation(): void {
     this.activeContact = null;
     this.unreadMessagesCountBeforeOpening = 0;
+  }
+
+  cleanCallLogText(text: string): string {
+    if (!text) return '';
+    return text.replace(/^[📞📹\s]+/, '').trim();
   }
 
   get activeMessages(): any[] {
@@ -1644,8 +1660,8 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     const senderId = this.currentChatUserId;
     const senderName = this.currentChatUserName;
     const text = status === 'completed'
-      ? (callType === 'video' ? `📹 Cuộc gọi video (${this.formatCallDuration(durationSec)})` : `📞 Cuộc gọi thoại (${this.formatCallDuration(durationSec)})`)
-      : (callType === 'video' ? `📹 Cuộc gọi video nhỡ` : `📞 Cuộc gọi thoại nhỡ`);
+      ? (callType === 'video' ? `Cuộc gọi video (${this.formatCallDuration(durationSec)})` : `Cuộc gọi thoại (${this.formatCallDuration(durationSec)})`)
+      : (callType === 'video' ? `Cuộc gọi video nhỡ` : `Cuộc gọi thoại nhỡ`);
 
     const now = new Date();
     const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
@@ -1705,7 +1721,15 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
     const myId = this.currentChatUserId;
     if (!data) return;
 
-    if (data.signalType === 'call_start' && data.receiverId === myId) {
+    // Không tự báo chuông cho chính mình nếu cùng tài khoản phát cuộc gọi
+    if (data.callerId === myId) return;
+
+    const isForMe = (data.receiverId === myId) ||
+                    (this.currentChatRole === 'admin' && (data.receiverId === 'xuanngocit@gmail.com' || data.receiverId === 'admin')) ||
+                    (this.currentChatRole === 'huyen' && (data.receiverId === '051197003685' || data.receiverId === '051197003685@vnedu.vn')) ||
+                    (this.currentLoggedInUser && (data.receiverId === this.currentLoggedInUser.username || data.receiverId === this.currentLoggedInUser.email));
+
+    if (data.signalType === 'call_start' && isForMe) {
       this.incomingCallPrompt = {
         callerId: data.callerId,
         callerName: data.callerName,
@@ -1734,11 +1758,11 @@ export class SoDauBaiMobileComponent implements OnInit, OnChanges, OnDestroy {
       this.stopCallTimer();
       this.activeCall = null;
       this.cdr.detectChanges();
-    } else if (data.signalType === 'call_offer' && data.receiverId === myId) {
+    } else if (data.signalType === 'call_offer' && isForMe) {
       this.handleRemoteOffer(data);
-    } else if (data.signalType === 'call_answer' && data.receiverId === myId) {
+    } else if (data.signalType === 'call_answer' && isForMe) {
       this.handleRemoteAnswer(data);
-    } else if (data.signalType === 'call_ice' && data.receiverId === myId) {
+    } else if (data.signalType === 'call_ice' && isForMe) {
       this.handleRemoteIce(data);
     }
   }

@@ -50,7 +50,7 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   currentWeek = 10;
   realCurrentWeek = 10; // Tuần thực tế đang diễn ra trong năm học
   isMobile: boolean = false;
-  appVersion: string = 'v2.8.20';
+  appVersion: string = 'v2.8.21';
   dataSource: 'vnedu' | 'excel' = 'vnedu';
   todayStr = '';
   selectedClassFilter: string = 'all';
@@ -261,6 +261,18 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     isCurrentRealWeek: i + 1 === 10
   }));
 
+  // Quản lý thông báo cuộc gọi đến trên Desktop (Real-time BroadcastChannel & SSE)
+  incomingCallPrompt: {
+    callerId: string;
+    callerName: string;
+    callerAvatar: string;
+    callType: 'voice' | 'video';
+  } | null = null;
+  private desktopBroadcastChannel: any = null;
+  private desktopEventSource: any = null;
+  private desktopRingTimer: any = null;
+  private desktopRingAudioCtx: any = null;
+
   constructor(
     private vneduService: VnEduService,
     private authService: AuthService,
@@ -268,8 +280,151 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef
   ) {}
 
+  initDesktopCallListeners(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      if ('BroadcastChannel' in window) {
+        this.desktopBroadcastChannel = new BroadcastChannel('vnedu_chat_bus');
+        this.desktopBroadcastChannel.onmessage = (event: MessageEvent) => {
+          if (event?.data?.type === 'call_signal') {
+            this.handleDesktopCallSignal(event.data);
+          }
+        };
+      }
+    } catch (_) {}
+
+    try {
+      if ('EventSource' in window) {
+        this.desktopEventSource = new EventSource('/api/chat/stream');
+        this.desktopEventSource.onmessage = (event: MessageEvent) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data?.type === 'call_signal') {
+              this.handleDesktopCallSignal(data);
+            }
+          } catch (_) {}
+        };
+      }
+    } catch (_) {}
+  }
+
+  handleDesktopCallSignal(data: any): void {
+    if (!data || this.isMobile) return;
+    const myId = (this.isSuperAdminLoggedIn || this.currentLoggedInUser?.email === 'xuanngocit@gmail.com') ? 'xuanngocit@gmail.com' : (this.currentLoggedInUser?.username || '051197003685');
+    if (data.callerId === myId) return;
+
+    const isForMe = (data.receiverId === myId) ||
+                    (myId === 'xuanngocit@gmail.com' && (data.receiverId === 'xuanngocit@gmail.com' || data.receiverId === 'admin')) ||
+                    (myId === '051197003685' && (data.receiverId === '051197003685' || data.receiverId === '051197003685@vnedu.vn')) ||
+                    (this.currentLoggedInUser && (data.receiverId === this.currentLoggedInUser.username || data.receiverId === this.currentLoggedInUser.email));
+
+    if (data.signalType === 'call_start' && isForMe) {
+      this.incomingCallPrompt = {
+        callerId: data.callerId,
+        callerName: data.callerName,
+        callerAvatar: data.callerAvatar || (data.callerId === 'xuanngocit@gmail.com' ? '👨‍💼' : '👩‍🏫'),
+        callType: data.callType || 'voice'
+      };
+      this.playDesktopCallTone();
+      this.cdr.detectChanges();
+    } else if (data.signalType === 'call_end' || data.signalType === 'call_reject') {
+      this.stopDesktopCallTone();
+      this.incomingCallPrompt = null;
+      this.cdr.detectChanges();
+    }
+  }
+
+  acceptDesktopIncomingCall(): void {
+    if (!this.incomingCallPrompt) return;
+    const incoming = { ...this.incomingCallPrompt };
+    this.stopDesktopCallTone();
+    this.incomingCallPrompt = null;
+    const myId = (this.isSuperAdminLoggedIn || this.currentLoggedInUser?.email === 'xuanngocit@gmail.com') ? 'xuanngocit@gmail.com' : (this.currentLoggedInUser?.username || '051197003685');
+    const signalData = {
+      signalType: 'call_accept' as const,
+      callerId: incoming.callerId,
+      callerName: incoming.callerName,
+      receiverId: myId,
+      receiverName: this.teacherTitle,
+      callType: incoming.callType
+    };
+    try {
+      if (this.desktopBroadcastChannel) {
+        this.desktopBroadcastChannel.postMessage({ type: 'call_signal', ...signalData });
+      }
+    } catch (_) {}
+    this.vneduService.sendCallSignal(signalData).subscribe();
+    this.cdr.detectChanges();
+  }
+
+  rejectDesktopIncomingCall(): void {
+    if (!this.incomingCallPrompt) return;
+    const incoming = { ...this.incomingCallPrompt };
+    this.stopDesktopCallTone();
+    this.incomingCallPrompt = null;
+    const myId = (this.isSuperAdminLoggedIn || this.currentLoggedInUser?.email === 'xuanngocit@gmail.com') ? 'xuanngocit@gmail.com' : (this.currentLoggedInUser?.username || '051197003685');
+    const signalData = {
+      signalType: 'call_reject' as const,
+      callerId: incoming.callerId,
+      callerName: incoming.callerName,
+      receiverId: myId,
+      receiverName: this.teacherTitle,
+      callType: incoming.callType
+    };
+    try {
+      if (this.desktopBroadcastChannel) {
+        this.desktopBroadcastChannel.postMessage({ type: 'call_signal', ...signalData });
+      }
+    } catch (_) {}
+    this.vneduService.sendCallSignal(signalData).subscribe();
+    this.cdr.detectChanges();
+  }
+
+  private playDesktopCallTone(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      if (!this.desktopRingAudioCtx) {
+        this.desktopRingAudioCtx = new AudioCtx();
+      }
+      if (this.desktopRingAudioCtx.state === 'suspended') {
+        this.desktopRingAudioCtx.resume();
+      }
+      this.stopDesktopCallTone();
+      const playChime = () => {
+        if (!this.desktopRingAudioCtx) return;
+        const now = this.desktopRingAudioCtx.currentTime;
+        const osc1 = this.desktopRingAudioCtx.createOscillator();
+        const osc2 = this.desktopRingAudioCtx.createOscillator();
+        const gain = this.desktopRingAudioCtx.createGain();
+        osc1.type = 'sine'; osc2.type = 'triangle';
+        osc1.frequency.setValueAtTime(587.33, now);
+        osc1.frequency.exponentialRampToValueAtTime(880.00, now + 0.35);
+        osc2.frequency.setValueAtTime(659.25, now + 0.15);
+        osc2.frequency.exponentialRampToValueAtTime(1174.66, now + 0.55);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+        osc1.connect(gain); osc2.connect(gain);
+        gain.connect(this.desktopRingAudioCtx.destination);
+        osc1.start(now); osc2.start(now + 0.15);
+        osc1.stop(now + 1.2); osc2.stop(now + 1.2);
+      };
+      playChime();
+      this.desktopRingTimer = setInterval(playChime, 2500);
+    } catch (_) {}
+  }
+
+  private stopDesktopCallTone(): void {
+    if (this.desktopRingTimer) {
+      clearInterval(this.desktopRingTimer);
+      this.desktopRingTimer = null;
+    }
+  }
+
   ngOnInit(): void {
     this.checkScreenSize();
+    this.initDesktopCallListeners();
     const now = new Date();
     this.todayStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
 
@@ -342,6 +497,15 @@ export class SoDauBaiComponent implements OnInit, OnDestroy {
   private hasAutoOpenedMailbox: boolean = false;
 
   ngOnDestroy(): void {
+    this.stopDesktopCallTone();
+    if (this.desktopBroadcastChannel) {
+      try { this.desktopBroadcastChannel.close(); } catch (_) {}
+      this.desktopBroadcastChannel = null;
+    }
+    if (this.desktopEventSource) {
+      try { this.desktopEventSource.close(); } catch (_) {}
+      this.desktopEventSource = null;
+    }
     if (this.weatherTimer) {
       clearInterval(this.weatherTimer);
     }
