@@ -897,9 +897,9 @@ $tnvn-text-muted: #64748b;
     }
 
     .nav-label {
-      font-size: 13px !important;
-      font-weight: 600;
-      color: $tnvn-text-muted; // MÀU XÁM KHI CHƯA CHỌN
+      font-size: 11px !important;
+      font-weight: 500;
+      color: #64748b;
       line-height: 1;
       transition: color 0.15s ease;
     }
@@ -907,8 +907,12 @@ $tnvn-text-muted: #64748b;
     // ĐANG CHỌN (ACTIVE)
     &.active {
       .nav-label {
-        color: $tnvn-blue !important; // MÀU XANH KHI ĐANG CHỌN
-        font-weight: 800;
+        color: #2563eb !important;
+        font-weight: 700;
+      }
+      svg {
+        stroke: #2563eb !important;
+        transform: scale(1.05);
       }
     }
 

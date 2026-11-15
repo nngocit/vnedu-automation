@@ -857,9 +857,14 @@
                   <h3 class="native-chat-name mb-0 fw-bold text-gray-900 text-truncate fs-6">
                     {{ contact.name }}
                   </h3>
-                  <span class="native-role-tag badge rounded-pill px-2 py-0.5 fs-9 fw-semibold flex-shrink-0"
-                        [ngClass]="contact.role === 'ADMIN' ? 'bg-primary-subtle text-primary border border-primary-subtle' : (contact.role === 'GROUP' ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-success-subtle text-success border border-success-subtle')">
-                    {{ contact.role === 'ADMIN' ? 'Admin' : (contact.role === 'GROUP' ? 'Nhóm' : 'Giáo viên') }}
+                  <!-- Chỉ hiển thị badge cho vai trò đặc biệt: Admin hoặc Nhóm (chuẩn Astryx UI & Zalo, tránh lặp lại Giáo viên trên từng dòng) -->
+                  <span *ngIf="contact.role === 'ADMIN'"
+                        class="native-role-tag badge rounded-pill px-2 py-0.5 fs-9 fw-bold flex-shrink-0 bg-primary-subtle text-primary border border-primary-subtle">
+                    Admin
+                  </span>
+                  <span *ngIf="contact.role === 'GROUP'"
+                        class="native-role-tag badge rounded-pill px-2 py-0.5 fs-9 fw-bold flex-shrink-0 bg-indigo-subtle text-indigo-700 border border-indigo-subtle">
+                    Nhóm
                   </span>
                 </div>
                 <span class="native-chat-time text-muted fs-9 fw-semibold flex-shrink-0">
@@ -1579,11 +1584,8 @@
             [class.active]="activeTab === 'schedule'"
             (click)="activeTab = 'schedule'">
       <div class="nav-icon-box">
-        <svg *ngIf="activeTab === 'schedule'" viewBox="0 0 24 24" fill="#2b59ff" width="24" height="24">
-          <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/>
-        </svg>
-        <svg *ngIf="activeTab !== 'schedule'" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" width="24" height="24">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <svg viewBox="0 0 24 24" fill="none" [attr.stroke]="activeTab === 'schedule' ? '#2563eb' : '#64748b'" [attr.stroke-width]="activeTab === 'schedule' ? '2.4' : '2'" stroke-linecap="round" stroke-linejoin="round" width="24" height="24">
+          <rect x="3" y="4" width="18" height="18" rx="3" ry="3" [attr.fill]="activeTab === 'schedule' ? 'rgba(37, 99, 235, 0.12)' : 'none'"></rect>
           <line x1="16" y1="2" x2="16" y2="6"></line>
           <line x1="8" y1="2" x2="8" y2="6"></line>
           <line x1="3" y1="10" x2="21" y2="10"></line>
@@ -1598,13 +1600,8 @@
             [class.active]="activeTab === 'sync'"
             (click)="activeTab = 'sync'">
       <div class="nav-icon-box">
-        <svg *ngIf="activeTab === 'sync'" viewBox="0 0 24 24" fill="#2b59ff" width="24" height="24">
-          <path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C8.97 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C15.03 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/>
-        </svg>
-        <svg *ngIf="activeTab !== 'sync'" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" width="24" height="24">
-          <polyline points="23 4 23 10 17 10"></polyline>
-          <polyline points="1 20 1 14 7 14"></polyline>
-          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        <svg viewBox="0 0 24 24" fill="none" [attr.stroke]="activeTab === 'sync' ? '#2563eb' : '#64748b'" [attr.stroke-width]="activeTab === 'sync' ? '2.4' : '2'" stroke-linecap="round" stroke-linejoin="round" width="24" height="24">
+          <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
         </svg>
       </div>
       <span class="nav-label">Đồng bộ</span>
@@ -1616,11 +1613,8 @@
             [class.active]="activeTab === 'messages'"
             (click)="activeTab = 'messages'">
       <div class="nav-icon-box position-relative">
-        <svg *ngIf="activeTab === 'messages'" viewBox="0 0 24 24" fill="#2b59ff" width="24" height="24">
-          <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
-        </svg>
-        <svg *ngIf="activeTab !== 'messages'" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" width="24" height="24">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        <svg viewBox="0 0 24 24" fill="none" [attr.stroke]="activeTab === 'messages' ? '#2563eb' : '#64748b'" [attr.stroke-width]="activeTab === 'messages' ? '2.4' : '2'" stroke-linecap="round" stroke-linejoin="round" width="24" height="24">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" [attr.fill]="activeTab === 'messages' ? 'rgba(37, 99, 235, 0.12)' : 'none'"></path>
         </svg>
 
         <!-- Huy hiệu báo tin nhắn mới chưa đọc trên menu (trên 5 tin thì hiện 5+ để khỏi cộng dồn) -->
@@ -1638,14 +1632,11 @@
             [class.active]="activeTab === 'discover'"
             (click)="activeTab = 'discover'">
       <div class="nav-icon-box">
-        <svg *ngIf="activeTab === 'discover'" viewBox="0 0 24 24" fill="#2b59ff" width="24" height="24">
-          <path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/>
-        </svg>
-        <svg *ngIf="activeTab !== 'discover'" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" width="24" height="24">
-          <rect x="3" y="3" width="7" height="7"></rect>
-          <rect x="14" y="3" width="7" height="7"></rect>
-          <rect x="14" y="14" width="7" height="7"></rect>
-          <rect x="3" y="14" width="7" height="7"></rect>
+        <svg viewBox="0 0 24 24" fill="none" [attr.stroke]="activeTab === 'discover' ? '#2563eb' : '#64748b'" [attr.stroke-width]="activeTab === 'discover' ? '2.4' : '2'" stroke-linecap="round" stroke-linejoin="round" width="24" height="24">
+          <rect x="3" y="3" width="7" height="7" rx="1.5" [attr.fill]="activeTab === 'discover' ? 'rgba(37, 99, 235, 0.12)' : 'none'"></rect>
+          <rect x="14" y="3" width="7" height="7" rx="1.5" [attr.fill]="activeTab === 'discover' ? 'rgba(37, 99, 235, 0.12)' : 'none'"></rect>
+          <rect x="14" y="14" width="7" height="7" rx="1.5" [attr.fill]="activeTab === 'discover' ? 'rgba(37, 99, 235, 0.12)' : 'none'"></rect>
+          <rect x="3" y="14" width="7" height="7" rx="1.5" [attr.fill]="activeTab === 'discover' ? 'rgba(37, 99, 235, 0.12)' : 'none'"></rect>
         </svg>
       </div>
       <span class="nav-label">Khám phá</span>
@@ -1657,12 +1648,9 @@
             [class.active]="activeTab === 'profile'"
             (click)="activeTab = 'profile'">
       <div class="nav-icon-box">
-        <svg *ngIf="activeTab === 'profile'" viewBox="0 0 24 24" fill="#2b59ff" width="24" height="24">
-          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-        </svg>
-        <svg *ngIf="activeTab !== 'profile'" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" width="24" height="24">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-          <circle cx="12" cy="7" r="4"></circle>
+        <svg viewBox="0 0 24 24" fill="none" [attr.stroke]="activeTab === 'profile' ? '#2563eb' : '#64748b'" [attr.stroke-width]="activeTab === 'profile' ? '2.4' : '2'" stroke-linecap="round" stroke-linejoin="round" width="24" height="24">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" [attr.fill]="activeTab === 'profile' ? 'rgba(37, 99, 235, 0.12)' : 'none'"></path>
+          <circle cx="12" cy="7" r="4" [attr.fill]="activeTab === 'profile' ? 'rgba(37, 99, 235, 0.12)' : 'none'"></circle>
         </svg>
       </div>
       <span class="nav-label">Cá nhân</span>
