@@ -620,3 +620,136 @@ textarea {
   }
 }
 
+/* ========================================================= */
+/* LUCIDE ICONS & INTERACTIVE MICRO-ANIMATIONS SYSTEM        */
+/* Trục phong cách đồng bộ Mobile - Desktop (Astryx 2026)     */
+/* ========================================================= */
+.lucide-icon {
+  display: inline-block;
+  vertical-align: middle;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  flex-shrink: 0;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+              stroke 0.2s ease,
+              fill 0.2s ease,
+              filter 0.2s ease,
+              opacity 0.2s ease;
+
+  // Kích thước chuẩn
+  &.icon-xs { width: 14px; height: 14px; stroke-width: 2.2; }
+  &.icon-sm { width: 16px; height: 16px; stroke-width: 2.2; }
+  &.icon-md { width: 20px; height: 20px; stroke-width: 2; }
+  &.icon-lg { width: 24px; height: 24px; stroke-width: 2; }
+  &.icon-xl { width: 28px; height: 28px; stroke-width: 2; }
+  &.icon-2xl { width: 34px; height: 34px; stroke-width: 1.8; }
+}
+
+// 1. Hiệu ứng Hover & Move: Nhẹ nhàng bay lên và phóng lớn nhẹ (Micro-elevation)
+.lucide-anim-hover,
+button:hover .lucide-icon:not(.no-anim),
+.btn:hover .lucide-icon:not(.no-anim),
+.pill-btn:hover .lucide-icon:not(.no-anim),
+.nav-btn:hover .lucide-icon:not(.no-anim),
+.header-nav-btn:hover .lucide-icon:not(.no-anim),
+.btn-chat-topbar-icon:hover .lucide-icon:not(.no-anim),
+.call-circle-btn:hover .lucide-icon:not(.no-anim),
+.btn-call-action:hover .lucide-icon:not(.no-anim),
+.bottom-nav-item:hover .lucide-icon:not(.no-anim),
+.native-chat-item:hover .lucide-icon:not(.no-anim) {
+  transform: translateY(-1.5px) scale(1.12);
+}
+
+// 2. Hiệu ứng Click / Tap / Active: Đàn hồi nén nút xúc giác (Tactile feedback)
+.lucide-anim-active,
+button:active .lucide-icon,
+.btn:active .lucide-icon,
+.pill-btn:active .lucide-icon,
+.nav-btn:active .lucide-icon,
+.header-nav-btn:active .lucide-icon,
+.btn-chat-topbar-icon:active .lucide-icon,
+.call-circle-btn:active .lucide-icon,
+.btn-call-action:active .lucide-icon,
+.bottom-nav-item:active .lucide-icon,
+.lucide-icon:active {
+  transform: scale(0.88) !important;
+  transition-duration: 0.08s !important;
+}
+
+// 3. Hiệu ứng Xoay 360 độ (Sync / Refresh / Loading)
+@keyframes lucideSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.lucide-anim-spin,
+.fa-spin .lucide-icon,
+.fa-spin.lucide-icon {
+  animation: lucideSpin 1.05s linear infinite !important;
+  transform-origin: center center;
+}
+
+// Xoay 180 độ khi rê chuột (cho nút làm mới/đổi giáo viên)
+.lucide-anim-spin-hover:hover,
+button:hover .lucide-anim-spin-hover,
+.btn:hover .lucide-anim-spin-hover {
+  transform: rotate(180deg) scale(1.15) !important;
+  transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+// 4. Hiệu ứng Rung chuông thông báo (Bell Swing)
+@keyframes lucideBellWobble {
+  0%, 100% { transform: rotate(0); }
+  15% { transform: rotate(-16deg); }
+  35% { transform: rotate(13deg); }
+  55% { transform: rotate(-9deg); }
+  75% { transform: rotate(5deg); }
+}
+.lucide-anim-bell,
+button:hover .lucide-anim-bell,
+.header-nav-btn:hover .lucide-anim-bell {
+  animation: lucideBellWobble 0.65s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  transform-origin: top center;
+}
+
+// 5. Hiệu ứng Nhịp đập trực tuyến / Trực quan hóa sóng (Breathing Pulse)
+@keyframes lucidePulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.16); opacity: 0.82; }
+}
+.lucide-anim-pulse {
+  animation: lucidePulse 1.8s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+// 6. Hiệu ứng Chuông gọi thoại / Đang đổ chuông (Call Ring Shaking)
+@keyframes lucideCallRing {
+  0%, 100% { transform: rotate(0) scale(1); }
+  10%, 30%, 50%, 70%, 90% { transform: rotate(-14deg) scale(1.12); }
+  20%, 40%, 60%, 80% { transform: rotate(14deg) scale(1.12); }
+}
+.lucide-anim-ring {
+  animation: lucideCallRing 1.1s ease-in-out infinite !important;
+  transform-origin: center center;
+}
+
+// 7. Hiệu ứng Gửi tin nhắn phóng bay (Send Fly)
+.lucide-anim-send:hover,
+button:hover .lucide-anim-send,
+.btn-native-send:hover .lucide-icon {
+  transform: translate(2.5px, -2.5px) scale(1.14) !important;
+}
+
+// 8. Hiệu ứng Nảy Pop cho Checkmark và Khiên bảo vệ
+@keyframes lucidePop {
+  0% { transform: scale(0.65); opacity: 0; }
+  65% { transform: scale(1.22); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.lucide-anim-pop {
+  animation: lucidePop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+

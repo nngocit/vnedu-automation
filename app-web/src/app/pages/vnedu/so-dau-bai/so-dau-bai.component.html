@@ -4,9 +4,20 @@
        [ngClass]="toastMessage.type === 'success' ? 'bg-success' : (toastMessage.type === 'danger' ? 'bg-danger' : 'bg-primary')"
        role="alert">
     <div class="d-flex align-items-center px-4 py-3">
-      <app-keenicon *ngIf="toastMessage.type === 'success'" name="check-circle" class="fs-2 me-3 text-white"></app-keenicon>
-      <app-keenicon *ngIf="toastMessage.type === 'danger'" name="cross-circle" class="fs-2 me-3 text-white"></app-keenicon>
-      <app-keenicon *ngIf="toastMessage.type === 'info'" name="information-5" class="fs-2 me-3 text-white"></app-keenicon>
+      <svg *ngIf="toastMessage.type === 'success'" class="lucide-icon icon-lg me-3 text-white lucide-anim-pop" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="m9 12 2 2 4-4"/>
+      </svg>
+      <svg *ngIf="toastMessage.type === 'danger'" class="lucide-icon icon-lg me-3 text-white lucide-anim-pop" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" x2="12" y1="8" y2="12"/>
+        <line x1="12" x2="12.01" y1="16" y2="16"/>
+      </svg>
+      <svg *ngIf="toastMessage.type === 'info'" class="lucide-icon icon-lg me-3 text-white lucide-anim-pop" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 16v-4"/>
+        <path d="M12 8h.01"/>
+      </svg>
       <div class="toast-body fw-bold fs-6 flex-grow-1">
         {{ toastMessage.text }}
       </div>
@@ -63,15 +74,28 @@
     </div>
     <div class="hero-stats-group position-relative z-index-2 d-flex align-items-center gap-2 flex-wrap">
       <button type="button" class="btn btn-sm btn-light-primary rounded-pill px-3 py-1.5 fw-bold d-flex align-items-center gap-1.5 shadow-xs" (click)="openTeacherSwitcherModal()">
-        <span>🔄</span>
+        <svg class="lucide-icon icon-sm lucide-anim-spin-hover" viewBox="0 0 24 24">
+          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+          <path d="M21 3v5h-5"/>
+          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+          <path d="M8 16H3v5"/>
+        </svg>
         <span>Đổi giáo viên</span>
       </button>
-      <div class="hero-stat-pill">
-        <span class="hero-stat-icon">🛡️</span>
+      <div class="hero-stat-pill d-flex align-items-center gap-1.5">
+        <svg class="lucide-icon icon-sm text-primary" viewBox="0 0 24 24">
+          <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
+          <path d="m9 12 2 2 4-4"/>
+        </svg>
         <span>SĐĐ đối soát khớp 100%</span>
       </div>
-      <div class="hero-stat-pill">
-        <span class="hero-stat-icon">📅</span>
+      <div class="hero-stat-pill d-flex align-items-center gap-1.5">
+        <svg class="lucide-icon icon-sm text-primary" viewBox="0 0 24 24">
+          <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+          <line x1="16" x2="16" y1="2" y2="6"/>
+          <line x1="8" x2="8" y1="2" y2="6"/>
+          <line x1="3" x2="21" y1="10" y2="10"/>
+        </svg>
         <span>{{ totalSlotsCount }} Tiết tuần này</span>
       </div>
     </div>
@@ -90,28 +114,40 @@
     <!-- Cụm nút hành động nghiệp vụ (Chuẩn Zalo 1 Primary duy nhất, các nút phụ Soft Tone) -->
     <div class="d-flex flex-wrap align-items-center gap-2">
       <button class="pill-btn pill-orange shadow-xs" (click)="syncBatch('all')" [disabled]="isSavingBatch" title="Đồng bộ toàn bộ tiết trong tuần vào Sổ Đầu Bài vnEdu">
-        <app-keenicon name="double-check" class="fs-4 me-1 text-white"></app-keenicon>
-        ⚡ Đồng bộ cả tuần
+        <svg class="lucide-icon icon-sm me-1 text-white" viewBox="0 0 24 24">
+          <path d="M18 6 7 17l-5-5"/>
+          <path d="m22 10-7.5 7.5L13 16"/>
+        </svg>
+        <span>Đồng bộ cả tuần</span>
       </button>
 
       <button class="pill-btn pill-primary shadow-xs" (click)="syncBatch('today')" [disabled]="isSavingBatch" title="Đồng bộ các tiết dạy hôm nay">
-        <app-keenicon name="check-circle" class="fs-4 me-1 text-white"></app-keenicon>
-        Đồng bộ hôm nay
+        <svg class="lucide-icon icon-sm me-1 text-white" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="m9 12 2 2 4-4"/>
+        </svg>
+        <span>Đồng bộ hôm nay</span>
       </button>
 
       <button class="pill-btn pill-soft-purple shadow-xs" (click)="scanAllSupervisorAttendance()" [disabled]="isScanningAllGiamThi" title="Quét đối chiếu toàn bộ dữ liệu vắng từ Sổ Điểm Danh của Giám thị trên vnEdu">
         <span *ngIf="isScanningAllGiamThi" class="spinner-border spinner-border-sm me-1" role="status"></span>
-        <app-keenicon *ngIf="!isScanningAllGiamThi" name="shield-tick" class="fs-4 me-1 text-indigo"></app-keenicon>
-        🛡️ Quét SĐĐ Giám Thị
+        <svg *ngIf="!isScanningAllGiamThi" class="lucide-icon icon-sm me-1 text-indigo" viewBox="0 0 24 24">
+          <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
+          <path d="m9 12 2 2 4-4"/>
+        </svg>
+        <span>Quét SĐĐ Giám Thị</span>
       </button>
 
       <!-- TH1: Khi Kế hoạch tuần ĐÃ TẠO và CÓ NHẬP LIỆU -> KHÓA TẠO MỚI ĐỂ BẢO VỆ AN TOÀN -->
       <button *ngIf="isWeekPlanCreatedAndHasData"
               type="button"
-              class="pill-btn pill-locked-safe shadow-xs"
+              class="pill-btn pill-locked-safe shadow-xs d-flex align-items-center gap-1.5"
               (click)="onBlockedCreatePlanClick()"
               title="🛡️ Kế hoạch Tuần {{ currentWeek }} đã tạo và có dữ liệu nhập liệu trên vnEdu. Khóa tạo mới để chống ghi đè mất dữ liệu.">
-        <span class="fs-5 me-1">🔒</span>
+        <svg class="lucide-icon icon-sm text-gray-600" viewBox="0 0 24 24">
+          <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
         <span class="text-gray-600 fw-bold fs-8">KHDH Đã Tạo</span>
       </button>
 
@@ -121,8 +157,15 @@
               (click)="autoPlanNewWeek()"
               [disabled]="isLoading"
               title="Tự động chuẩn bị KHDH cho tuần mới">
-        <app-keenicon name="calendar-add" class="fs-4 me-1 text-gray-700"></app-keenicon>
-        Lập trước KHDH
+        <svg class="lucide-icon icon-sm me-1 text-gray-700" viewBox="0 0 24 24">
+          <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+          <line x1="16" x2="16" y1="2" y2="6"/>
+          <line x1="8" x2="8" y1="2" y2="6"/>
+          <line x1="3" x2="21" y1="10" y2="10"/>
+          <line x1="12" x2="12" y1="14" y2="18"/>
+          <line x1="10" x2="14" y1="16" y2="16"/>
+        </svg>
+        <span>Lập trước KHDH</span>
       </button>
 
       <!-- NÚT CẬP NHẬT TỪ VNEDU CHO AN TOÀN (CHỈ UPDATE, KHÔNG TẠO ĐÈ) -->
@@ -131,7 +174,12 @@
               (click)="refreshFromVnEdu()"
               [disabled]="isLoading"
               title="Cập nhật dữ liệu mới nhất từ cổng vnEdu (An toàn tuyệt đối, không ghi đè dữ liệu bài dạy)">
-        <app-keenicon name="arrows-circle" class="fs-4 me-1 text-primary" [ngClass]="{'fa-spin': isLoading}"></app-keenicon>
+        <svg class="lucide-icon icon-sm me-1 text-primary" [class.lucide-anim-spin]="isLoading" viewBox="0 0 24 24">
+          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+          <path d="M21 3v5h-5"/>
+          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+          <path d="M8 16H3v5"/>
+        </svg>
         <span>Cập nhật từ vnEdu</span>
       </button>
     </div>
@@ -139,8 +187,10 @@
     <div class="d-flex align-items-center gap-2">
       <!-- Cụm chọn tuần dạng Pill - Mặc định tuần hiện tại -->
       <div class="week-pill-control">
-        <button type="button" class="nav-btn" (click)="prevWeek()" [disabled]="currentWeek <= 1" title="Tuần trước">
-          ❮
+        <button type="button" class="nav-btn d-flex align-items-center justify-content-center" (click)="prevWeek()" [disabled]="currentWeek <= 1" title="Tuần trước">
+          <svg class="lucide-icon icon-sm" viewBox="0 0 24 24">
+            <path d="m15 18-6-6 6-6"/>
+          </svg>
         </button>
         <span class="bullet bullet-dot bg-success me-1"></span>
         <select class="week-select-pill" [(ngModel)]="currentWeek" (change)="onWeekChange($event)" title="Chọn tuần học">
@@ -148,8 +198,10 @@
             Tuần {{ opt.weekNumber }}{{ opt.weekNumber === realCurrentWeek ? ' • HK I (Hiện tại)' : '' }}
           </option>
         </select>
-        <button type="button" class="nav-btn" (click)="nextWeek()" [disabled]="currentWeek >= 35" title="Tuần sau">
-          ›
+        <button type="button" class="nav-btn d-flex align-items-center justify-content-center" (click)="nextWeek()" [disabled]="currentWeek >= 35" title="Tuần sau">
+          <svg class="lucide-icon icon-sm" viewBox="0 0 24 24">
+            <path d="m9 18 6-6-6-6"/>
+          </svg>
         </button>
       </div>
     </div>
@@ -1786,19 +1838,29 @@
                   <!-- Nếu chưa khớp: nút Đồng Bộ Khớp Ngay -->
                   <button *ngIf="!slot.isMatched"
                           type="button"
-                          class="pill-btn pill-primary px-3 py-1 fs-8 shadow-xs"
+                          class="pill-btn pill-primary px-3 py-1 fs-8 shadow-xs d-flex align-items-center gap-1"
                           (click)="syncSingleSlotFromGiamThi(slot)"
                           title="Lưu danh sách Giám thị vào Sổ Đầu Bài tiết này">
-                    ⚡ Đồng Bộ Khớp Ngay
+                    <svg class="lucide-icon icon-xs text-white" viewBox="0 0 24 24">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                    </svg>
+                    <span>Đồng Bộ Khớp Ngay</span>
                   </button>
 
                   <!-- Nút Mở Điểm Danh xem/sửa (Phong cách Zalo Button) -->
                   <button type="button"
-                          class="btn-detail-action"
+                          class="btn-detail-action d-flex align-items-center gap-1"
                           [ngClass]="slot.isMatched ? 'btn-detail-matched' : 'btn-detail-mismatched'"
                           (click)="openAttendanceFromScanResult(slot)">
-                    <app-keenicon [name]="slot.isMatched ? 'eye' : 'pencil'" class="fs-7 me-1"></app-keenicon>
-                    {{ slot.isMatched ? 'Xem Điểm Danh' : 'Sửa Điểm Danh' }}
+                    <svg *ngIf="slot.isMatched" class="lucide-icon icon-xs me-1" viewBox="0 0 24 24">
+                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    <svg *ngIf="!slot.isMatched" class="lucide-icon icon-xs me-1" viewBox="0 0 24 24">
+                      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                      <path d="m15 5 4 4"/>
+                    </svg>
+                    <span>{{ slot.isMatched ? 'Xem Điểm Danh' : 'Sửa Điểm Danh' }}</span>
                   </button>
                 </div>
               </div>
@@ -1810,13 +1872,25 @@
 
       <!-- TRẠNG THÁI 3: LỖI (ERROR) -->
       <div *ngIf="scanModalStatus === 'error'" class="text-center py-5">
-        <div class="fs-1 mb-2">❌</div>
+        <div class="mb-3 d-inline-flex align-items-center justify-content-center p-3 rounded-circle bg-danger-subtle text-danger">
+          <svg class="lucide-icon icon-2xl" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" x2="12" y1="8" y2="12"/>
+            <line x1="12" x2="12.01" y1="16" y2="16"/>
+          </svg>
+        </div>
         <h5 class="fw-bold text-danger mb-2">Quá trình quét SĐĐ Giám thị gặp lỗi</h5>
         <p class="fs-7 text-gray-600 mb-4 max-w-450px mx-auto">
           Không thể lấy được dữ liệu điểm danh từ vnEdu. Vui lòng thử lại hoặc kiểm tra kết nối mạng.
         </p>
-        <button type="button" class="pill-btn pill-primary px-4 py-2" (click)="scanAllSupervisorAttendance()">
-          🔄 Thử Quét Lại
+        <button type="button" class="pill-btn pill-primary px-4 py-2 d-inline-flex align-items-center gap-1.5" (click)="scanAllSupervisorAttendance()">
+          <svg class="lucide-icon icon-sm text-white lucide-anim-spin-hover" viewBox="0 0 24 24">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+            <path d="M21 3v5h-5"/>
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+            <path d="M8 16H3v5"/>
+          </svg>
+          <span>Thử Quét Lại</span>
         </button>
       </div>
     </div>
@@ -2040,16 +2114,19 @@
               class="btn-call-action btn-call-reject rounded-circle border-0 d-flex align-items-center justify-content-center shadow-lg transition-all"
               (click)="rejectDesktopIncomingCall()"
               title="Từ chối cuộc gọi">
-        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20" style="transform: rotate(135deg);">
-          <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.43-3.9-6.63-6.82l1.97-1.61c.24-.26.35-.64.24-1.01A11.36 11.36 0 0 1 8.92 4c0-.55-.45-1-1-1H4.35c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.62c0-.55-.45-1-1-1z"/>
+        <svg class="lucide-icon text-white icon-sm" viewBox="0 0 24 24">
+          <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/>
+          <line x1="22" x2="2" y1="2" y2="22"/>
         </svg>
       </button>
       <button type="button"
               class="btn-call-action btn-call-accept rounded-circle border-0 d-flex align-items-center justify-content-center shadow-lg transition-all"
               (click)="acceptDesktopIncomingCall()"
               title="Nhận cuộc gọi">
-        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-          <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.43-3.9-6.63-6.82l1.97-1.61c.24-.26.35-.64.24-1.01A11.36 11.36 0 0 1 8.92 4c0-.55-.45-1-1-1H4.35c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.62c0-.55-.45-1-1-1z"/>
+        <svg class="lucide-icon text-white icon-sm lucide-anim-ring" viewBox="0 0 24 24">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+          <path d="M14.05 2a9 9 0 0 1 8 7.94"/>
+          <path d="M14.05 6A5 5 0 0 1 18 10"/>
         </svg>
       </button>
     </div>
@@ -2089,7 +2166,13 @@
         </div>
       </div>
       <div class="min-w-0" *ngIf="activeDesktopCall.status === 'unreachable'">
-        <div class="fw-bold fs-7 text-danger text-truncate">📵 Người dùng hiện không thể nghe máy</div>
+        <div class="fw-bold fs-7 text-danger text-truncate d-flex align-items-center gap-1.5">
+          <svg class="lucide-icon icon-xs text-danger" viewBox="0 0 24 24">
+            <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/>
+            <line x1="22" x2="2" y1="2" y2="22"/>
+          </svg>
+          <span>Người dùng hiện không thể nghe máy</span>
+        </div>
         <div class="text-white-50 fs-9">Vui lòng liên hệ lại sau...</div>
       </div>
     </div>
@@ -2099,25 +2182,37 @@
       <button type="button"
               class="btn-call-action rounded-circle border-0 d-flex align-items-center justify-content-center text-white transition-all"
               [style.background]="activeDesktopCall.isMuted ? '#ef4444' : 'rgba(255,255,255,0.15)'"
-              style="width: 40px; height: 40px; font-size: 16px;"
+              style="width: 40px; height: 40px;"
               (click)="toggleDesktopMute()"
               [title]="activeDesktopCall.isMuted ? 'Bật mic' : 'Tắt tiếng mic'">
-        <span>{{ activeDesktopCall.isMuted ? '🔇' : '🎤' }}</span>
+        <svg *ngIf="!activeDesktopCall.isMuted" class="lucide-icon icon-sm text-white" viewBox="0 0 24 24">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" x2="12" y1="19" y2="22"/>
+        </svg>
+        <svg *ngIf="activeDesktopCall.isMuted" class="lucide-icon icon-sm text-white" viewBox="0 0 24 24">
+          <line x1="2" x2="22" y1="2" y2="22"/>
+          <path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2"/>
+          <path d="M5 10v2a7 7 0 0 0 12 5"/>
+          <path d="M15 9.34V5a3 3 0 0 0-5.68-1.33"/>
+          <path d="M9 9v3a3 3 0 0 0 5.12 2.12"/>
+          <line x1="12" x2="12" y1="19" y2="22"/>
+        </svg>
       </button>
 
       <!-- Nút Loa ngoài (Desktop Speakerphone Toggle) -->
       <button type="button"
               class="btn-call-action rounded-circle border-0 d-flex align-items-center justify-content-center text-white transition-all"
               [style.background]="isDesktopSpeakerOn ? '#3b82f6' : 'rgba(255,255,255,0.15)'"
-              style="width: 40px; height: 40px; font-size: 16px;"
+              style="width: 40px; height: 40px;"
               (click)="toggleDesktopSpeaker()"
               [title]="isDesktopSpeakerOn ? 'Bật Loa trong' : 'Bật Loa ngoài'">
-        <svg *ngIf="isDesktopSpeakerOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+        <svg *ngIf="isDesktopSpeakerOn" class="lucide-icon icon-sm text-white" viewBox="0 0 24 24">
           <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
           <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
           <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
         </svg>
-        <svg *ngIf="!isDesktopSpeakerOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+        <svg *ngIf="!isDesktopSpeakerOn" class="lucide-icon icon-sm text-white" viewBox="0 0 24 24">
           <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
           <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
         </svg>
@@ -2128,8 +2223,9 @@
               style="width: 40px; height: 40px; background: #dc2626; color: white;"
               (click)="endDesktopCall()"
               title="Kết thúc cuộc gọi">
-        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20" style="transform: rotate(135deg);">
-          <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.43-3.9-6.63-6.82l1.97-1.61c.24-.26.35-.64.24-1.01A11.36 11.36 0 0 1 8.92 4c0-.55-.45-1-1-1H4.35c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.62c0-.55-.45-1-1-1z"/>
+        <svg class="lucide-icon icon-sm text-white" viewBox="0 0 24 24">
+          <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/>
+          <line x1="22" x2="2" y1="2" y2="22"/>
         </svg>
       </button>
     </div>
