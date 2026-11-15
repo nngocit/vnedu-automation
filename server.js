@@ -149,10 +149,12 @@ app.use((req, res, next) => {
 // Phục vụ file tĩnh của Angular Web App với cache tối ưu
 if (fs.existsSync(DIST_DIR)) {
     app.use(express.static(DIST_DIR, {
-        maxAge: '1d',
+        maxAge: '1h',
         setHeaders: (res, pathUrl) => {
             if (pathUrl.endsWith('.html')) {
-                res.setHeader('Cache-Control', 'no-cache');
+                res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+                res.setHeader('Pragma', 'no-cache');
+                res.setHeader('Expires', '0');
             }
         }
     }));
@@ -1647,10 +1649,14 @@ app.use('/api', (req, res) => {
 if (fs.existsSync(DIST_DIR)) {
     const indexPath = path.join(DIST_DIR, 'index.html');
     app.use((req, res, next) => {
-        if (req.method === 'GET') {
+        if (req.method === 'GET' || req.method === 'HEAD') {
             try {
-                const html = fs.readFileSync(indexPath, 'utf8');
                 res.setHeader('Content-Type', 'text/html; charset=utf-8');
+                res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+                res.setHeader('Pragma', 'no-cache');
+                res.setHeader('Expires', '0');
+                if (req.method === 'HEAD') return res.status(200).end();
+                const html = fs.readFileSync(indexPath, 'utf8');
                 return res.send(html);
             } catch (err) {
                 return res.status(500).send('Không thể nạp index.html: ' + err.message);
