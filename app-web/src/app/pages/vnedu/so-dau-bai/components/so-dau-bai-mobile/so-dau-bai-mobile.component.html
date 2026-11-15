@@ -736,35 +736,43 @@
       <!-- THIẾT KẾ NATIVE CHUẨN MS TEAMS & ZALO (ASTRYX UI/UX) -->
       <!-- ============================================== -->
       <div *ngIf="!activeContact" class="native-chat-view bg-white d-flex flex-column flex-grow-1">
-        <!-- Thanh công cụ trên cùng: Vai trò & Nút xóa lịch sử -->
-        <div class="native-chat-top-panel px-3 py-2 bg-white d-flex align-items-center justify-content-between border-bottom border-gray-100">
-          <div class="d-flex align-items-center gap-2">
-            <span class="fs-9 text-muted fw-bold text-uppercase tracking-wider">Tài khoản:</span>
-            <!-- Chip chuyển đổi vai trò nhanh dạng Glass Pill nhỏ gọn thay cho Card to -->
+        <!-- Thanh công cụ trên cùng: Tài khoản & Trạng thái & Xóa lịch sử -->
+        <div class="native-chat-top-panel px-3 py-2.5 bg-white d-flex align-items-center justify-content-between border-bottom border-gray-100">
+          <div class="d-flex align-items-center gap-2 min-w-0">
+            <!-- Chip vai trò chuẩn Astryx: Avatar mini + Tên vai trò + Nút đổi vai trò dạng Switch -->
             <button type="button"
-                    class="btn-native-role-chip btn btn-sm py-1 px-2.5 rounded-pill fs-8 fw-bold d-inline-flex align-items-center gap-1.5 border-0 shadow-2xs"
+                    class="btn-native-role-chip btn btn-sm py-1 px-2.5 rounded-pill fs-8 fw-bold d-inline-flex align-items-center gap-1.5 border shadow-2xs transition-all"
                     [style.background]="currentChatRole === 'admin' ? '#eff6ff' : '#fdf2f8'"
-                    [style.color]="currentChatRole === 'admin' ? '#1d4ed8' : '#be185d'"
+                    [style.borderColor]="currentChatRole === 'admin' ? '#bfdbfe' : '#fbcfe8'"
+                    [style.color]="currentChatRole === 'admin' ? '#1e40af' : '#9d174d'"
                     (click)="toggleChatRole()"
                     title="Bấm để đổi vai trò chat (Admin / Giáo viên)">
-              <span>{{ currentChatRole === 'admin' ? '👨‍💼 Admin' : '👩‍🏫 Cô Huyên' }}</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11">
-                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
-              </svg>
+              <span class="role-avatar-mini rounded-circle d-inline-flex align-items-center justify-content-center"
+                    style="width: 22px; height: 22px; font-size: 12px; background: rgba(255,255,255,0.85); box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+                {{ currentChatRole === 'admin' ? '👨‍💼' : '👩‍🏫' }}
+              </span>
+              <span class="text-truncate fw-bolder">{{ currentChatRole === 'admin' ? 'Thầy Ngọc (Admin)' : 'Cô Diệu Huyên (GV)' }}</span>
+              <span class="badge rounded-pill px-1.5 py-0.5 fs-9 fw-semibold ms-1"
+                    [style.background]="currentChatRole === 'admin' ? '#dbeafe' : '#fce7f3'"
+                    [style.color]="currentChatRole === 'admin' ? '#1d4ed8' : '#be185d'">
+                Đổi vai trò ⇄
+              </span>
             </button>
           </div>
 
-          <div class="d-flex align-items-center gap-1.5">
-            <span class="badge bg-light-success text-success fw-bold px-2 py-1 rounded-pill fs-9 d-flex align-items-center gap-1">
-              <span class="online-dot-sm rounded-circle bg-success" style="width: 6px; height: 6px;"></span>
-              CSDL Thật
+          <div class="d-flex align-items-center gap-2 flex-shrink-0">
+            <!-- Status Badge Astryx -->
+            <span class="badge bg-emerald-50 text-emerald-700 border border-emerald-200 fw-bold px-2 py-1 rounded-pill fs-9 d-flex align-items-center gap-1.5 shadow-2xs">
+              <span class="online-dot-sm rounded-circle bg-success animate-pulse" style="width: 6px; height: 6px;"></span>
+              Trực tuyến
             </span>
+            <!-- Clear History Button with clear red trash icon -->
             <button type="button"
-                    class="btn btn-sm btn-light border-0 rounded-circle text-muted p-1.5 d-flex align-items-center justify-content-center"
-                    style="width: 30px; height: 30px;"
+                    class="btn-clear-chat-history btn btn-sm btn-light-danger border-0 rounded-circle p-0 d-flex align-items-center justify-content-center transition-all"
+                    style="width: 32px; height: 32px; background: #fef2f2;"
                     (click)="promptClearAllMessages()"
                     title="Xóa toàn bộ lịch sử trò chuyện">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" width="16" height="16">
                 <polyline points="3 6 5 6 21 6"></polyline>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
               </svg>
@@ -772,28 +780,29 @@
           </div>
         </div>
 
-        <!-- Thanh tìm kiếm native chuẩn MS Teams & Zalo -->
+        <!-- Thanh tìm kiếm native chuẩn MS Teams & Zalo (Astryx SearchInput) -->
         <div class="native-search-panel px-3 py-2 bg-white">
-          <div class="native-search-box d-flex align-items-center gap-2 px-3 py-1.5 rounded-pill"
-               style="background: #f1f5f9; border: 1px solid #e2e8f0;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.2" width="15" height="15">
+          <div class="native-search-box d-flex align-items-center gap-2 px-3 py-2 rounded-pill"
+               style="background: #f8fafc; border: 1px solid #e2e8f0;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.2" width="16" height="16" class="flex-shrink-0">
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
             <input type="text"
-                   class="form-control form-control-sm border-0 bg-transparent p-0 fs-7 text-gray-900 shadow-none"
+                   class="form-control form-control-sm border-0 bg-transparent p-0 fs-7 text-gray-900 shadow-none flex-grow-1"
                    [(ngModel)]="searchTeacherQuery"
-                   placeholder="Tìm kiếm tin nhắn, liên hệ...">
+                   placeholder="Tìm theo tên giáo viên, số điện thoại, tin nhắn...">
             <button *ngIf="searchTeacherQuery"
                     type="button"
-                    class="btn-clear-search border-0 bg-transparent text-muted p-0 fs-8"
+                    class="btn-clear-search border-0 bg-transparent text-muted p-0 fs-8 d-flex align-items-center justify-content-center"
+                    style="width: 20px; height: 20px;"
                     (click)="searchTeacherQuery = ''">
               ✕
             </button>
           </div>
         </div>
 
-        <!-- Phân loại Sub-tabs chuẩn Zalo (Tất cả, Ưu tiên, Nhóm, Khác) -->
+        <!-- Phân loại Sub-tabs chuẩn Astryx (Tất cả, Ưu tiên, Nhóm, Khác) -->
         <div class="native-category-tabs px-3 py-1.5 d-flex align-items-center gap-1.5 bg-white border-bottom border-gray-100 overflow-x-auto">
           <button type="button"
                   class="native-cat-pill rounded-pill px-3 py-1 fs-8 fw-bold border-0 transition-all"
@@ -844,16 +853,16 @@
             <!-- Khối thông tin giữa: Tên + Role tag + Tin nhắn cuối -->
             <div class="native-chat-content flex-grow-1 min-w-0">
               <div class="d-flex align-items-center justify-content-between mb-0.5">
-                <div class="d-flex align-items-center gap-1.5 min-w-0">
+                <div class="d-flex align-items-center gap-1.5 min-w-0 flex-grow-1 me-2">
                   <h3 class="native-chat-name mb-0 fw-bold text-gray-900 text-truncate fs-6">
                     {{ contact.name }}
                   </h3>
                   <span class="native-role-tag badge rounded-pill px-2 py-0.5 fs-9 fw-semibold flex-shrink-0"
                         [ngClass]="contact.role === 'ADMIN' ? 'bg-primary-subtle text-primary border border-primary-subtle' : (contact.role === 'GROUP' ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-success-subtle text-success border border-success-subtle')">
-                    {{ contact.accountType || (contact.role === 'ADMIN' ? 'Quản Trị Viên' : 'Giáo Viên') }}
+                    {{ contact.role === 'ADMIN' ? 'Admin' : (contact.role === 'GROUP' ? 'Nhóm' : 'Giáo viên') }}
                   </span>
                 </div>
-                <span class="native-chat-time text-muted fs-9 fw-semibold flex-shrink-0 ms-2">
+                <span class="native-chat-time text-muted fs-9 fw-semibold flex-shrink-0">
                   {{ contact.lastTime }}
                 </span>
               </div>
@@ -1751,23 +1760,30 @@
        class="zalo-call-overlay astryx-call-theme position-fixed top-0 start-0 w-100 h-100 d-flex flex-column justify-content-between p-4"
        style="z-index: 10050;">
     
-    <!-- Top bar cuộc gọi chuẩn Astryx -->
+    <!-- Top bar cuộc gọi chuẩn Meta Astryx / Native VOIP -->
     <div class="astryx-call-topbar d-flex align-items-center justify-content-between text-white pt-2 px-1">
-      <div class="d-flex align-items-center gap-2.5">
-        <div class="call-type-icon-badge d-flex align-items-center justify-content-center"
-             style="width: 38px; height: 38px; border-radius: 12px; background: rgba(236, 72, 153, 0.18); border: 1px solid rgba(236, 72, 153, 0.35);">
+      <div class="d-flex align-items-center gap-3">
+        <div class="call-type-icon-badge d-flex align-items-center justify-content-center flex-shrink-0"
+             style="width: 42px; height: 42px; border-radius: 14px; background: rgba(236, 72, 153, 0.22); border: 1.5px solid rgba(244, 114, 182, 0.45); box-shadow: 0 4px 16px rgba(236, 72, 153, 0.3);">
           <!-- Pink phone handset icon matching screenshot -->
-          <svg viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
             <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
           </svg>
         </div>
         <div>
-          <div class="fw-bold fs-7 text-white tracking-tight">{{ activeCall.type === 'video' ? 'Cuộc gọi Video vnEdu' : 'Cuộc gọi Thoại vnEdu' }}</div>
-          <div class="fs-9 text-white-50">Mã hóa đầu cuối bảo mật</div>
+          <div class="fw-bold fs-6 text-white tracking-tight">{{ activeCall.type === 'video' ? 'Cuộc gọi Video vnEdu' : 'Cuộc gọi Thoại vnEdu' }}</div>
+          <div class="fs-9 text-white-50 d-flex align-items-center gap-1 mt-0.5">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="11" height="11">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <span>Mã hóa đầu cuối bảo mật WebRTC</span>
+          </div>
         </div>
       </div>
-      <div class="call-quality-pill badge rounded-pill px-3 py-1.5 fs-8 fw-semibold text-white"
-           style="background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.18); backdrop-filter: blur(8px);">
+      <div class="call-quality-pill badge rounded-pill px-3 py-1.5 fs-8 fw-semibold text-white d-flex align-items-center gap-1.5 shadow-sm"
+           style="background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.22); backdrop-filter: blur(12px);">
+        <span class="online-dot-sm rounded-circle bg-success animate-pulse" style="width: 6px; height: 6px;"></span>
         HD Voice
       </div>
     </div>
